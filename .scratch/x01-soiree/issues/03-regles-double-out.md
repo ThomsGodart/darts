@@ -36,4 +36,4 @@ Les rejets passent par un résultat typé de la façade, sans changer l’état.
   - Nouveau token `visitSummaryFontSize`.
 - 44 tests verts.
 - Code review (standards + spec) appliquée.
-- Décision ouverte : un total qui amène à 0 sur un finish impossible (ex. 168 en Double-out) est refusé (« Score invalide »), conformément à l’US 28. En vrai jeu, T20 T20 T16 sur 168 est un bust ; on pourrait l’enregistrer comme bust plutôt que le refuser.
+- Décision (2026-10-02, utilisateur) : un total qui amène à 0 sur un finish impossible (ex. 168 en Double-out) reste **refusé** (« Score invalide »), conformément à l’US 28 ; il n’est pas enregistré comme bust.
