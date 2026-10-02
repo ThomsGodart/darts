@@ -1,14 +1,84 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../soiree/soiree.dart';
 import '../soiree_controller.dart';
 import 'scoreboard.dart';
+import 'screen_awake.dart';
+import 'turn_banner.dart';
 import 'visit_input.dart';
 
-class GameScreen extends StatelessWidget {
-  const GameScreen({super.key, required this.controller});
+class GameScreen extends StatefulWidget {
+  const GameScreen({
+    super.key,
+    required this.controller,
+    this.screenAwake = const WakelockScreenAwake(),
+  });
 
   final SoireeController controller;
+  final ScreenAwake screenAwake;
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  SoireeController get controller => widget.controller;
+
+  late int _visitsSeen;
+  bool _screenKeptOn = false;
+
+  /// Next player to announce after a visit; null when no banner shows.
+  String? _announced;
+
+  /// Pointer-downs on the screen, to measure taps per visit (debug only).
+  int _taps = 0;
+  int _visitsAtOpen = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _visitsSeen = _visitsAtOpen = controller.state.game!.visitsPlayed;
+    controller.addListener(_onGameChanged);
+    if (kDebugMode) {
+      GestureBinding.instance.pointerRouter.addGlobalRoute(_countTap);
+    }
+    _syncScreenAwake();
+  }
+
+  @override
+  void dispose() {
+    controller.removeListener(_onGameChanged);
+    if (kDebugMode) {
+      GestureBinding.instance.pointerRouter.removeGlobalRoute(_countTap);
+    }
+    if (_screenKeptOn) widget.screenAwake.release();
+    super.dispose();
+  }
+
+  void _countTap(PointerEvent event) {
+    if (event is PointerDownEvent) _taps++;
+  }
+
+  void _onGameChanged() {
+    final game = controller.state.game!;
+    // Only a completed visit passes the phone on; an undo does not.
+    if (game.visitsPlayed > _visitsSeen && !game.isFinished) {
+      HapticFeedback.mediumImpact();
+      setState(() => _announced = game.activePlayer.name);
+    }
+    _visitsSeen = game.visitsPlayed;
+    _syncScreenAwake();
+  }
+
+  void _syncScreenAwake() {
+    final inProgress = !controller.state.game!.isFinished;
+    if (inProgress == _screenKeptOn) return;
+    _screenKeptOn = inProgress;
+    inProgress ? widget.screenAwake.keepOn() : widget.screenAwake.release();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,18 +88,46 @@ class GameScreen extends StatelessWidget {
           listenable: controller,
           builder: (context, _) {
             final game = controller.state.game!;
-            return Column(
+            final announced = _announced;
+            return Stack(
               children: [
-                Expanded(child: Scoreboard(game: game)),
-                if (game.isFinished)
-                  _GameOverPanel(winner: game.winner!, onUndo: controller.undo)
-                else
-                  VisitInput(
-                    key: ValueKey(game.visitsPlayed),
-                    onSubmit: (score) => _submit(context, game, score),
-                    onDart: controller.throwDart,
-                    dartsInVisit: game.dartsInVisit,
-                    onUndo: controller.canUndo ? controller.undo : null,
+                Column(
+                  children: [
+                    Expanded(child: Scoreboard(game: game)),
+                    if (game.isFinished)
+                      _GameOverPanel(
+                        winner: game.winner!,
+                        onUndo: controller.undo,
+                      )
+                    else
+                      VisitInput(
+                        key: ValueKey(game.visitsPlayed),
+                        onSubmit: (score) => _submit(context, game, score),
+                        onDart: controller.throwDart,
+                        dartsInVisit: game.dartsInVisit,
+                        onUndo: controller.canUndo ? controller.undo : null,
+                      ),
+                  ],
+                ),
+                if (announced != null)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: TurnBanner(
+                      key: ValueKey(game.visitsPlayed),
+                      playerName: announced,
+                      onDone: () => setState(() => _announced = null),
+                    ),
+                  ),
+                if (kDebugMode)
+                  Positioned(
+                    top: 4,
+                    right: 8,
+                    child: _TapCounter(
+                      taps: _taps,
+                      visits: game.visitsPlayed - _visitsAtOpen,
+                    ),
                   ),
               ],
             );
@@ -113,6 +211,23 @@ class _GameOverPanel extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Debug-only measure of the "≤ 2 taps per visit" goal.
+class _TapCounter extends StatelessWidget {
+  const _TapCounter({required this.taps, required this.visits});
+
+  final int taps;
+  final int visits;
+
+  @override
+  Widget build(BuildContext context) {
+    if (visits <= 0) return const SizedBox.shrink();
+    return Text(
+      '${(taps / visits).toStringAsFixed(1)} taps/volée',
+      style: Theme.of(context).textTheme.labelSmall,
     );
   }
 }
