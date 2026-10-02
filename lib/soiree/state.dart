@@ -1,3 +1,4 @@
+import 'dart.dart';
 import 'player.dart';
 import 'x01_config.dart';
 import 'x01_rules.dart';
@@ -39,6 +40,7 @@ class PlayerScore {
     this.lastVisit,
     this.pointsScored = 0,
     this.dartsThrown = 0,
+    this.visitsPlayed = 0,
   });
 
   final Player player;
@@ -48,6 +50,7 @@ class PlayerScore {
   final Visit? lastVisit;
   final int pointsScored;
   final int dartsThrown;
+  final int visitsPlayed;
 
   /// Points per three darts, null before the first dart.
   double? get threeDartAverage =>
@@ -59,6 +62,7 @@ class PlayerScore {
     lastVisit: visit,
     pointsScored: pointsScored + visit.points,
     dartsThrown: dartsThrown + visit.darts,
+    visitsPlayed: visitsPlayed + 1,
   );
 }
 
@@ -67,6 +71,7 @@ class GameState {
     required this.config,
     required this.scores,
     required this.activeIndex,
+    this.dartsInVisit = const [],
     this.winner,
   });
 
@@ -75,6 +80,10 @@ class GameState {
   /// One entry per player, in throwing order.
   final List<PlayerScore> scores;
   final int activeIndex;
+
+  /// Darts already thrown in the active player's visit when it is entered
+  /// dart by dart; empty between visits.
+  final List<Dart> dartsInVisit;
   final Player? winner;
 
   bool get isFinished => winner != null;
@@ -82,6 +91,13 @@ class GameState {
   PlayerScore get activeScore => scores[activeIndex];
 
   Player get activePlayer => activeScore.player;
+
+  /// Completed visits, all players together: changes on every turn.
+  int get visitsPlayed => scores.fold(0, (sum, s) => sum + s.visitsPlayed);
+
+  /// The active player's remaining score, counting darts already thrown.
+  int get activeRemaining =>
+      activeScore.remaining - dartsInVisit.fold(0, (sum, d) => sum + d.score);
 
   /// Everyone but the active player, in the order they will throw next.
   List<PlayerScore> get waitingInTurnOrder => [

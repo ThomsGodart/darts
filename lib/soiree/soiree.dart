@@ -5,6 +5,7 @@
 library;
 
 export 'commands.dart';
+export 'dart.dart';
 export 'events.dart' show SoireeEvent;
 export 'journal.dart';
 export 'player.dart';

@@ -15,7 +15,7 @@ Les rejets passent par un résultat typé de la façade, sans changer l’état.
 **Status:** ready-for-agent
 
 - [x] Tests de façade : 501 et 301, en Double-out et en Straight-out
-- [ ] Tests de façade : les trois cas de bust (2/3 : « 0 sans double » indétectable en mode total, à couvrir au ticket 05)
+- [x] Tests de façade : les trois cas de bust (« 0 sans double » couvert en mode fléchettes au ticket 05)
 - [x] Tests de façade : rejet des totaux impossibles et des checkouts impossibles, avec l’état inchangé
 - [x] Tests de façade : checkout avec nombre de fléchettes et moyenne exacte (ex. 180, 180, 141 en 3 fléchettes → moyenne 167)
 - [x] UI : signal bust visible (token bust), dialog « combien de fléchettes ? » uniquement au checkout

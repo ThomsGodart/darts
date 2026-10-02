@@ -1,3 +1,4 @@
+import 'dart.dart';
 import 'events.dart';
 import 'player.dart';
 import 'x01_config.dart';
@@ -7,6 +8,7 @@ import 'x01_config.dart';
 abstract final class EventTypes {
   static const gameStarted = 'game_started';
   static const visitTotalSubmitted = 'visit_total_submitted';
+  static const dartThrown = 'dart_thrown';
 }
 
 /// A storable form of an event: a type tag and a JSON-compatible payload.
@@ -27,6 +29,10 @@ EncodedEvent encodeEvent(SoireeEvent event) => switch (event) {
     type: EventTypes.visitTotalSubmitted,
     payload: {'score': score, 'darts': darts},
   ),
+  DartThrown(:final dart) => (
+    type: EventTypes.dartThrown,
+    payload: {'sector': dart.sector, 'multiplier': dart.multiplier},
+  ),
 };
 
 SoireeEvent decodeEvent(String type, Map<String, Object?> payload) =>
@@ -44,6 +50,12 @@ SoireeEvent decodeEvent(String type, Map<String, Object?> payload) =>
       EventTypes.visitTotalSubmitted => VisitTotalSubmitted(
         payload['score']! as int,
         darts: payload['darts']! as int,
+      ),
+      EventTypes.dartThrown => DartThrown(
+        Dart.fromStored(
+          sector: payload['sector']! as int,
+          multiplier: payload['multiplier']! as int,
+        ),
       ),
       _ => throw FormatException('Unknown event type "$type"'),
     };

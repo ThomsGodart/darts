@@ -14,7 +14,12 @@ class Scoreboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Expanded(child: _ActivePlayer(score: game.activeScore)),
+        Expanded(
+          child: _ActivePlayer(
+            score: game.activeScore,
+            remaining: game.activeRemaining,
+          ),
+        ),
         for (final score in game.waitingInTurnOrder)
           _WaitingPlayer(score: score),
       ],
@@ -33,9 +38,12 @@ String _visitSummary(PlayerScore score) {
 }
 
 class _ActivePlayer extends StatelessWidget {
-  const _ActivePlayer({required this.score});
+  const _ActivePlayer({required this.score, required this.remaining});
 
   final PlayerScore score;
+
+  /// Live remaining, darts of the visit in progress included.
+  final int remaining;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +65,7 @@ class _ActivePlayer extends StatelessWidget {
               ),
             ),
             Text(
-              '${score.remaining}',
+              '$remaining',
               key: const Key('active-remaining'),
               style: TextStyle(
                 fontSize: tokens.remainingFontSize,

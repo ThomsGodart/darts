@@ -1,13 +1,29 @@
 import 'package:flutter/material.dart';
 
+import '../soiree/soiree.dart';
+import 'dart_picker.dart';
+
 /// Visit totals players hit most often, entered in a single tap.
 const quickScores = [26, 41, 45, 60, 81, 85, 100, 140, 180];
 
-/// Bottom drawer to enter a visit: quick-scores, or a typed total.
+/// Bottom drawer to enter a visit: quick-scores or a typed total, or dart
+/// by dart for this visit only. Give it a new key on each visit so the
+/// next one starts back in total mode.
 class VisitInput extends StatefulWidget {
-  const VisitInput({super.key, required this.onSubmit, required this.onUndo});
+  const VisitInput({
+    super.key,
+    required this.onSubmit,
+    required this.onDart,
+    required this.onUndo,
+    this.dartsInVisit = const [],
+  });
 
   final ValueChanged<int> onSubmit;
+  final ValueChanged<Dart> onDart;
+
+  /// Darts already entered in this visit; the visit stays in dart mode
+  /// until it ends.
+  final List<Dart> dartsInVisit;
 
   /// Takes back the latest input; null when there is nothing to undo.
   final VoidCallback? onUndo;
@@ -18,6 +34,9 @@ class VisitInput extends StatefulWidget {
 
 class _VisitInputState extends State<VisitInput> {
   String _typed = '';
+  bool _dartByDart = false;
+
+  bool get _inDartMode => _dartByDart || widget.dartsInVisit.isNotEmpty;
 
   void _appendDigit(int digit) {
     if (_typed.length >= 3) return;
@@ -42,49 +61,27 @@ class _VisitInputState extends State<VisitInput> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              alignment: WrapAlignment.center,
-              children: [
-                for (final score in quickScores)
-                  ActionChip(
-                    label: Text('$score', style: textTheme.titleMedium),
-                    onPressed: () => _submit(score),
-                  ),
-              ],
+            _ModeSwitch(
+              dartByDart: _inDartMode,
+              // Once a dart is in, the visit is finished dart by dart.
+              onChanged: widget.dartsInVisit.isNotEmpty
+                  ? null
+                  : (value) => setState(() => _dartByDart = value),
             ),
             const SizedBox(height: 8),
-            Text(
-              _typed.isEmpty ? '–' : _typed,
-              key: const Key('typed-total'),
-              style: textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            for (final row in const [
-              [1, 2, 3],
-              [4, 5, 6],
-              [7, 8, 9],
-            ])
-              Row(
-                children: [
-                  for (final digit in row)
-                    _PadKey(label: '$digit', onTap: () => _appendDigit(digit)),
-                ],
+            if (_inDartMode) ...[
+              Text(
+                [
+                  for (var i = 0; i < dartsPerVisit; i++)
+                    widget.dartsInVisit.elementAtOrNull(i)?.notation ?? '–',
+                ].join('  ·  '),
+                key: const Key('darts-in-visit'),
+                style: textTheme.headlineSmall,
               ),
-            Row(
-              children: [
-                _PadKey(label: 'C', onTap: _clear),
-                _PadKey(label: '0', onTap: () => _appendDigit(0)),
-                _PadKey(
-                  label: 'OK',
-                  emphasized: true,
-                  onTap: _typed.isEmpty
-                      ? null
-                      : () => _submit(int.parse(_typed)),
-                ),
-              ],
-            ),
+              const SizedBox(height: 8),
+              DartPicker(onDart: widget.onDart),
+            ] else
+              ..._totalPad(textTheme),
             const SizedBox(height: 4),
             Row(
               children: [
@@ -95,18 +92,87 @@ class _VisitInputState extends State<VisitInput> {
                     label: const Text('Annuler'),
                   ),
                 ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _submit(0),
-                    child: const Text('0 / raté'),
+                if (!_inDartMode) ...[
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _submit(0),
+                      child: const Text('0 / raté'),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  List<Widget> _totalPad(TextTheme textTheme) => [
+    Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      alignment: WrapAlignment.center,
+      children: [
+        for (final score in quickScores)
+          ActionChip(
+            label: Text('$score', style: textTheme.titleMedium),
+            onPressed: () => _submit(score),
+          ),
+      ],
+    ),
+    const SizedBox(height: 8),
+    Text(
+      _typed.isEmpty ? '–' : _typed,
+      key: const Key('typed-total'),
+      style: textTheme.headlineMedium,
+    ),
+    const SizedBox(height: 8),
+    for (final row in const [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+    ])
+      Row(
+        children: [
+          for (final digit in row)
+            _PadKey(label: '$digit', onTap: () => _appendDigit(digit)),
+        ],
+      ),
+    Row(
+      children: [
+        _PadKey(label: 'C', onTap: _clear),
+        _PadKey(label: '0', onTap: () => _appendDigit(0)),
+        _PadKey(
+          label: 'OK',
+          emphasized: true,
+          onTap: _typed.isEmpty ? null : () => _submit(int.parse(_typed)),
+        ),
+      ],
+    ),
+  ];
+}
+
+class _ModeSwitch extends StatelessWidget {
+  const _ModeSwitch({required this.dartByDart, required this.onChanged});
+
+  final bool dartByDart;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final onChanged = this.onChanged;
+    return SegmentedButton<bool>(
+      segments: const [
+        ButtonSegment(value: false, label: Text('Total')),
+        ButtonSegment(value: true, label: Text('Fléchettes')),
+      ],
+      selected: {dartByDart},
+      showSelectedIcon: false,
+      onSelectionChanged: onChanged == null
+          ? null
+          : (selection) => onChanged(selection.single),
     );
   }
 }

@@ -140,4 +140,44 @@ void main() {
     // Joueur 2's second 26 is taken back: back to 501 - 26.
     expect(activeRemaining(tester), '475');
   });
+
+  testWidgets('a visit entered dart by dart, then back to total mode', (
+    tester,
+  ) async {
+    await startGame(tester);
+
+    await tester.tap(find.text('Fléchettes'));
+    await tester.pump();
+    await tester.tap(find.text('Triple'));
+    await tester.pump();
+    await tester.tap(find.text('T20'));
+    await tester.pump();
+
+    final darts = find.byKey(const Key('darts-in-visit'));
+    expect(tester.widget<Text>(darts).data, startsWith('T20'));
+    expect(activeRemaining(tester), '441');
+
+    // Back to single after each dart.
+    await tester.tap(find.text('5'));
+    await tester.tap(find.text('Bull'));
+    await tester.pump();
+
+    expect(find.text('Joueur 2'), findsOneWidget);
+    expect(find.text('386'), findsOneWidget);
+    expect(find.widgetWithText(ActionChip, '60'), findsOneWidget);
+  });
+
+  testWidgets('a dart-by-dart visit cannot switch back to total', (
+    tester,
+  ) async {
+    await startGame(tester);
+    await tester.tap(find.text('Fléchettes'));
+    await tester.pump();
+    await tester.tap(find.text('20'));
+    await tester.pump();
+
+    await tester.tap(find.text('Total'));
+    await tester.pump();
+    expect(find.byKey(const Key('darts-in-visit')), findsOneWidget);
+  });
 }

@@ -1,4 +1,5 @@
 import 'commands.dart';
+import 'dart.dart';
 import 'events.dart';
 import 'fold.dart';
 import 'journal.dart';
@@ -43,6 +44,9 @@ class Soiree {
     final game = _state.game;
     if (game == null) return const Rejected('No game in progress');
     if (game.isFinished) return const Rejected('The game is over');
+    if (game.dartsInVisit.isNotEmpty) {
+      return const Rejected('This visit is being entered dart by dart');
+    }
     if (!isPossibleVisitTotal(score)) {
       return Rejected('$score cannot be scored with three darts');
     }
@@ -64,9 +68,19 @@ class Soiree {
     return _record(VisitTotalSubmitted(score, darts: dartsAtCheckout));
   }
 
+  /// Enters the next dart of the active player's visit. The visit ends by
+  /// itself on the third dart, a bust or a checkout.
+  CommandResult throwDart(Dart dart) {
+    final game = _state.game;
+    if (game == null) return const Rejected('No game in progress');
+    if (game.isFinished) return const Rejected('The game is over');
+    if (!dart.isValid) return Rejected('No such dart: $dart');
+    return _record(DartThrown(dart));
+  }
+
   /// Whether there is an input of the current game to take back.
   bool get canUndo => switch (_journal.events.lastOrNull) {
-    VisitTotalSubmitted() => true,
+    VisitTotalSubmitted() || DartThrown() => true,
     GameStarted() || null => false,
   };
 

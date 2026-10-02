@@ -84,6 +84,22 @@ void repositoryContract(
       expect(third!.state.game!.scoreOf(bob).remaining, 456);
     });
 
+    test('darts of a visit in progress survive a relaunch', () async {
+      final repository = open();
+      final soiree = await repository.create();
+      soiree.startGame([alice, bob]);
+      soiree
+        ..throwDart(Dart.treble(20))
+        ..throwDart(Dart.outerBull)
+        ..throwDart(Dart.miss)
+        ..throwDart(Dart.bull);
+      final before = scoreboardOf(soiree);
+
+      final resumed = await (await relaunch(repository)).resumable();
+      expect(scoreboardOf(resumed!), before);
+      expect(resumed.state.game!.dartsInVisit, [Dart.bull]);
+    });
+
     test('a finished game is not offered for resuming', () async {
       final repository = open();
       final soiree = await repository.create();

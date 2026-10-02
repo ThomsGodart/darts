@@ -29,6 +29,7 @@ List<Object?> scoreboardOf(Soiree soiree) {
     for (final s in game.scores)
       (s.player, s.remaining, s.lastVisit, s.threeDartAverage),
     game.activePlayer,
+    game.dartsInVisit,
     game.winner,
   ];
 }

@@ -1,3 +1,5 @@
+import 'dart.dart';
+
 /// Darts thrown in a full visit.
 const dartsPerVisit = 3;
 
@@ -24,7 +26,13 @@ enum OutRule {
     double => _doubles,
   };
 
-  /// Whether a visit leaving [remaining] busts.
+  /// Whether [dart] may be the one that brings the remaining score to 0.
+  bool allowsFinishOn(Dart dart) => switch (this) {
+    straight => dart != Dart.miss,
+    double => dart.isDouble,
+  };
+
+  /// Whether a visit leaving [remaining] busts, whatever the last dart.
   bool bustsOn(int remaining) =>
       remaining < 0 || (remaining == 1 && !finishingDartScores.contains(1));
 }

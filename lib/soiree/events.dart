@@ -1,3 +1,4 @@
+import 'dart.dart';
 import 'player.dart';
 import 'x01_config.dart';
 
@@ -22,4 +23,11 @@ class VisitTotalSubmitted extends SoireeEvent {
 
   /// Darts thrown: a full visit, unless the visit checked out in fewer.
   final int darts;
+}
+
+/// One dart of a visit entered dart by dart.
+class DartThrown extends SoireeEvent {
+  const DartThrown(this.dart);
+
+  final Dart dart;
 }

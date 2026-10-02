@@ -25,7 +25,10 @@ class GameScreen extends StatelessWidget {
                   _GameOverPanel(winner: game.winner!, onUndo: controller.undo)
                 else
                   VisitInput(
+                    key: ValueKey(game.visitsPlayed),
                     onSubmit: (score) => _submit(context, game, score),
+                    onDart: controller.throwDart,
+                    dartsInVisit: game.dartsInVisit,
                     onUndo: controller.canUndo ? controller.undo : null,
                   ),
               ],
