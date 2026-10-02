@@ -77,10 +77,16 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       onBust: Color.lerp(onBust, other.onBust, t)!,
       checkout: Color.lerp(checkout, other.checkout, t)!,
       onCheckout: Color.lerp(onCheckout, other.onCheckout, t)!,
-      remainingFontSize:
-          lerpDouble(remainingFontSize, other.remainingFontSize, t)!,
-      playerNameFontSize:
-          lerpDouble(playerNameFontSize, other.playerNameFontSize, t)!,
+      remainingFontSize: lerpDouble(
+        remainingFontSize,
+        other.remainingFontSize,
+        t,
+      )!,
+      playerNameFontSize: lerpDouble(
+        playerNameFontSize,
+        other.playerNameFontSize,
+        t,
+      )!,
       compactRemainingFontSize: lerpDouble(
         compactRemainingFontSize,
         other.compactRemainingFontSize,

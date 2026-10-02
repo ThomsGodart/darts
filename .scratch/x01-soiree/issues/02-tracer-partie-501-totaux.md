@@ -8,9 +8,16 @@ Ce ticket pose la **façade `Soirée`** en Dart pur, sans Flutter ni DB. Elle re
 
 **Status:** ready-for-agent
 
-- [ ] Façade `Soirée` en Dart pur : commandes démarrer une partie / soumettre une volée par total ; état exposé : joueurs, joueur actif, restes, dernière volée, partie terminée + gagnant
-- [ ] Journal d’événements derrière un port abstrait, implémentation mémoire
-- [ ] Les tests de façade se lisent comme une partie (ex. deux joueurs, 501, déroulé jusqu’au gagnant)
-- [ ] Écran de jeu scoreboard-first, quick-scores en un tap, pavé numérique + valider, bouton « 0 »
-- [ ] Styles exclusivement via les tokens du thème `default`
-- [ ] Smoke test widget : un tap sur un quick-score change le reste affiché
+- [x] Façade `Soirée` en Dart pur : commandes démarrer une partie / soumettre une volée par total ; état exposé : joueurs, joueur actif, restes, dernière volée, partie terminée + gagnant
+- [x] Journal d’événements derrière un port abstrait, implémentation mémoire
+- [x] Les tests de façade se lisent comme une partie (ex. deux joueurs, 501, déroulé jusqu’au gagnant)
+- [x] Écran de jeu scoreboard-first, quick-scores en un tap, pavé numérique + valider, bouton « 0 »
+- [x] Styles exclusivement via les tokens du thème `default`
+- [x] Smoke test widget : un tap sur un quick-score change le reste affiché
+
+## Comments
+
+- 2026-10-02 — Implémenté : façade `Soiree` (Dart pur) + `InMemoryJournal`, events `GameStarted` (avec `X01Config` : score de départ + `OutRule.straight`) et `VisitTotalSubmitted`, état par fold ; `SoireeController` (ChangeNotifier) injecté depuis `DartsApp` ; écran de jeu scoreboard-first, quick-scores, pavé + OK, « 0 / raté ». 22 tests verts, analyze propre.
+- Code review (standards + spec) appliquée : config X01 enregistrée dans l’event, refus d’un `startGame` pendant une partie en cours ou avec un score de départ invalide, construction de la façade sortie des widgets, getters `activeScore` / `waitingInTurnOrder`.
+- Laissé pour plus tard : dernière volée du joueur actif non affichée (US 32, petit), graisses / espacements encore en dur (hors règle « couleurs et tailles du scoreboard »), panneau de fin de partie minimal (le vrai écran est au ticket 09).
+- Pour le ticket 03 : ajouter `OutRule.double` (défaut du spec) et brancher les règles de bust dans le fold.
