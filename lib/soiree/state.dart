@@ -96,8 +96,10 @@ class GameState {
   int get visitsPlayed => scores.fold(0, (sum, s) => sum + s.visitsPlayed);
 
   /// The active player's remaining score, counting darts already thrown.
-  int get activeRemaining =>
-      activeScore.remaining - dartsInVisit.fold(0, (sum, d) => sum + d.score);
+  int get activeRemaining => activeScore.remaining - dartsInVisitScore;
+
+  /// Points of the darts already thrown in the visit in progress.
+  int get dartsInVisitScore => dartsInVisit.fold(0, (sum, d) => sum + d.score);
 
   /// Everyone but the active player, in the order they will throw next.
   List<PlayerScore> get waitingInTurnOrder => [

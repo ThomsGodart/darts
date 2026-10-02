@@ -42,8 +42,7 @@ class Soiree {
   /// [GameState.checkoutDartOptions]); otherwise it must be omitted.
   CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) {
     final game = _state.game;
-    if (game == null) return const Rejected('No game in progress');
-    if (game.isFinished) return const Rejected('The game is over');
+    if (game == null || game.isFinished) return _notInProgress(game);
     if (game.dartsInVisit.isNotEmpty) {
       return const Rejected('This visit is being entered dart by dart');
     }
@@ -72,8 +71,7 @@ class Soiree {
   /// itself on the third dart, a bust or a checkout.
   CommandResult throwDart(Dart dart) {
     final game = _state.game;
-    if (game == null) return const Rejected('No game in progress');
-    if (game.isFinished) return const Rejected('The game is over');
+    if (game == null || game.isFinished) return _notInProgress(game);
     if (!dart.isValid) return Rejected('No such dart: $dart');
     return _record(DartThrown(dart));
   }
@@ -91,6 +89,11 @@ class Soiree {
     _state = foldEvents(_journal.events);
     return const Accepted();
   }
+
+  /// Why no input can be entered into [game] (missing or finished).
+  Rejected _notInProgress(GameState? game) => game == null
+      ? const Rejected('No game in progress')
+      : const Rejected('The game is over');
 
   CommandResult _record(SoireeEvent event) {
     _journal.append(event);

@@ -9,7 +9,8 @@ abstract interface class SoireeRepository {
   /// The most recently created soirée, if any.
   Future<Soiree?> latest();
 
-  /// Completes once every change made so far is stored.
+  /// Completes once every change made so far is stored; throws if some
+  /// could not be.
   Future<void> flush();
 }
 

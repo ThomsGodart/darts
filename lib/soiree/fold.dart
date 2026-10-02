@@ -59,7 +59,7 @@ GameState _dartThrown(GameState game, Dart dart) {
   return _completeVisit(
     game,
     Visit(
-      score: darts.fold(0, (sum, d) => sum + d.score),
+      score: game.dartsInVisitScore + dart.score,
       darts: darts.length,
       isBust: isBust,
     ),

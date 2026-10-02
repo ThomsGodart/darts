@@ -16,16 +16,20 @@ class DriftSoireeRepository implements SoireeRepository {
   /// Writes run one after the other, in the order commands were accepted.
   Future<void> _writes = Future.value();
 
+  /// The first write that failed. Once set, nothing more is written: a
+  /// journal with a hole would replay into a different game.
+  Object? _failure;
+
   @override
   Future<Soiree> create() async {
-    await flush();
+    await _writes;
     final id = await _db.into(_db.soirees).insert(SoireesCompanion.insert());
     return Soiree(_DriftJournal(id, const [], _enqueue, _db));
   }
 
   @override
   Future<Soiree?> latest() async {
-    await flush();
+    await _writes;
     final soiree =
         await (_db.select(_db.soirees)
               ..orderBy([(s) => OrderingTerm.desc(s.id)])
@@ -44,13 +48,24 @@ class DriftSoireeRepository implements SoireeRepository {
     return Soiree(_DriftJournal(soiree.id, events, _enqueue, _db));
   }
 
+  /// Completes once every write has run; throws if one of them failed.
   @override
-  Future<void> flush() => _writes;
+  Future<void> flush() async {
+    await _writes;
+    if (_failure case final failure?) throw failure;
+  }
 
   void _enqueue(Future<void> Function() write) {
-    _writes = _writes.then((_) => write()).catchError((Object error) {
-      // The game goes on from memory; only its persistence is lost.
-      debugPrint('Could not store a soirée event: $error');
+    _writes = _writes.then((_) async {
+      if (_failure != null) return;
+      try {
+        await write();
+      } catch (error) {
+        // The game goes on from memory; what is stored stays a consistent
+        // prefix of it.
+        _failure = error;
+        debugPrint('Stopped storing soirée events: $error');
+      }
     });
   }
 }

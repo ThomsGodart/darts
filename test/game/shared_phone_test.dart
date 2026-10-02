@@ -86,6 +86,17 @@ void main() {
       expect(find.byKey(const Key('turn-banner')), findsNothing);
     });
 
+    testWidgets('an undo during the banner hides it', (tester) async {
+      final controller = await pumpGame(tester);
+      await tester.tap(find.widgetWithText(ActionChip, '60'));
+      await tester.pump();
+      expect(find.byKey(const Key('turn-banner')), findsOneWidget);
+
+      controller.undo();
+      await tester.pump();
+      expect(find.byKey(const Key('turn-banner')), findsNothing);
+    });
+
     testWidgets('the banner never blocks the next input', (tester) async {
       await pumpGame(tester);
       await tester.tap(find.widgetWithText(ActionChip, '60'));

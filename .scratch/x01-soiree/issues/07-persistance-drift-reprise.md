@@ -24,3 +24,7 @@
 - Limite connue : une écriture non encore terminée au moment où l’app est tuée est perdue (au plus le dernier événement). Un `flush()` à la mise en arrière-plan de l’app réduirait encore ce risque.
 - « Soirée non terminée » = dernière soirée avec une partie en cours, en attendant l’événement de fin de soirée (ticket 09).
 - Non vérifié sur appareil (build Android/iOS).
+- 2026-10-02 — Suite à la code review :
+  - Après un premier échec d’écriture, plus rien n’est écrit : le journal stocké reste un préfixe cohérent, et `flush()` remonte l’erreur.
+  - Écriture forcée quand l’app passe en pause ou est détachée (`AppLifecycleListener` sur l’accueil).
+  - Le spec documente le compromis « écriture en arrière-plan, pas atomique ».

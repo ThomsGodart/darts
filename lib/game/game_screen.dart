@@ -30,8 +30,8 @@ class _GameScreenState extends State<GameScreen> {
   late int _visitsSeen;
   bool _screenKeptOn = false;
 
-  /// Next player to announce after a visit; null when no banner shows.
-  String? _announced;
+  /// Name shown by the turn banner; null when no banner shows.
+  String? _bannerPlayerName;
 
   /// Pointer-downs on the screen, to measure taps per visit (debug only).
   int _taps = 0;
@@ -67,7 +67,9 @@ class _GameScreenState extends State<GameScreen> {
     // Only a completed visit passes the phone on; an undo does not.
     if (game.visitsPlayed > _visitsSeen && !game.isFinished) {
       HapticFeedback.mediumImpact();
-      setState(() => _announced = game.activePlayer.name);
+      setState(() => _bannerPlayerName = game.activePlayer.name);
+    } else if (game.visitsPlayed < _visitsSeen) {
+      setState(() => _bannerPlayerName = null);
     }
     _visitsSeen = game.visitsPlayed;
     _syncScreenAwake();
@@ -88,7 +90,7 @@ class _GameScreenState extends State<GameScreen> {
           listenable: controller,
           builder: (context, _) {
             final game = controller.state.game!;
-            final announced = _announced;
+            final bannerPlayerName = _bannerPlayerName;
             return Stack(
               children: [
                 Column(
@@ -109,15 +111,15 @@ class _GameScreenState extends State<GameScreen> {
                       ),
                   ],
                 ),
-                if (announced != null)
+                if (bannerPlayerName != null)
                   Positioned(
                     top: 0,
                     left: 0,
                     right: 0,
                     child: TurnBanner(
                       key: ValueKey(game.visitsPlayed),
-                      playerName: announced,
-                      onDone: () => setState(() => _announced = null),
+                      playerName: bannerPlayerName,
+                      onDone: () => setState(() => _bannerPlayerName = null),
                     ),
                   ),
                 if (kDebugMode)

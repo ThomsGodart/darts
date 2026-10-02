@@ -21,17 +21,44 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  /// The soirée left in progress, offered for resuming; null if none.
-  late Future<SoireeController?> _resumable;
+  /// Whether a soirée was left with a game in progress.
+  late Future<bool> _canResume;
+
+  /// Stores what was played before the OS may kill the backgrounded app.
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
-    _resumable = widget.launcher.resumable();
+    _canResume = widget.launcher.canResume();
+    _lifecycle = AppLifecycleListener(onPause: _flush, onDetach: _flush);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  Future<void> _flush() async {
+    try {
+      await widget.launcher.flush();
+    } catch (_) {
+      // Already logged by the repository; the game goes on from memory.
+    }
   }
 
   Future<void> _newGame() async {
-    _open(await widget.launcher.newGame(_fixedPlayers));
+    final controller = await widget.launcher.newGame(_fixedPlayers);
+    if (!mounted) return controller.dispose();
+    await _open(controller);
+  }
+
+  Future<void> _resume() async {
+    final controller = await widget.launcher.resume();
+    if (controller == null) return;
+    if (!mounted) return controller.dispose();
+    await _open(controller);
   }
 
   Future<void> _open(SoireeController controller) async {
@@ -42,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     controller.dispose();
     if (!mounted) return;
-    setState(() => _resumable = widget.launcher.resumable());
+    setState(() => _canResume = widget.launcher.canResume());
   }
 
   @override
@@ -57,14 +84,13 @@ class _HomeScreenState extends State<HomeScreen> {
               Text('Darts', style: textTheme.displayMedium),
               const SizedBox(height: 32),
               FutureBuilder(
-                future: _resumable,
+                future: _canResume,
                 builder: (context, snapshot) {
-                  final resumable = snapshot.data;
-                  if (resumable == null) return const SizedBox.shrink();
+                  if (snapshot.data != true) return const SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: FilledButton.icon(
-                      onPressed: () => _open(resumable),
+                      onPressed: _resume,
                       icon: const Icon(Icons.play_arrow),
                       label: const Text('Reprendre la partie'),
                     ),
