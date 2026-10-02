@@ -22,6 +22,16 @@ class Scoreboard extends StatelessWidget {
   }
 }
 
+/// "60 · moy. 45.2", or "BUST · moy. 45.2"; empty before the first visit.
+String _visitSummary(PlayerScore score) {
+  final lastVisit = score.lastVisit;
+  final average = score.threeDartAverage;
+  return [
+    if (lastVisit != null) lastVisit.isBust ? 'BUST' : '${lastVisit.points}',
+    if (average != null) 'moy. ${average.toStringAsFixed(1)}',
+  ].join(' · ');
+}
+
 class _ActivePlayer extends StatelessWidget {
   const _ActivePlayer({required this.score});
 
@@ -30,6 +40,7 @@ class _ActivePlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<DartsTokens>()!;
+    final busted = score.lastVisit?.isBust ?? false;
     return Container(
       width: double.infinity,
       color: tokens.activePlayer,
@@ -55,6 +66,18 @@ class _ActivePlayer extends StatelessWidget {
                 height: 1,
               ),
             ),
+            // With a single player, their own bust is shown here.
+            Container(
+              color: busted ? tokens.bust : null,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                _visitSummary(score),
+                style: TextStyle(
+                  fontSize: tokens.visitSummaryFontSize,
+                  color: busted ? tokens.onBust : tokens.onActivePlayer,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -71,15 +94,20 @@ class _WaitingPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<DartsTokens>()!;
     final textTheme = Theme.of(context).textTheme;
-    final lastVisit = score.lastVisit;
+    final busted = score.lastVisit?.isBust ?? false;
+    final foreground = busted ? tokens.onBust : null;
+    final summary = _visitSummary(score);
     return ListTile(
+      tileColor: busted ? tokens.bust : null,
+      textColor: foreground,
       title: Text(score.player.name, style: textTheme.titleLarge),
-      subtitle: lastVisit == null ? null : Text('Dernière volée : $lastVisit'),
+      subtitle: summary.isEmpty ? null : Text(summary),
       trailing: Text(
         '${score.remaining}',
         style: TextStyle(
           fontSize: tokens.compactRemainingFontSize,
           fontWeight: FontWeight.bold,
+          color: foreground,
         ),
       ),
     );

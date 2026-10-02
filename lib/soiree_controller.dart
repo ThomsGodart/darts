@@ -20,8 +20,10 @@ class SoireeController extends ChangeNotifier {
     X01Config config = const X01Config(),
   }) => _notifyIfAccepted(_soiree.startGame(players, config: config));
 
-  CommandResult submitVisitTotal(int score) =>
-      _notifyIfAccepted(_soiree.submitVisitTotal(score));
+  CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) =>
+      _notifyIfAccepted(
+        _soiree.submitVisitTotal(score, dartsAtCheckout: dartsAtCheckout),
+      );
 
   CommandResult _notifyIfAccepted(CommandResult result) {
     if (result is Accepted) notifyListeners();

@@ -1,4 +1,5 @@
 import 'package:darts_points_counter/app.dart';
+import 'package:darts_points_counter/game/visit_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,6 +12,32 @@ Future<void> startGame(WidgetTester tester) async {
   addTearDown(tester.view.reset);
   await tester.pumpWidget(const DartsApp());
   await tester.tap(find.text('Nouvelle partie 501'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> quickScore(WidgetTester tester, int score) async {
+  await tester.tap(find.widgetWithText(ActionChip, '$score'));
+  await tester.pump();
+}
+
+/// Enters [scores] as visits, quick-scores when available.
+Future<void> playVisits(WidgetTester tester, List<int> scores) async {
+  for (final score in scores) {
+    if (quickScores.contains(score)) {
+      await quickScore(tester, score);
+    } else {
+      await typeTotal(tester, score);
+    }
+  }
+}
+
+Future<void> typeTotal(WidgetTester tester, int score) async {
+  for (final digit in '$score'.split('')) {
+    await tester.tap(find.widgetWithText(FilledButton, digit));
+    // OK is only enabled once a digit has been rendered.
+    await tester.pump();
+  }
+  await tester.tap(find.widgetWithText(FilledButton, 'OK'));
   await tester.pumpAndSettle();
 }
 
@@ -44,5 +71,46 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'OK'));
     await tester.pump();
     expect(find.text('456'), findsOneWidget);
+  });
+
+  testWidgets('a checkout asks for the dart count, then names the winner', (
+    tester,
+  ) async {
+    await startGame(tester);
+    // Joueur 1 down to 40; Joueur 2 scores 26s.
+    await playVisits(tester, [180, 26, 180, 26, 101, 26]);
+
+    await typeTotal(tester, 40);
+    expect(find.text('Combien de fléchettes ?'), findsOneWidget);
+    final inDialog = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(FilledButton),
+    );
+    expect(inDialog, findsNWidgets(3));
+
+    await tester.tap(find.descendant(of: inDialog, matching: find.text('2')));
+    await tester.pumpAndSettle();
+    expect(find.text('Joueur 1 gagne !'), findsOneWidget);
+  });
+
+  testWidgets('a checkout with a single possible dart count needs no dialog', (
+    tester,
+  ) async {
+    await startGame(tester);
+    await playVisits(tester, [180, 26, 180, 26]);
+
+    // 141 double-out can only be done in three darts.
+    await typeTotal(tester, 141);
+    expect(find.text('Combien de fléchettes ?'), findsNothing);
+    expect(find.text('Joueur 1 gagne !'), findsOneWidget);
+  });
+
+  testWidgets('a bust is flagged on the player who busted', (tester) async {
+    await startGame(tester);
+    await playVisits(tester, [180, 26, 180, 26]);
+
+    await typeTotal(tester, 160);
+    expect(find.textContaining('BUST'), findsOneWidget);
+    expect(find.text('141'), findsOneWidget);
   });
 }

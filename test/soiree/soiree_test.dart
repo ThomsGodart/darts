@@ -1,29 +1,7 @@
 import 'package:darts_points_counter/soiree/soiree.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const alice = Player(id: 'alice', name: 'Alice');
-const bob = Player(id: 'bob', name: 'Bob');
-
-Soiree newSoiree() => Soiree(InMemoryJournal());
-
-/// Submits [scores] in order and fails the test on the first rejection.
-void play(Soiree soiree, List<int> scores) {
-  for (final score in scores) {
-    final result = soiree.submitVisitTotal(score);
-    expect(result, isA<Accepted>(), reason: 'visit $score was rejected');
-  }
-}
-
-/// What a player sees on the scoreboard; used to assert nothing changed.
-List<Object?> scoreboardOf(Soiree soiree) {
-  final game = soiree.state.game;
-  if (game == null) return [];
-  return [
-    for (final s in game.scores) (s.player, s.remaining, s.lastVisit),
-    game.activePlayer,
-    game.winner,
-  ];
-}
+import 'helpers.dart';
 
 void main() {
   test('no game is running before one is started', () {
@@ -47,7 +25,7 @@ void main() {
 
     final game = soiree.state.game!;
     expect(game.scoreOf(alice).remaining, 441);
-    expect(game.scoreOf(alice).lastVisit, 60);
+    expect(game.scoreOf(alice).lastVisit!.points, 60);
     expect(game.activePlayer, bob);
   });
 
@@ -68,7 +46,8 @@ void main() {
 
   test('Alice and Bob, 501: Alice checks out exactly and wins', () {
     final soiree = newSoiree()..startGame([alice, bob]);
-    play(soiree, [180, 60, 180, 60, 141]);
+    play(soiree, [180, 60, 180, 60]);
+    checkOut(soiree, 141);
 
     final game = soiree.state.game!;
     expect(game.scoreOf(alice).remaining, 0);
@@ -76,14 +55,15 @@ void main() {
     expect(game.winner, alice);
   });
 
-  test('going below zero scores nothing and passes the turn', () {
+  test('going below zero is a bust: nothing scored, turn passes', () {
     final soiree = newSoiree()
       ..startGame([alice, bob], config: const X01Config(startScore: 301));
     play(soiree, [180, 0, 140]);
 
     final game = soiree.state.game!;
     expect(game.scoreOf(alice).remaining, 121);
-    expect(game.scoreOf(alice).lastVisit, 0);
+    expect(game.scoreOf(alice).lastVisit!.isBust, isTrue);
+    expect(game.scoreOf(alice).lastVisit!.points, 0);
     expect(game.activePlayer, bob);
     expect(game.isFinished, isFalse);
   });
@@ -107,7 +87,8 @@ void main() {
     test('a visit after the game is over', () {
       final soiree = newSoiree()
         ..startGame([alice, bob], config: const X01Config(startScore: 301));
-      play(soiree, [180, 0, 121]);
+      play(soiree, [180, 0]);
+      checkOut(soiree, 121);
       final before = scoreboardOf(soiree);
 
       expect(soiree.submitVisitTotal(60), isA<Rejected>());
@@ -142,7 +123,8 @@ void main() {
   test('a new game can start once the previous one is over', () {
     final soiree = newSoiree()
       ..startGame([alice, bob], config: const X01Config(startScore: 301));
-    play(soiree, [180, 0, 121]);
+    play(soiree, [180, 0]);
+    checkOut(soiree, 121);
 
     expect(soiree.startGame([bob, alice]), isA<Accepted>());
     expect(soiree.state.game!.activePlayer, bob);

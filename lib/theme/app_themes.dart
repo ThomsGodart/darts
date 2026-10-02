@@ -29,6 +29,7 @@ ThemeData _buildDefault() {
         remainingFontSize: 120,
         playerNameFontSize: 40,
         compactRemainingFontSize: 32,
+        visitSummaryFontSize: 20,
       ),
     ],
   );

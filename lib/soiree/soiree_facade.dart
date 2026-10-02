@@ -5,6 +5,7 @@ import 'journal.dart';
 import 'player.dart';
 import 'state.dart';
 import 'x01_config.dart';
+import 'x01_rules.dart';
 
 /// Single entry point to the soirée domain.
 ///
@@ -35,14 +36,32 @@ class Soiree {
     );
   }
 
-  CommandResult submitVisitTotal(int score) {
+  /// Submits a visit by its total. When it brings the remaining score to
+  /// exactly 0, [dartsAtCheckout] must say how many darts it took (one of
+  /// [GameState.checkoutDartOptions]); otherwise it must be omitted.
+  CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) {
     final game = _state.game;
     if (game == null) return const Rejected('No game in progress');
     if (game.isFinished) return const Rejected('The game is over');
-    if (score < 0 || score > 180) {
-      return Rejected('A visit scores between 0 and 180, not $score');
+    if (!isPossibleVisitTotal(score)) {
+      return Rejected('$score cannot be scored with three darts');
     }
-    return _record(VisitTotalSubmitted(score));
+    if (score != game.activeScore.remaining) {
+      if (dartsAtCheckout != null) {
+        return const Rejected('A dart count is only given on a checkout');
+      }
+      return _record(VisitTotalSubmitted(score));
+    }
+    // From here the visit would bring the remaining score to exactly 0.
+    final options = game.checkoutDartOptions(score);
+    if (options.isEmpty) return Rejected('$score cannot be checked out');
+    if (dartsAtCheckout == null) {
+      return const Rejected('A checkout needs its dart count');
+    }
+    if (!options.contains(dartsAtCheckout)) {
+      return Rejected('$score cannot be checked out in $dartsAtCheckout');
+    }
+    return _record(VisitTotalSubmitted(score, darts: dartsAtCheckout));
   }
 
   CommandResult _record(SoireeEvent event) {

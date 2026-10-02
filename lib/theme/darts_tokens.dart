@@ -18,6 +18,7 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     required this.remainingFontSize,
     required this.playerNameFontSize,
     required this.compactRemainingFontSize,
+    required this.visitSummaryFontSize,
   });
 
   /// Highlight of the player whose turn it is.
@@ -41,6 +42,9 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
   /// Remaining score of waiting players in the compact list.
   final double compactRemainingFontSize;
 
+  /// Last visit and average under the active player's remaining score.
+  final double visitSummaryFontSize;
+
   @override
   DartsTokens copyWith({
     Color? activePlayer,
@@ -52,6 +56,7 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     double? remainingFontSize,
     double? playerNameFontSize,
     double? compactRemainingFontSize,
+    double? visitSummaryFontSize,
   }) {
     return DartsTokens(
       activePlayer: activePlayer ?? this.activePlayer,
@@ -64,6 +69,7 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       playerNameFontSize: playerNameFontSize ?? this.playerNameFontSize,
       compactRemainingFontSize:
           compactRemainingFontSize ?? this.compactRemainingFontSize,
+      visitSummaryFontSize: visitSummaryFontSize ?? this.visitSummaryFontSize,
     );
   }
 
@@ -92,6 +98,11 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
         other.compactRemainingFontSize,
         t,
       )!,
+      visitSummaryFontSize: lerpDouble(
+        visitSummaryFontSize,
+        other.visitSummaryFontSize,
+        t,
+      )!,
     );
   }
 
@@ -106,7 +117,8 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       other.onCheckout == onCheckout &&
       other.remainingFontSize == remainingFontSize &&
       other.playerNameFontSize == playerNameFontSize &&
-      other.compactRemainingFontSize == compactRemainingFontSize;
+      other.compactRemainingFontSize == compactRemainingFontSize &&
+      other.visitSummaryFontSize == visitSummaryFontSize;
 
   @override
   int get hashCode => Object.hash(
@@ -119,5 +131,6 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     remainingFontSize,
     playerNameFontSize,
     compactRemainingFontSize,
+    visitSummaryFontSize,
   );
 }

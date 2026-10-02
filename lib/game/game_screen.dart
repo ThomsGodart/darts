@@ -24,7 +24,9 @@ class GameScreen extends StatelessWidget {
                 if (game.isFinished)
                   _GameOverPanel(winner: game.winner!)
                 else
-                  VisitInput(onSubmit: (score) => _submit(context, score)),
+                  VisitInput(
+                    onSubmit: (score) => _submit(context, game, score),
+                  ),
               ],
             );
           },
@@ -33,13 +35,42 @@ class GameScreen extends StatelessWidget {
     );
   }
 
-  void _submit(BuildContext context, int score) {
-    if (controller.submitVisitTotal(score) is Rejected) {
+  Future<void> _submit(BuildContext context, GameState game, int score) async {
+    int? dartsAtCheckout;
+    final options = game.checkoutDartOptions(score);
+    if (options.length == 1) {
+      dartsAtCheckout = options.single;
+    } else if (options.isNotEmpty) {
+      dartsAtCheckout = await _askCheckoutDarts(context, options);
+      if (dartsAtCheckout == null || !context.mounted) return;
+    }
+    final result = controller.submitVisitTotal(
+      score,
+      dartsAtCheckout: dartsAtCheckout,
+    );
+    if (result is Rejected && context.mounted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text('Score invalide : $score')));
     }
   }
+}
+
+/// Asks how many darts the checkout took; null if dismissed.
+Future<int?> _askCheckoutDarts(BuildContext context, List<int> options) {
+  return showDialog<int>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Combien de fléchettes ?'),
+      actions: [
+        for (final darts in options)
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(darts),
+            child: Text('$darts'),
+          ),
+      ],
+    ),
+  );
 }
 
 class _GameOverPanel extends StatelessWidget {

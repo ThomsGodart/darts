@@ -14,9 +14,26 @@ Les rejets passent par un résultat typé de la façade, sans changer l’état.
 
 **Status:** ready-for-agent
 
-- [ ] Tests de façade : 501 et 301, en Double-out et en Straight-out
-- [ ] Tests de façade : les trois cas de bust
-- [ ] Tests de façade : rejet des totaux impossibles et des checkouts impossibles, avec l’état inchangé
-- [ ] Tests de façade : checkout avec nombre de fléchettes et moyenne exacte (ex. 180, 180, 141 en 3 fléchettes → moyenne 167)
-- [ ] UI : signal bust visible (token bust), dialog « combien de fléchettes ? » uniquement au checkout
-- [ ] UI : moyenne 3 fléchettes affichée par joueur
+- [x] Tests de façade : 501 et 301, en Double-out et en Straight-out
+- [ ] Tests de façade : les trois cas de bust (2/3 : « 0 sans double » indétectable en mode total, à couvrir au ticket 05)
+- [x] Tests de façade : rejet des totaux impossibles et des checkouts impossibles, avec l’état inchangé
+- [x] Tests de façade : checkout avec nombre de fléchettes et moyenne exacte (ex. 180, 180, 141 en 3 fléchettes → moyenne 167)
+- [x] UI : signal bust visible (token bust), dialog « combien de fléchettes ? » uniquement au checkout
+- [x] UI : moyenne 3 fléchettes affichée par joueur
+
+## Comments
+
+- 2026-10-02 — Implémenté :
+  - `OutRule.double` est la règle par défaut. Le bust (sous 0 ; reste 1 en Double-out) est porté par l’enum `OutRule`.
+  - Les totaux impossibles sont refusés, ainsi que les finishes impossibles en Double-out (159, 162, 165, 168, > 170).
+  - `submitVisitTotal(score, dartsAtCheckout:)` exige le nombre de fléchettes au checkout, parmi `GameState.checkoutDartOptions`.
+  - `Visit` porte le score, les fléchettes et le flag bust.
+  - La moyenne 3 fléchettes compte les busts : 0 point et 3 fléchettes.
+- UI :
+  - Bust signalé en couleur `bust`, sur le joueur en attente et sur le panneau actif.
+  - Dialog « Combien de fléchettes ? » ; validation automatique quand une seule option est possible (ex. 141, 170).
+  - Moyenne affichée par joueur.
+  - Nouveau token `visitSummaryFontSize`.
+- 44 tests verts.
+- Code review (standards + spec) appliquée.
+- Décision ouverte : un total qui amène à 0 sur un finish impossible (ex. 168 en Double-out) est refusé (« Score invalide »), conformément à l’US 28. En vrai jeu, T20 T20 T16 sur 168 est un bust ; on pourrait l’enregistrer comme bust plutôt que le refuser.

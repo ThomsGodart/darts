@@ -17,21 +17,20 @@ SoireeState applyEvent(SoireeState state, SoireeEvent event) {
         activeIndex: 0,
       ),
     ),
-    VisitTotalSubmitted(:final score) => SoireeState(
-      game: _applyVisit(state.game!, score),
+    VisitTotalSubmitted(:final score, :final darts) => SoireeState(
+      game: _applyVisit(state.game!, score, darts),
     ),
   };
 }
 
-GameState _applyVisit(GameState game, int score) {
+GameState _applyVisit(GameState game, int score, int darts) {
   final current = game.activeScore;
-  // Straight-out: going below zero scores nothing (bust rules: ticket 03).
-  final scored = current.remaining - score < 0 ? 0 : score;
-  final updated = PlayerScore(
-    player: current.player,
-    remaining: current.remaining - scored,
-    lastVisit: scored,
+  final visit = Visit(
+    score: score,
+    darts: darts,
+    isBust: game.config.outRule.bustsOn(current.remaining - score),
   );
+  final updated = current.after(visit);
   final scores = [...game.scores]..[game.activeIndex] = updated;
   final won = updated.remaining == 0;
   return GameState(
