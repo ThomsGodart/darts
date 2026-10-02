@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
 import 'home/home_screen.dart';
-import 'soiree_controller.dart';
+import 'soiree/soiree.dart';
+import 'soiree_launcher.dart';
 import 'theme/app_themes.dart';
 
 class DartsApp extends StatelessWidget {
   const DartsApp({
     super.key,
+    required this.repository,
     this.themeId = defaultThemeId,
-    this.newSoiree = SoireeController.inMemory,
   });
 
+  /// Where soirées are kept: the device database, or memory in tests.
+  final SoireeRepository repository;
   final String themeId;
-
-  /// Composition root for the domain: how a new soirée is created.
-  final SoireeController Function() newSoiree;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class DartsApp extends StatelessWidget {
       title: 'Darts',
       debugShowCheckedModeBanner: false,
       theme: themeById(themeId),
-      home: HomeScreen(newSoiree: newSoiree),
+      home: HomeScreen(launcher: SoireeLauncher(repository)),
     );
   }
 }

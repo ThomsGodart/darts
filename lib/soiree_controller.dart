@@ -7,10 +7,6 @@ import 'soiree/soiree.dart';
 class SoireeController extends ChangeNotifier {
   SoireeController(this._soiree);
 
-  /// A soirée kept in memory only, until the drift journal lands (ticket 07).
-  factory SoireeController.inMemory() =>
-      SoireeController(Soiree(InMemoryJournal()));
-
   final Soiree _soiree;
 
   SoireeState get state => _soiree.state;

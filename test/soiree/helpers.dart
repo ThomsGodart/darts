@@ -25,7 +25,9 @@ List<Object?> scoreboardOf(Soiree soiree) {
   final game = soiree.state.game;
   if (game == null) return [];
   return [
-    for (final s in game.scores) (s.player, s.remaining, s.lastVisit),
+    game.config,
+    for (final s in game.scores)
+      (s.player, s.remaining, s.lastVisit, s.threeDartAverage),
     game.activePlayer,
     game.winner,
   ];

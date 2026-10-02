@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../game/game_screen.dart';
 import '../soiree/soiree.dart';
 import '../soiree_controller.dart';
+import '../soiree_launcher.dart';
 
 /// Placeholder players until the soirée setup exists (ticket 08).
 const _fixedPlayers = [
@@ -11,32 +12,37 @@ const _fixedPlayers = [
 ];
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.newSoiree});
+  const HomeScreen({super.key, required this.launcher});
 
-  final SoireeController Function() newSoiree;
+  final SoireeLauncher launcher;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  SoireeController? _controller;
+  /// The soirée left in progress, offered for resuming; null if none.
+  late Future<SoireeController?> _resumable;
 
-  void _startGame() {
-    _controller?.dispose();
-    final controller = widget.newSoiree()..startGame(_fixedPlayers);
-    _controller = controller;
-    Navigator.of(context).push(
+  @override
+  void initState() {
+    super.initState();
+    _resumable = widget.launcher.resumable();
+  }
+
+  Future<void> _newGame() async {
+    _open(await widget.launcher.newGame(_fixedPlayers));
+  }
+
+  Future<void> _open(SoireeController controller) async {
+    await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => GameScreen(controller: controller),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
+    controller.dispose();
+    if (!mounted) return;
+    setState(() => _resumable = widget.launcher.resumable());
   }
 
   @override
@@ -50,8 +56,23 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text('Darts', style: textTheme.displayMedium),
               const SizedBox(height: 32),
-              FilledButton(
-                onPressed: _startGame,
+              FutureBuilder(
+                future: _resumable,
+                builder: (context, snapshot) {
+                  final resumable = snapshot.data;
+                  if (resumable == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: FilledButton.icon(
+                      onPressed: () => _open(resumable),
+                      icon: const Icon(Icons.play_arrow),
+                      label: const Text('Reprendre la partie'),
+                    ),
+                  );
+                },
+              ),
+              FilledButton.tonal(
+                onPressed: _newGame,
                 child: const Text('Nouvelle partie 501'),
               ),
             ],
