@@ -22,10 +22,11 @@ class GameScreen extends StatelessWidget {
               children: [
                 Expanded(child: Scoreboard(game: game)),
                 if (game.isFinished)
-                  _GameOverPanel(winner: game.winner!)
+                  _GameOverPanel(winner: game.winner!, onUndo: controller.undo)
                 else
                   VisitInput(
                     onSubmit: (score) => _submit(context, game, score),
+                    onUndo: controller.canUndo ? controller.undo : null,
                   ),
               ],
             );
@@ -74,9 +75,12 @@ Future<int?> _askCheckoutDarts(BuildContext context, List<int> options) {
 }
 
 class _GameOverPanel extends StatelessWidget {
-  const _GameOverPanel({required this.winner});
+  const _GameOverPanel({required this.winner, required this.onUndo});
 
   final Player winner;
+
+  /// Reopens the game by taking back the checkout.
+  final VoidCallback onUndo;
 
   @override
   Widget build(BuildContext context) {
@@ -88,9 +92,21 @@ class _GameOverPanel extends StatelessWidget {
         children: [
           Text('${winner.name} gagne !', style: textTheme.headlineMedium),
           const SizedBox(height: 16),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Accueil'),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: onUndo,
+                icon: const Icon(Icons.undo),
+                label: const Text('Annuler le checkout'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Accueil'),
+              ),
+            ],
           ),
         ],
       ),

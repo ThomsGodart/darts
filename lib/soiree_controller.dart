@@ -25,6 +25,10 @@ class SoireeController extends ChangeNotifier {
         _soiree.submitVisitTotal(score, dartsAtCheckout: dartsAtCheckout),
       );
 
+  bool get canUndo => _soiree.canUndo;
+
+  CommandResult undo() => _notifyIfAccepted(_soiree.undo());
+
   CommandResult _notifyIfAccepted(CommandResult result) {
     if (result is Accepted) notifyListeners();
     return result;

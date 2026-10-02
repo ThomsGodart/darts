@@ -64,6 +64,20 @@ class Soiree {
     return _record(VisitTotalSubmitted(score, darts: dartsAtCheckout));
   }
 
+  /// Whether there is an input of the current game to take back.
+  bool get canUndo => switch (_journal.events.lastOrNull) {
+    VisitTotalSubmitted() => true,
+    GameStarted() || null => false,
+  };
+
+  /// Takes back the latest input, even after the game was won.
+  CommandResult undo() {
+    if (!canUndo) return const Rejected('Nothing to undo');
+    _journal.removeLast();
+    _state = foldEvents(_journal.events);
+    return const Accepted();
+  }
+
   CommandResult _record(SoireeEvent event) {
     _journal.append(event);
     _state = applyEvent(_state, event);

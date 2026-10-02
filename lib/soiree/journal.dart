@@ -5,6 +5,9 @@ abstract interface class SoireeJournal {
   List<SoireeEvent> get events;
 
   void append(SoireeEvent event);
+
+  /// Drops the latest event; the journal must not be empty.
+  void removeLast();
 }
 
 class InMemoryJournal implements SoireeJournal {
@@ -15,4 +18,7 @@ class InMemoryJournal implements SoireeJournal {
 
   @override
   void append(SoireeEvent event) => _events.add(event);
+
+  @override
+  void removeLast() => _events.removeLast();
 }

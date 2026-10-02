@@ -5,9 +5,12 @@ const quickScores = [26, 41, 45, 60, 81, 85, 100, 140, 180];
 
 /// Bottom drawer to enter a visit: quick-scores, or a typed total.
 class VisitInput extends StatefulWidget {
-  const VisitInput({super.key, required this.onSubmit});
+  const VisitInput({super.key, required this.onSubmit, required this.onUndo});
 
   final ValueChanged<int> onSubmit;
+
+  /// Takes back the latest input; null when there is nothing to undo.
+  final VoidCallback? onUndo;
 
   @override
   State<VisitInput> createState() => _VisitInputState();
@@ -83,12 +86,23 @@ class _VisitInputState extends State<VisitInput> {
               ],
             ),
             const SizedBox(height: 4),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => _submit(0),
-                child: const Text('0 / raté'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: widget.onUndo,
+                    icon: const Icon(Icons.undo),
+                    label: const Text('Annuler'),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _submit(0),
+                    child: const Text('0 / raté'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

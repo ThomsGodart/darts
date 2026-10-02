@@ -6,7 +6,16 @@
 
 **Status:** ready-for-agent
 
-- [ ] Tests de façade : undo simple, undo multiple traversant plusieurs joueurs, undo après la fin de partie (la partie est rouverte, le gagnant effacé)
-- [ ] Le joueur actif et les restes sont corrects après chaque undo
-- [ ] Undo sans saisie à annuler : rejet typé, sans crash
-- [ ] Bouton undo toujours visible dans le tiroir de saisie
+- [x] Tests de façade : undo simple, undo multiple traversant plusieurs joueurs, undo après la fin de partie (la partie est rouverte, le gagnant effacé)
+- [x] Le joueur actif et les restes sont corrects après chaque undo
+- [x] Undo sans saisie à annuler : rejet typé, sans crash
+- [x] Bouton undo toujours visible dans le tiroir de saisie
+
+## Comments
+
+- 2026-10-02 — Implémenté : `Soiree.undo()` / `canUndo`.
+  - Le journal gagne `removeLast()`. L’état est recalculé par fold complet.
+  - Seules les saisies de la partie courante s’annulent : la partie elle-même n’est jamais annulée.
+  - Undo toujours visible dans le tiroir (désactivé sans saisie à annuler).
+  - « Annuler le checkout » sur le panneau de fin de partie.
+  - 52 tests verts.

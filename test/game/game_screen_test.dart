@@ -113,4 +113,30 @@ void main() {
     expect(find.textContaining('BUST'), findsOneWidget);
     expect(find.text('141'), findsOneWidget);
   });
+
+  testWidgets('undo takes back visits, even the checkout', (tester) async {
+    await startGame(tester);
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Annuler'),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    await playVisits(tester, [180, 26, 180, 26, 141]);
+    expect(find.text('Joueur 1 gagne !'), findsOneWidget);
+
+    await tester.tap(find.text('Annuler le checkout'));
+    await tester.pump();
+    expect(find.text('Joueur 1 gagne !'), findsNothing);
+    expect(activeRemaining(tester), '141');
+
+    await tester.tap(find.text('Annuler'));
+    await tester.pump();
+    expect(find.text('Joueur 2'), findsOneWidget);
+    // Joueur 2's second 26 is taken back: back to 501 - 26.
+    expect(activeRemaining(tester), '475');
+  });
 }
