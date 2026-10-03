@@ -9,7 +9,7 @@ void main() {
   ) async {
     final storage = await AppStorage.withTwoPlayers();
     await pumpApp(tester, storage);
-    expect(find.text('Reprendre la partie'), findsNothing);
+    expect(find.text('Reprendre la soirée'), findsNothing);
 
     await launchGame(tester);
     await tester.tap(find.widgetWithText(ActionChip, '60'));
@@ -19,7 +19,7 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await pumpApp(tester, storage);
 
-    await tester.tap(find.text('Reprendre la partie'));
+    await tester.tap(find.text('Reprendre la soirée'));
     await tester.pumpAndSettle();
     expect(find.text('Joueur 2'), findsOneWidget);
     expect(find.text('441'), findsOneWidget);

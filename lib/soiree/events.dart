@@ -25,6 +25,11 @@ class VisitTotalSubmitted extends SoireeEvent {
   final int darts;
 }
 
+/// The soirée is over: it goes to the history.
+class SoireeEnded extends SoireeEvent {
+  const SoireeEnded();
+}
+
 /// One dart of a visit entered dart by dart.
 class DartThrown extends SoireeEvent {
   const DartThrown(this.dart);

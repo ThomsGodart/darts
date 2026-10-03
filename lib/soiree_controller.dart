@@ -24,6 +24,11 @@ class SoireeController extends ChangeNotifier {
   CommandResult throwDart(Dart dart) =>
       _notifyIfAccepted(_soiree.throwDart(dart));
 
+  CommandResult rematch({X01Config? config}) =>
+      _notifyIfAccepted(_soiree.rematch(config: config));
+
+  CommandResult endSoiree() => _notifyIfAccepted(_soiree.endSoiree());
+
   bool get canUndo => _soiree.canUndo;
 
   CommandResult undo() => _notifyIfAccepted(_soiree.undo());

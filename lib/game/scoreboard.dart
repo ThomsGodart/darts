@@ -66,6 +66,7 @@ class _ActivePlayer extends StatelessWidget {
           children: [
             Text(
               score.player.name,
+              key: const Key('active-name'),
               style: TextStyle(
                 fontSize: tokens.playerNameFontSize,
                 color: tokens.onActivePlayer,

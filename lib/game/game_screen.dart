@@ -14,10 +14,15 @@ class GameScreen extends StatefulWidget {
   const GameScreen({
     super.key,
     required this.controller,
+    this.onChangeSetup,
     this.screenAwake = const WakelockScreenAwake(),
   });
 
   final SoireeController controller;
+
+  /// Between games: lets players join, leave or reorder, or the rules
+  /// change, then starts the next game. Null hides the option.
+  final Future<void> Function()? onChangeSetup;
   final ScreenAwake screenAwake;
 
   @override
@@ -27,6 +32,8 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   SoireeController get controller => widget.controller;
 
+  /// What the listener last saw, to tell a new game, a visit or an undo.
+  late int _gamesSeen;
   late int _visitsSeen;
   bool _screenKeptOn = false;
 
@@ -35,12 +42,13 @@ class _GameScreenState extends State<GameScreen> {
 
   /// Pointer-downs on the screen, to measure taps per visit (debug only).
   int _taps = 0;
-  int _visitsAtOpen = 0;
+  int _visitsCounted = 0;
 
   @override
   void initState() {
     super.initState();
-    _visitsSeen = _visitsAtOpen = controller.state.game!.visitsPlayed;
+    _gamesSeen = controller.state.games.length;
+    _visitsSeen = controller.state.game!.visitsPlayed;
     controller.addListener(_onGameChanged);
     if (kDebugMode) {
       GestureBinding.instance.pointerRouter.addGlobalRoute(_countTap);
@@ -63,13 +71,21 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _onGameChanged() {
-    final game = controller.state.game!;
-    // Only a completed visit passes the phone on; an undo does not.
-    if (game.visitsPlayed > _visitsSeen && !game.isFinished) {
+    final state = controller.state;
+    final game = state.game!;
+    if (state.games.length != _gamesSeen) {
+      // A new game: nothing to announce yet.
+      _gamesSeen = state.games.length;
+      setState(() => _bannerPlayerName = null);
+    } else if (game.visitsPlayed > _visitsSeen && !game.isFinished) {
+      // Only a completed visit passes the phone on; an undo does not.
       HapticFeedback.mediumImpact();
       setState(() => _bannerPlayerName = game.activePlayer.name);
     } else if (game.visitsPlayed < _visitsSeen) {
       setState(() => _bannerPlayerName = null);
+    }
+    if (state.games.length == _gamesSeen) {
+      _visitsCounted += game.visitsPlayed - _visitsSeen;
     }
     _visitsSeen = game.visitsPlayed;
     _syncScreenAwake();
@@ -98,8 +114,11 @@ class _GameScreenState extends State<GameScreen> {
                     Expanded(child: Scoreboard(game: game)),
                     if (game.isFinished)
                       _GameOverPanel(
-                        winner: game.winner!,
+                        soiree: controller.state,
+                        onRematch: controller.rematch,
                         onUndo: controller.undo,
+                        onChangeSetup: widget.onChangeSetup,
+                        onEnd: () => _endSoiree(context),
                       )
                     else
                       VisitInput(
@@ -126,10 +145,7 @@ class _GameScreenState extends State<GameScreen> {
                   Positioned(
                     top: 4,
                     right: 8,
-                    child: _TapCounter(
-                      taps: _taps,
-                      visits: game.visitsPlayed - _visitsAtOpen,
-                    ),
+                    child: _TapCounter(taps: _taps, visits: _visitsCounted),
                   ),
               ],
             );
@@ -137,6 +153,29 @@ class _GameScreenState extends State<GameScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _endSoiree(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Terminer la soirée ?'),
+        content: const Text('Elle passera dans l’historique.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Continuer'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Terminer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    controller.endSoiree();
+    Navigator.of(context).pop();
   }
 
   Future<void> _submit(BuildContext context, GameState game, int score) async {
@@ -177,44 +216,119 @@ Future<int?> _askCheckoutDarts(BuildContext context, List<int> options) {
   );
 }
 
+/// End of a game: the winner, everyone's averages, and what comes next.
 class _GameOverPanel extends StatelessWidget {
-  const _GameOverPanel({required this.winner, required this.onUndo});
+  const _GameOverPanel({
+    required this.soiree,
+    required this.onRematch,
+    required this.onUndo,
+    required this.onEnd,
+    this.onChangeSetup,
+  });
 
-  final Player winner;
+  final SoireeState soiree;
+  final VoidCallback onRematch;
 
   /// Reopens the game by taking back the checkout.
   final VoidCallback onUndo;
+  final Future<void> Function()? onChangeSetup;
+  final VoidCallback onEnd;
+
+  static String _average(double? value) => value?.toStringAsFixed(1) ?? '–';
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('${winner.name} gagne !', style: textTheme.headlineMedium),
-          const SizedBox(height: 16),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              OutlinedButton.icon(
-                onPressed: onUndo,
-                icon: const Icon(Icons.undo),
-                label: const Text('Annuler le checkout'),
+    final game = soiree.game!;
+    final showSoiree = soiree.games.length > 1;
+    final onChangeSetup = this.onChangeSetup;
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${game.winner!.name} gagne !',
+              style: textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 8),
+            Table(
+              key: const Key('game-averages'),
+              columnWidths: const {0: FlexColumnWidth()},
+              defaultColumnWidth: const IntrinsicColumnWidth(),
+              children: [
+                TableRow(
+                  children: [
+                    const SizedBox.shrink(),
+                    _Cell('moy.', style: textTheme.labelMedium),
+                    if (showSoiree)
+                      _Cell('soirée', style: textTheme.labelMedium),
+                  ],
+                ),
+                for (final score in game.scores)
+                  TableRow(
+                    children: [
+                      Text(score.player.name, style: textTheme.titleMedium),
+                      _Cell(_average(score.threeDartAverage)),
+                      if (showSoiree)
+                        _Cell(_average(soiree.averageOf(score.player))),
+                    ],
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: FilledButton.icon(
+                onPressed: onRematch,
+                icon: const Icon(Icons.replay),
+                label: Text('Rejouer', style: textTheme.titleLarge),
               ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Accueil'),
-              ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              children: [
+                if (onChangeSetup != null)
+                  TextButton.icon(
+                    onPressed: onChangeSetup,
+                    icon: const Icon(Icons.group),
+                    label: const Text('Changer…'),
+                  ),
+                TextButton.icon(
+                  onPressed: onUndo,
+                  icon: const Icon(Icons.undo),
+                  label: const Text('Annuler le checkout'),
+                ),
+                TextButton.icon(
+                  onPressed: onEnd,
+                  icon: const Icon(Icons.nightlight),
+                  label: const Text('Terminer la soirée'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _Cell extends StatelessWidget {
+  const _Cell(this.text, {this.style});
+
+  final String text;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(left: 16),
+    child: Text(text, textAlign: TextAlign.end, style: style),
+  );
 }
 
 /// Debug-only measure of the "≤ 2 taps per visit" goal.

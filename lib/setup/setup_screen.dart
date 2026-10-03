@@ -6,9 +6,14 @@ import 'setup_controller.dart';
 /// Picks who plays, in which order, and the rules; pops a [GameSetup].
 /// Whoever creates [controller] disposes it.
 class SetupScreen extends StatefulWidget {
-  const SetupScreen({super.key, required this.controller});
+  const SetupScreen({
+    super.key,
+    required this.controller,
+    this.title = 'Nouvelle soirée',
+  });
 
   final SetupController controller;
+  final String title;
 
   @override
   State<SetupScreen> createState() => _SetupScreenState();
@@ -79,7 +84,7 @@ class _SetupScreenState extends State<SetupScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Nouvelle soirée')),
+      appBar: AppBar(title: Text(widget.title)),
       body: ListenableBuilder(
         listenable: setup,
         builder: (context, _) => ListView(

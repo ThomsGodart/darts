@@ -100,13 +100,40 @@ void repositoryContract(
       expect(resumed.state.game!.dartsInVisit, [Dart.bull]);
     });
 
-    test('a finished game is not offered for resuming', () async {
+    test('a soirée whose game is over is offered, to play again', () async {
       final repository = open();
       final soiree = await repository.create();
       soiree.startGame([alice], config: const X01Config(startScore: 40));
       checkOut(soiree, 40, darts: 1);
 
-      expect(await (await relaunch(repository)).resumable(), isNull);
+      final resumed = await (await relaunch(repository)).resumable();
+      expect(resumed!.state.game!.winner, alice);
+      expect(resumed.rematch(), isA<Accepted>());
+    });
+
+    test('an ended soirée is not offered, and stays ended', () async {
+      final repository = open();
+      final soiree = await repository.create();
+      soiree.startGame([alice], config: const X01Config(startScore: 40));
+      checkOut(soiree, 40, darts: 1);
+      soiree.endSoiree();
+
+      final reopened = await relaunch(repository);
+      expect(await reopened.resumable(), isNull);
+      expect((await reopened.latest())!.state.isEnded, isTrue);
+    });
+
+    test('rematches survive a relaunch', () async {
+      final repository = open();
+      final soiree = await repository.create();
+      soiree.startGame([alice, bob], config: const X01Config(startScore: 40));
+      checkOut(soiree, 40, darts: 1);
+      soiree.rematch();
+      play(soiree, [20]);
+
+      final resumed = await (await relaunch(repository)).resumable();
+      expect(resumed!.state.games, hasLength(2));
+      expect(scoreboardOf(resumed), scoreboardOf(soiree));
     });
 
     test('a soirée without a game is not offered for resuming', () async {

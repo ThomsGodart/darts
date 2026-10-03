@@ -43,14 +43,23 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _newGame() async {
-    final setupController = widget.launcher.newSetup();
+  /// Shows the setup screen; null if the user backed out.
+  Future<GameSetup?> _askSetup({GameSetup? from, String? title}) async {
+    final setupController = widget.launcher.newSetup(from: from);
     final setup = await Navigator.of(context).push<GameSetup>(
       MaterialPageRoute(
-        builder: (_) => SetupScreen(controller: setupController),
+        builder: (_) => SetupScreen(
+          controller: setupController,
+          title: title ?? 'Nouvelle soirée',
+        ),
       ),
     );
     setupController.dispose();
+    return setup;
+  }
+
+  Future<void> _newGame() async {
+    final setup = await _askSetup();
     if (setup == null || !mounted) return;
     final controller = await widget.launcher.newGame(setup);
     if (!mounted) return controller.dispose();
@@ -64,15 +73,32 @@ class _HomeScreenState extends State<HomeScreen> {
     await _open(controller);
   }
 
+  /// Between games: the setup screen, starting from the last game.
+  Future<void> _changeSetup(SoireeController controller) async {
+    final game = controller.state.game!;
+    final setup = await _askSetup(
+      from: (players: game.rematchOrder, config: game.config),
+      title: 'Partie suivante',
+    );
+    if (setup == null || !mounted) return;
+    await widget.launcher.nextGame(controller, setup);
+  }
+
   Future<void> _open(SoireeController controller) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => GameScreen(controller: controller),
+        builder: (_) => GameScreen(
+          controller: controller,
+          onChangeSetup: () => _changeSetup(controller),
+        ),
       ),
     );
     controller.dispose();
     if (!mounted) return;
-    setState(() => _canResume = widget.launcher.canResume());
+    final canResume = widget.launcher.canResume();
+    setState(() {
+      _canResume = canResume;
+    });
   }
 
   @override
@@ -95,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: FilledButton.icon(
                       onPressed: _resume,
                       icon: const Icon(Icons.play_arrow),
-                      label: const Text('Reprendre la partie'),
+                      label: const Text('Reprendre la soirée'),
                     ),
                   );
                 },

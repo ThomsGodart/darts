@@ -20,10 +20,13 @@ class Soiree {
 
   SoireeState get state => _state;
 
+  /// Starts a game with [players] in throwing order: the first game of the
+  /// soirée, or the next one with players added, removed or reordered.
   CommandResult startGame(
     List<Player> players, {
     X01Config config = const X01Config(),
   }) {
+    if (_state.isEnded) return const Rejected('The soirée is over');
     if (players.isEmpty) return const Rejected('A game needs players');
     if (players.length > maxPlayers) {
       return const Rejected('At most $maxPlayers players');
@@ -41,6 +44,25 @@ class Soiree {
     return _record(
       GameStarted(players: List.unmodifiable(players), config: config),
     );
+  }
+
+  /// Starts the next game with the same players, whoever started the last
+  /// one now throwing last; with the same rules unless [config] is given.
+  CommandResult rematch({X01Config? config}) {
+    final game = _state.game;
+    if (game == null) return const Rejected('No game to play again');
+    if (!game.isFinished) return const Rejected('The game is not over');
+    return startGame(game.rematchOrder, config: config ?? game.config);
+  }
+
+  /// Ends the soirée between two games.
+  CommandResult endSoiree() {
+    if (_state.isEnded) return const Rejected('The soirée is already over');
+    final game = _state.game;
+    if (game != null && !game.isFinished) {
+      return const Rejected('A game is in progress');
+    }
+    return _record(const SoireeEnded());
   }
 
   /// Submits a visit by its total. When it brings the remaining score to
@@ -85,7 +107,7 @@ class Soiree {
   /// Whether there is an input of the current game to take back.
   bool get canUndo => switch (_journal.events.lastOrNull) {
     VisitTotalSubmitted() || DartThrown() => true,
-    GameStarted() || null => false,
+    GameStarted() || SoireeEnded() || null => false,
   };
 
   /// Takes back the latest input, even after the game was won.

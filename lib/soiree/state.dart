@@ -5,10 +5,39 @@ import 'x01_config.dart';
 import 'x01_rules.dart';
 
 class SoireeState {
-  const SoireeState({this.game});
+  const SoireeState({this.games = const [], this.isEnded = false});
 
-  /// The current game, or null when none has been started.
-  final GameState? game;
+  /// Every game of the soirée, in the order they were played.
+  final List<GameState> games;
+
+  /// Whether the soirée was ended; nothing more can be played then.
+  final bool isEnded;
+
+  /// The current (latest) game, or null when none has been started.
+  GameState? get game => games.lastOrNull;
+
+  /// Three-dart average of [player] over all their games of the soirée;
+  /// null if they have not thrown yet.
+  double? averageOf(Player player) {
+    var points = 0;
+    var darts = 0;
+    for (final game in games) {
+      for (final score in game.scores) {
+        if (score.player != player) continue;
+        points += score.pointsScored;
+        darts += score.dartsThrown;
+      }
+    }
+    return darts == 0 ? null : points / darts * dartsPerVisit;
+  }
+
+  SoireeState withGame(GameState game, {bool isNew = false}) => SoireeState(
+    games: List.unmodifiable([
+      ...isNew ? games : games.take(games.length - 1),
+      game,
+    ]),
+    isEnded: isEnded,
+  );
 }
 
 /// One visit as it was played.
@@ -112,6 +141,12 @@ class GameState {
 
   /// Points of the darts already thrown in the visit in progress.
   int get dartsInVisitScore => dartsInVisit.fold(0, (sum, d) => sum + d.score);
+
+  /// Throwing order of a rematch: whoever started this game throws last.
+  List<Player> get rematchOrder => [
+    for (final s in scores.skip(1)) s.player,
+    scores.first.player,
+  ];
 
   /// Everyone but the active player, in the order they will throw next.
   List<PlayerScore> get waitingInTurnOrder => [

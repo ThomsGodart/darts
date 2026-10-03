@@ -6,8 +6,19 @@
 
 **Status:** ready-for-agent
 
-- [ ] Tests de façade : rotation du premier joueur sur plusieurs « Rejouer »
-- [ ] Tests de façade : rejouer avec une config modifiée
-- [ ] Tests de façade : ajout et retrait de joueur entre deux parties ; rejet typé pendant une partie
-- [ ] Tests de façade : moyenne de soirée par joueur sur plusieurs parties
-- [ ] Écran de fin de partie avec « Rejouer » en un tap (< 5 s jusqu’à la volée suivante) et « Terminer la soirée »
+- [x] Tests de façade : rotation du premier joueur sur plusieurs « Rejouer »
+- [x] Tests de façade : rejouer avec une config modifiée
+- [x] Tests de façade : ajout et retrait de joueur entre deux parties ; rejet typé pendant une partie
+- [x] Tests de façade : moyenne de soirée par joueur sur plusieurs parties
+- [x] Écran de fin de partie avec « Rejouer » en un tap (< 5 s jusqu’à la volée suivante) et « Terminer la soirée »
+
+## Comments
+
+- 2026-10-03 — Implémenté :
+  - `Soiree.rematch({config})` relance avec l’ordre de la partie précédente décalé d’un cran : celui qui a commencé lance en dernier.
+  - Ajout / retrait / réordonnancement entre deux parties = un nouveau `startGame` avec la nouvelle liste (refusé pendant une partie). Côté UI, « Changer… » ouvre le setup prérempli (« Partie suivante »).
+  - `endSoiree()` → événement `SoireeEnded`, possible seulement entre deux parties, avec confirmation à l’écran. Une soirée terminée refuse tout.
+  - `SoireeState.games` (toutes les parties) et `averageOf(player)` sur la soirée.
+  - Fin de partie : gagnant, tableau des moyennes (partie + soirée dès la 2e partie), « Rejouer » en un tap, « Changer… », « Annuler le checkout », « Terminer la soirée ».
+  - « Reprendre la soirée » = dernière soirée non terminée, même entre deux parties.
+- Corrigé au passage : `setState` de l’accueil renvoyait un Future (bug latent depuis le ticket 07, visible au retour à l’accueil).

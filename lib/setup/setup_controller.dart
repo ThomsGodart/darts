@@ -7,15 +7,19 @@ typedef GameSetup = ({List<Player> players, X01Config config});
 
 /// State of the soirée setup screen, over the player catalog.
 class SetupController extends ChangeNotifier {
-  SetupController(this._catalog);
+  /// A blank setup, or one starting from the players and rules of [from].
+  SetupController(this._catalog, {GameSetup? from})
+    : _picked = [...?from?.players],
+      _startScore = from?.config.startScore ?? 501,
+      _doubleOut = (from?.config.outRule ?? OutRule.double) == OutRule.double;
 
   final PlayerCatalog _catalog;
 
   List<Player> _players = const [];
   bool _disposed = false;
-  final List<Player> _picked = [];
-  int _startScore = 501;
-  bool _doubleOut = true;
+  final List<Player> _picked;
+  int _startScore;
+  bool _doubleOut;
 
   /// Players of the catalog, by name.
   List<Player> get players => _players;

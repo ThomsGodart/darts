@@ -15,11 +15,13 @@ abstract interface class SoireeRepository {
 }
 
 extension Resumable on SoireeRepository {
-  /// The latest soirée when it has a game still in progress.
+  /// The latest soirée when it was not ended: its game may be in progress,
+  /// or over and waiting for Rejouer.
   Future<Soiree?> resumable() async {
     final soiree = await latest();
-    final game = soiree?.state.game;
-    return game == null || game.isFinished ? null : soiree;
+    if (soiree == null) return null;
+    final state = soiree.state;
+    return state.game == null || state.isEnded ? null : soiree;
   }
 }
 

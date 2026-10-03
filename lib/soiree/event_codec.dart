@@ -9,6 +9,7 @@ abstract final class EventTypes {
   static const gameStarted = 'game_started';
   static const visitTotalSubmitted = 'visit_total_submitted';
   static const dartThrown = 'dart_thrown';
+  static const soireeEnded = 'soiree_ended';
 }
 
 /// A storable form of an event: a type tag and a JSON-compatible payload.
@@ -33,6 +34,7 @@ EncodedEvent encodeEvent(SoireeEvent event) => switch (event) {
     type: EventTypes.dartThrown,
     payload: {'sector': dart.sector, 'multiplier': dart.multiplier},
   ),
+  SoireeEnded() => (type: EventTypes.soireeEnded, payload: const {}),
 };
 
 SoireeEvent decodeEvent(String type, Map<String, Object?> payload) =>
@@ -57,5 +59,6 @@ SoireeEvent decodeEvent(String type, Map<String, Object?> payload) =>
           multiplier: payload['multiplier']! as int,
         ),
       ),
+      EventTypes.soireeEnded => const SoireeEnded(),
       _ => throw FormatException('Unknown event type "$type"'),
     };
