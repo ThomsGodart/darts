@@ -18,6 +18,7 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     required this.cricketMark,
     required this.cricketClosed,
     required this.cricketDead,
+    required this.cricketActiveColumn,
     required this.remainingFontSize,
     required this.playerNameFontSize,
     required this.compactRemainingFontSize,
@@ -50,6 +51,9 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
   /// A number every player has closed: it no longer scores.
   final Color cricketDead;
 
+  /// Background of the active player's column on the cricket board.
+  final Color cricketActiveColumn;
+
   /// Active player's remaining score, meant to be read from 2–3 m.
   final double remainingFontSize;
 
@@ -79,6 +83,7 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     Color? cricketMark,
     Color? cricketClosed,
     Color? cricketDead,
+    Color? cricketActiveColumn,
     double? remainingFontSize,
     double? playerNameFontSize,
     double? compactRemainingFontSize,
@@ -96,6 +101,7 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       cricketMark: cricketMark ?? this.cricketMark,
       cricketClosed: cricketClosed ?? this.cricketClosed,
       cricketDead: cricketDead ?? this.cricketDead,
+      cricketActiveColumn: cricketActiveColumn ?? this.cricketActiveColumn,
       remainingFontSize: remainingFontSize ?? this.remainingFontSize,
       playerNameFontSize: playerNameFontSize ?? this.playerNameFontSize,
       compactRemainingFontSize:
@@ -120,6 +126,11 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       cricketMark: Color.lerp(cricketMark, other.cricketMark, t)!,
       cricketClosed: Color.lerp(cricketClosed, other.cricketClosed, t)!,
       cricketDead: Color.lerp(cricketDead, other.cricketDead, t)!,
+      cricketActiveColumn: Color.lerp(
+        cricketActiveColumn,
+        other.cricketActiveColumn,
+        t,
+      )!,
       remainingFontSize: lerpDouble(
         remainingFontSize,
         other.remainingFontSize,
@@ -165,6 +176,7 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       other.cricketMark == cricketMark &&
       other.cricketClosed == cricketClosed &&
       other.cricketDead == cricketDead &&
+      other.cricketActiveColumn == cricketActiveColumn &&
       other.remainingFontSize == remainingFontSize &&
       other.playerNameFontSize == playerNameFontSize &&
       other.compactRemainingFontSize == compactRemainingFontSize &&
@@ -183,6 +195,7 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     cricketMark,
     cricketClosed,
     cricketDead,
+    cricketActiveColumn,
     remainingFontSize,
     playerNameFontSize,
     compactRemainingFontSize,

@@ -54,6 +54,8 @@ Le Cricket (Standard et Cut-Throat) devient un type de partie de la **Session**,
 
 ## Implementation Decisions
 
+> **Plan de référence** (2026-10-03, choix de l’utilisateur) : ce spec et `.scratch/cricket/issues/`. Le plan parallèle `.scratch/cricket-v1.1/` est remplacé par celui-ci.
+
 - **Un seul module profond : la façade `Session`.** Le Cricket y entre par les mêmes commandes et le même journal, sans façade parallèle.
 - **Configuration de partie.** `GameStarted` porte une `GameConfig` scellée : `X01Config` (existant) ou `CricketConfig(variant: standard | cutThroat)`. `Session.startGame` et `rematch` acceptent n’importe quelle `GameConfig`. Rejouer garde le type ; « Changer… » passe par le setup, qui propose le type.
 - **État de partie.** Le `GameState` actuel est spécifique au X01. Il est découpé en une partie commune (joueurs, ordre, joueur actif, fléchettes de la volée en cours, gagnant, volées jouées) et un état propre au type : restes, visites et checkout pour X01 ; marques par chiffre et points pour Cricket. Ce découpage se fait **avant** le Cricket et sans aucun changement de comportement (prefactor), sous les tests existants.
@@ -65,7 +67,7 @@ Le Cricket (Standard et Cut-Throat) devient un type de partie de la **Session**,
   - répartition des marques en trop selon la variante ;
   - test de victoire après chaque fléchette.
   - Un chiffre fermé par tous les joueurs ne rapporte plus rien. Une volée compte 3 fléchettes, ou moins si la partie est gagnée avant.
-- **MPR.** Marques sur 15–20 et Bull (celles qui ferment comme celles qui scorent, mortes comprises) ÷ volées jouées. La volée gagnante compte pour une volée entière. Par partie et par session, calculé uniquement sur les parties de Cricket. La moyenne 3 fléchettes reste calculée sur les seules parties X01.
+- **MPR.** Marques sur 15–20 et Bull (celles qui ferment comme celles qui scorent, mortes comprises) ÷ volées jouées. La volée gagnante compte pour une volée entière. *Amendé le 2026-10-03* : la volée en cours compte aussi pour un tour, pour que le MPR affiché en direct reste stable (après un T20 au premier tour : 3.0, et non une division par zéro). Par partie et par session, calculé uniquement sur les parties de Cricket. La moyenne 3 fléchettes reste calculée sur les seules parties X01.
 - **UI.**
   - Le setup gagne un choix « X01 / Cricket », puis les options du type choisi (501/301 et Double-out, ou Standard/Cut-Throat).
   - L’écran de jeu choisit son scoreboard selon le type : grille Cricket ou scoreboard X01.

@@ -28,3 +28,4 @@ Voir spec : US 4, 22–24 ; Implementation Decisions (MPR).
     - Panneau de fin de partie : pts, MPR et MPR de session.
     - Historique : « Stats de la session » avec « moy. · MPR » selon les types joués, et pts + MPR par partie de Cricket.
   - « Changer… » passe du X01 au Cricket, ce que couvre un test widget.
+- 2026-10-03 — Suite à la code review : en fin de partie, une colonne de session par type joué dans la session (« moy. session », « MPR session »), donc la moyenne X01 apparaît aussi après une partie de Cricket (US 23).

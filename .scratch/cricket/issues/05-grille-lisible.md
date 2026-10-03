@@ -24,3 +24,4 @@ Voir spec : US 18–20 ; Further Notes.
   - Colonne du joueur actif surlignée.
   - Test widget : 8 joueurs aux noms longs sur un 6,1" (393 dp) sans débordement.
 - Reste à faire sur appareil : lecture à 2–3 m.
+- 2026-10-03 — Suite à la code review : surlignage de la colonne active via un token `cricketActiveColumn`, plus d’alpha en dur.

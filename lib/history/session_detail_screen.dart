@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../session/session.dart';
+import '../ui/game_labels.dart';
 import '../ui/average_label.dart';
 import 'formatting.dart';
 
@@ -69,7 +70,7 @@ class SessionDetailScreen extends StatelessWidget {
           Text('Stats de la session', style: textTheme.titleLarge),
           const SizedBox(height: 8),
           _StatsTable(
-            key: const Key('session-averages'),
+            key: const Key('session-stats'),
             rows: [
               for (final player in state.players)
                 (player.name, _sessionStats(state, player)),

@@ -44,4 +44,8 @@ void main() {
     await pumpBoard(tester, gameWith(1));
     expect(tester.takeException(), isNull);
   });
+
+  test('mark symbols: none, /, X, Ⓧ', () {
+    expect([for (var m = 0; m <= 3; m++) markSymbol(m)], ['', '/', 'X', 'Ⓧ']);
+  });
 }

@@ -210,8 +210,9 @@ final class X01Game extends Game {
       scores[(activeIndex + i) % scores.length],
   ];
 
+  /// Matched by id: a player renamed between games stays one player.
   PlayerScore scoreOf(Player player) =>
-      scores.firstWhere((s) => s.player == player);
+      scores.firstWhere((s) => s.player.id == player.id);
 
   /// Dart counts the active player may claim if a visit of [score] checks
   /// out; empty when it would not end the game validly.
@@ -294,8 +295,9 @@ final class CricketGame extends Game {
   @override
   int get visitsPlayed => scores.fold(0, (sum, s) => sum + s.visitsPlayed);
 
+  /// Matched by id: a player renamed between games stays one player.
   CricketScore scoreOf(Player player) =>
-      scores.firstWhere((s) => s.player == player);
+      scores.firstWhere((s) => s.player.id == player.id);
 
   /// Closed by every player: no one scores on it any more.
   bool isDead(int number) => scores.every((s) => s.isClosed(number));
@@ -303,7 +305,8 @@ final class CricketGame extends Game {
   /// Rounds [player] has played, the visit in progress included.
   int roundsOf(Player player) {
     final score = scoreOf(player);
-    final inProgress = score == activeScore && dartsInVisit.isNotEmpty;
+    final inProgress =
+        score.player.id == activePlayer.id && dartsInVisit.isNotEmpty;
     return score.visitsPlayed + (inProgress ? 1 : 0);
   }
 

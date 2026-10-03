@@ -353,23 +353,35 @@ class _GameOverPanel extends StatelessWidget {
 typedef _Stats = ({List<String> headings, List<(Player, List<String>)> rows});
 
 _Stats _statsOf(SessionState session, Game game) {
-  final showSession = session.games.length > 1;
+  // From the second game on: each session stat of a game type played in it,
+  // so a cricket game still shows the X01 average and the other way round.
+  final later = session.games.length > 1;
+  final sessionX01 = later && session.games.any((g) => g is X01Game);
+  final sessionCricket = later && session.games.any((g) => g is CricketGame);
+  List<String> sessionStats(Player player) => [
+    if (sessionX01) averageLabel(session.averageOf(player)),
+    if (sessionCricket) averageLabel(session.marksPerRoundOf(player)),
+  ];
+  final sessionHeadings = [
+    if (sessionX01) 'moy. session',
+    if (sessionCricket) 'MPR session',
+  ];
   return switch (game) {
     X01Game(:final scores) => (
-      headings: ['moy.', if (showSession) 'session'],
+      headings: ['moy.', ...sessionHeadings],
       rows: [
         for (final score in scores)
           (
             score.player,
             [
               averageLabel(score.threeDartAverage),
-              if (showSession) averageLabel(session.averageOf(score.player)),
+              ...sessionStats(score.player),
             ],
           ),
       ],
     ),
     CricketGame(:final scores) => (
-      headings: ['pts', 'MPR', if (showSession) 'session'],
+      headings: ['pts', 'MPR', ...sessionHeadings],
       rows: [
         for (final score in scores)
           (
@@ -377,8 +389,7 @@ _Stats _statsOf(SessionState session, Game game) {
             [
               '${score.points}',
               averageLabel(game.marksPerRound(score.player)),
-              if (showSession)
-                averageLabel(session.marksPerRoundOf(score.player)),
+              ...sessionStats(score.player),
             ],
           ),
       ],

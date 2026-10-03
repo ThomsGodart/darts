@@ -29,6 +29,7 @@ ThemeData _buildDefault() {
         cricketMark: Color(0xFFE0E0E0),
         cricketClosed: Color(0xFF66BB6A),
         cricketDead: Color(0xFF616161),
+        cricketActiveColumn: Color(0x40FFC107),
         remainingFontSize: 120,
         playerNameFontSize: 40,
         compactRemainingFontSize: 32,

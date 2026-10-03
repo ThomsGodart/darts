@@ -1,5 +1,3 @@
-import '../session/session.dart';
-
 const _days = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
 
 String _two(int n) => n.toString().padLeft(2, '0');
@@ -13,11 +11,3 @@ String sessionDate(DateTime when) {
 
 /// "1 partie", "3 parties".
 String gamesCount(int count) => count == 1 ? '1 partie' : '$count parties';
-
-/// "501 DO", "301 SO".
-String configLabel(GameConfig config) => switch (config) {
-  X01Config(:final startScore, :final outRule) =>
-    '$startScore ${outRule == OutRule.double ? 'DO' : 'SO'}',
-  CricketConfig(variant: CricketVariant.standard) => 'Cricket',
-  CricketConfig(variant: CricketVariant.cutThroat) => 'Cut-Throat',
-};

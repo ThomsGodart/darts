@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../session/session.dart';
 import '../theme/darts_tokens.dart';
 import '../ui/average_label.dart';
+import '../ui/game_labels.dart';
 
 /// "/", "X" or "Ⓧ" for 1, 2 or 3 marks; empty for none.
 String markSymbol(int marks) => switch (marks) {
@@ -31,11 +32,11 @@ class CricketBoard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            switch (game.config.variant) {
-              CricketVariant.standard => 'Cricket · le plus de points gagne',
-              CricketVariant.cutThroat =>
-                'Cut-Throat · le moins de points gagne',
-            },
+            '${variantLabel(game.config.variant)} · '
+            '${switch (game.config.variant) {
+              CricketVariant.standard => 'le plus de points gagne',
+              CricketVariant.cutThroat => 'le moins de points gagne',
+            }}',
             key: const Key('cricket-variant'),
             style: textTheme.labelLarge,
           ),
@@ -120,9 +121,7 @@ class CricketBoard extends StatelessWidget {
         ),
         for (final (i, score) in game.scores.indexed)
           Container(
-            color: i == game.activeIndex
-                ? tokens.activePlayer.withValues(alpha: 0.25)
-                : null,
+            color: i == game.activeIndex ? tokens.cricketActiveColumn : null,
             padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
             alignment: Alignment.center,
             child: cellOf(score),

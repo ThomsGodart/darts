@@ -25,3 +25,4 @@ Voir spec : US 2, 3, 13, 16.
   - La grille rappelle la variante et la règle de victoire.
   - L’historique affiche « Cut-Throat ».
   - « Rejouer » et la reprise après relance gardent la variante.
+- 2026-10-03 — Suite à la code review : la règle de points et de victoire est portée par `CricketVariant`. Test ajouté : un joueur qui a tout fermé et que les autres laissent le plus bas gagne à sa fléchette suivante.

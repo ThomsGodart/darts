@@ -1,5 +1,8 @@
 # Spec : Cricket en Session (v1.1)
 
+> **Remplacé (2026-10-03)** par `.scratch/cricket/spec.md`, le plan implémenté et retenu comme référence.
+
+
 Status: ready-for-agent  
 Source: docs/ideas/darts-scoreboard-ui-first.md (grilling 2026-10-03)  
 Depends on: v1 X01 Session scorer validated in real soirées before **code** starts  

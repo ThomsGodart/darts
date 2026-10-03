@@ -65,4 +65,28 @@ void main() {
     final resumed = await InMemorySessionRepository(storage).resumable();
     expect((resumed!.state.game! as CricketGame).config, cutThroat);
   });
+
+  test('closed out, then left lowest by others: wins on the next dart', () {
+    final session = newSession()
+      ..startGame([alice, bob, chloe], config: cutThroat);
+    visit(session); // Alice
+    visit(session, [t20, t20]); // Bob gives Alice and Chloé 60 each
+    visit(session); // Chloé
+    closeAll(session, 2); // Alice closes all on 60; Bob still on 0
+
+    expect(cricketOf(session).winner, isNull, reason: 'Bob has fewer');
+    visit(session); // Alice
+    visit(session); // Bob
+    // Chloé closes 19 and hands Bob 2 × 57: Alice is now the lowest.
+    visit(session, [
+      const Dart.treble(19),
+      const Dart.treble(19),
+      const Dart.treble(19),
+    ]);
+    expect(cricketOf(session).scoreOf(bob).points, 114);
+    expect(cricketOf(session).winner, isNull);
+
+    session.throwDart(Dart.miss);
+    expect(cricketOf(session).winner, alice);
+  });
 }

@@ -81,7 +81,17 @@ enum CricketVariant {
   standard,
 
   /// They score for every opponent still open; the fewest points wins.
-  cutThroat,
+  cutThroat;
+
+  /// Whether extra marks score for the thrower, or against the others.
+  bool get scoresForThrower => this == standard;
+
+  /// Whether a player who closed everything on [points] wins against
+  /// everyone's [allPoints] (theirs included): ties win.
+  bool wins(int points, Iterable<int> allPoints) => switch (this) {
+    standard => allPoints.every((p) => p <= points),
+    cutThroat => allPoints.every((p) => p >= points),
+  };
 }
 
 /// Rules of a cricket game.

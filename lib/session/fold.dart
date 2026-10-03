@@ -14,7 +14,10 @@ SessionState applyEvent(SessionState state, SessionEvent event) {
       _newGame(players, config),
     ),
     VisitTotalSubmitted(:final score, :final darts) => state.replaceCurrentGame(
-      _visitTotal(state.game! as X01Game, score, darts),
+      switch (state.game) {
+        final X01Game game => _visitTotal(game, score, darts),
+        _ => throw const FormatException('A visit total outside an X01 game'),
+      },
     ),
     DartThrown(:final dart) => state.replaceCurrentGame(switch (state.game!) {
       final X01Game game => _dartThrown(game, dart),
@@ -113,28 +116,20 @@ CricketGame _cricketDart(CricketGame game, Dart dart) {
     );
     final points = extra * number;
     if (points > 0 && othersOpen.isNotEmpty) {
-      switch (game.config.variant) {
-        case CricketVariant.standard:
-          final t = scores[game.activeIndex];
-          scores[game.activeIndex] = t.copyWith(points: t.points + points);
-        case CricketVariant.cutThroat:
-          for (final i in othersOpen) {
-            scores[i] = scores[i].copyWith(points: scores[i].points + points);
-          }
+      final scorers = game.config.variant.scoresForThrower
+          ? [game.activeIndex]
+          : othersOpen;
+      for (final i in scorers) {
+        scores[i] = scores[i].copyWith(points: scores[i].points + points);
       }
     }
   }
   final active = scores[game.activeIndex];
   final won =
       active.hasClosedAll &&
-      switch (game.config.variant) {
-        CricketVariant.standard => scores.every(
-          (s) => s.points <= active.points,
-        ),
-        CricketVariant.cutThroat => scores.every(
-          (s) => s.points >= active.points,
-        ),
-      };
+      game.config.variant.wins(active.points, [
+        for (final s in scores) s.points,
+      ]);
   if (!won && darts.length < dartsPerVisit) {
     return CricketGame(
       config: game.config,

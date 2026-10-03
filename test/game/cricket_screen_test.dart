@@ -28,11 +28,15 @@ void main() {
     await tester.tap(find.text('T20'));
     await tester.pump();
 
+    // Which mark is the rules' business; here, one shows up on the board.
     final board = find.byKey(const Key('cricket-board'));
-    expect(
-      find.descendant(of: board, matching: find.text('Ⓧ')),
-      findsOneWidget,
+    final marks = find.descendant(
+      of: board,
+      matching: find.byWidgetPredicate(
+        (w) => w is Text && ['/', 'X', 'Ⓧ'].contains(w.data),
+      ),
     );
+    expect(marks, findsOneWidget);
   });
 
   testWidgets('cut-throat is chosen in the setup and shown in game', (

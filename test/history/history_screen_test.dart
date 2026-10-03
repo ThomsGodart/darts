@@ -49,7 +49,7 @@ void main() {
 
     // Which winner and averages is the facade's business; here, they show.
     expect(find.text('Partie 1 · 40 DO'), findsOneWidget);
-    expect(find.byKey(const Key('session-averages')), findsOneWidget);
+    expect(find.byKey(const Key('session-stats')), findsOneWidget);
   });
 
   testWidgets('the open session is not listed: it is resumed instead', (
