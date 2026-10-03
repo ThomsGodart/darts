@@ -20,6 +20,17 @@ class SoireeState {
   /// The current (latest) game, or null when none has been started.
   GameState? get game => games.lastOrNull;
 
+  /// Everyone who played, in the order they first did, under the name they
+  /// had in their latest game.
+  List<Player> get players {
+    // A map keeps each key where it was first inserted; values update.
+    final byId = <String, Player>{
+      for (final game in games)
+        for (final score in game.scores) score.player.id: score.player,
+    };
+    return byId.values.toList();
+  }
+
   /// Three-dart average of [player] over all their games of the soirée;
   /// null if they have not thrown yet.
   /// Matched by id: a player renamed between games stays one player.

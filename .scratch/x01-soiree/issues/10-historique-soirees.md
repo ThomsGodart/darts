@@ -6,7 +6,15 @@
 
 **Status:** ready-for-agent
 
-- [ ] Tests de façade : plusieurs soirées persistées → la liste et les détails exposent les bons gagnants et les bonnes moyennes
-- [ ] La suppression d’une soirée la retire de la liste et de la base
-- [ ] Écrans liste et détail accessibles depuis l’accueil
-- [ ] Fonctionne offline
+- [x] Tests de façade : plusieurs soirées persistées → la liste et les détails exposent les bons gagnants et les bonnes moyennes
+- [x] La suppression d’une soirée la retire de la liste et de la base
+- [x] Écrans liste et détail accessibles depuis l’accueil
+- [x] Fonctionne offline
+
+## Comments
+
+- 2026-10-03 — Implémenté :
+  - Port `SoireeRepository.history()` (soirées avec au moins une partie, la plus récente d’abord, rejouées depuis leur journal) et `delete(id)`, en mémoire et en drift, avec un contrat commun.
+  - `SoireeState.players` : joueurs dans l’ordre de première apparition, sous leur dernier nom.
+  - Écrans « Historique » (date en français, joueurs, nombre de parties, pastille « en cours » pour la soirée ouverte) et détail : moyennes de la soirée, puis chaque partie avec sa config, son gagnant (ou « Non terminée » pour une partie abandonnée) et les moyennes.
+  - Suppression avec confirmation. Supprimer la soirée ouverte retire aussi « Reprendre la soirée ».

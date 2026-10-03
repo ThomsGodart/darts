@@ -36,16 +36,55 @@ class DriftSoireeRepository implements SoireeRepository {
               ..limit(1))
             .getSingleOrNull();
     if (soiree == null) return null;
+    final events = await _eventsOf(soiree.id);
+    return Soiree(_DriftJournal(soiree.id, events, _enqueue, _db));
+  }
+
+  @override
+  Future<List<SoireeRecord>> history() async {
+    await _writes;
+    final soirees = await (_db.select(
+      _db.soirees,
+    )..orderBy([(s) => OrderingTerm.desc(s.id)])).get();
+    final records = <SoireeRecord>[];
+    for (final soiree in soirees) {
+      final state = Soiree(InMemoryJournal.of(await _eventsOf(soiree.id)))
+          .state;
+      if (state.game == null) continue;
+      records.add(
+        SoireeRecord(
+          id: '${soiree.id}',
+          createdAt: soiree.createdAt,
+          state: state,
+        ),
+      );
+    }
+    return records;
+  }
+
+  @override
+  Future<void> delete(String id) async {
+    await _writes;
+    final soireeId = int.tryParse(id);
+    if (soireeId == null) return;
+    await _db.transaction(() async {
+      await (_db.delete(
+        _db.soireeEvents,
+      )..where((e) => e.soireeId.equals(soireeId))).go();
+      await (_db.delete(_db.soirees)..where((s) => s.id.equals(soireeId))).go();
+    });
+  }
+
+  Future<List<SoireeEvent>> _eventsOf(int soireeId) async {
     final rows =
         await (_db.select(_db.soireeEvents)
-              ..where((e) => e.soireeId.equals(soiree.id))
+              ..where((e) => e.soireeId.equals(soireeId))
               ..orderBy([(e) => OrderingTerm.asc(e.seq)]))
             .get();
-    final events = [
+    return [
       for (final row in rows)
         decodeEvent(row.type, jsonDecode(row.payload) as Map<String, Object?>),
     ];
-    return Soiree(_DriftJournal(soiree.id, events, _enqueue, _db));
   }
 
   /// Completes once every write has run; throws if one of them failed.

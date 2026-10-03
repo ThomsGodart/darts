@@ -155,5 +155,69 @@ void repositoryContract(
       expect(resumed!.state.game!.activePlayer, alice);
       expect(resumed.state.game!.scoreOf(bob).remaining, 401);
     });
+
+    group('history', () {
+      test('empty at first', () async {
+        expect(await open().history(), isEmpty);
+      });
+
+      test('every soirée with a game, newest first', () async {
+        final repository = open();
+        final first = await repository.create();
+        first
+          ..startGame([alice, bob])
+          ..endSoiree();
+        await repository.create(); // never played: not history
+        final second = await repository.create();
+        second.startGame([bob]);
+
+        final history = await (await relaunch(repository)).history();
+
+        expect(history, hasLength(2));
+        expect(history.first.state.players, [bob]);
+        expect(history.first.state.isEnded, isFalse);
+        expect(history.last.state.players, [alice, bob]);
+        expect(history.last.state.isEnded, isTrue);
+        expect(history.first.id, isNot(history.last.id));
+        expect(
+          history.first.createdAt.isBefore(history.last.createdAt),
+          isFalse,
+        );
+      });
+
+      test('a soirée is replayed in full, games and averages', () async {
+        final repository = open();
+        final soiree = await repository.create();
+        soiree.startGame([alice, bob], config: const X01Config(startScore: 40));
+        checkOut(soiree, 40, darts: 1);
+        soiree.rematch();
+        checkOut(soiree, 40, darts: 2);
+        soiree.endSoiree();
+
+        final entry = (await (await relaunch(repository)).history()).single;
+        expect([for (final g in entry.state.games) g.winner], [alice, bob]);
+        expect(entry.state.averageOf(alice), 120);
+      });
+
+      test('a deleted soirée is gone for good', () async {
+        final repository = open();
+        final kept = await repository.create();
+        kept
+          ..startGame([alice])
+          ..endSoiree();
+        final deleted = await repository.create();
+        deleted.startGame([bob]);
+        play(deleted, [60]);
+        final doomed = (await repository.history()).first;
+
+        await repository.delete(doomed.id);
+
+        final reopened = await relaunch(repository);
+        final history = await reopened.history();
+        expect(history, hasLength(1));
+        expect(history.single.state.players, [alice]);
+        expect(await reopened.resumable(), isNull);
+      });
+    });
   });
 }

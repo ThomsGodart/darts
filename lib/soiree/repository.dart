@@ -1,5 +1,19 @@
 import 'journal.dart';
 import 'soiree_facade.dart';
+import 'state.dart';
+
+/// A stored soirée, as the history shows it.
+class SoireeRecord {
+  const SoireeRecord({
+    required this.id,
+    required this.createdAt,
+    required this.state,
+  });
+
+  final String id;
+  final DateTime createdAt;
+  final SoireeState state;
+}
 
 /// Where soirées are kept between launches of the app.
 abstract interface class SoireeRepository {
@@ -8,6 +22,12 @@ abstract interface class SoireeRepository {
 
   /// The most recently created soirée, if any.
   Future<Soiree?> latest();
+
+  /// Every soirée that had at least one game, newest first.
+  Future<List<SoireeRecord>> history();
+
+  /// Deletes a soirée and its journal for good.
+  Future<void> delete(String id);
 
   /// Completes once every change made so far is stored; throws if some
   /// could not be.
@@ -27,7 +47,12 @@ extension Resumable on SoireeRepository {
 
 /// Journals kept in memory; outlives the repositories opened on it.
 class InMemorySoireeStorage {
-  final List<InMemoryJournal> journals = [];
+  final List<({String id, DateTime createdAt, InMemoryJournal journal})>
+  entries = [];
+  int nextId = 1;
+
+  /// Journals, oldest first.
+  List<InMemoryJournal> get journals => [for (final e in entries) e.journal];
 }
 
 class InMemorySoireeRepository implements SoireeRepository {
@@ -39,7 +64,11 @@ class InMemorySoireeRepository implements SoireeRepository {
   @override
   Future<Soiree> create() async {
     final journal = InMemoryJournal();
-    _storage.journals.add(journal);
+    _storage.entries.add((
+      id: '${_storage.nextId++}',
+      createdAt: DateTime.now(),
+      journal: journal,
+    ));
     return Soiree(journal);
   }
 
@@ -48,6 +77,17 @@ class InMemorySoireeRepository implements SoireeRepository {
     final journal = _storage.journals.lastOrNull;
     return journal == null ? null : Soiree(journal);
   }
+
+  @override
+  Future<List<SoireeRecord>> history() async => [
+    for (final entry in _storage.entries.reversed)
+      if (Soiree(entry.journal).state case final state when state.game != null)
+        SoireeRecord(id: entry.id, createdAt: entry.createdAt, state: state),
+  ];
+
+  @override
+  Future<void> delete(String id) async =>
+      _storage.entries.removeWhere((e) => e.id == id);
 
   @override
   Future<void> flush() async {}

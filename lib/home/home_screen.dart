@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../game/game_screen.dart';
+import '../history/history_screen.dart';
 import '../setup/setup_controller.dart';
 import '../setup/setup_screen.dart';
 import '../soiree_controller.dart';
@@ -103,6 +104,20 @@ class _HomeScreenState extends State<HomeScreen> {
     return confirmed ?? false;
   }
 
+  Future<void> _openHistory() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => HistoryScreen(launcher: widget.launcher),
+      ),
+    );
+    if (!mounted) return;
+    // The open soirée may have been deleted from the history.
+    final canResume = widget.launcher.canResume();
+    setState(() {
+      _canResume = canResume;
+    });
+  }
+
   /// Between games: the setup screen, starting from the last game.
   Future<void> _changeSetup(SoireeController controller) async {
     if (_changingSetup) return;
@@ -169,6 +184,12 @@ class _HomeScreenState extends State<HomeScreen> {
               FilledButton.tonal(
                 onPressed: _newGame,
                 child: const Text('Nouvelle soirée'),
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: _openHistory,
+                icon: const Icon(Icons.history),
+                label: const Text('Historique'),
               ),
             ],
           ),

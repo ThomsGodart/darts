@@ -51,6 +51,13 @@ class SoireeLauncher {
     await _catalog.markPlayed(setup.players);
   }
 
+  /// Past and open soirées, newest first.
+  Future<List<SoireeRecord>> history() => _repository.history();
+
+  /// Deletes a soirée from the history for good.
+  Future<void> deleteSoiree(SoireeRecord record) =>
+      _repository.delete(record.id);
+
   /// Stores everything played so far, e.g. before the app is backgrounded.
   Future<void> flush() => _repository.flush();
 }

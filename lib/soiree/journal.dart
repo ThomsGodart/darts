@@ -11,6 +11,13 @@ abstract interface class SoireeJournal {
 }
 
 class InMemoryJournal implements SoireeJournal {
+  InMemoryJournal();
+
+  /// A journal holding [events] already, e.g. read back from storage.
+  InMemoryJournal.of(Iterable<SoireeEvent> events) {
+    _events.addAll(events);
+  }
+
   final List<SoireeEvent> _events = [];
 
   @override

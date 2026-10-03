@@ -166,5 +166,20 @@ void main() {
       final soiree = afterAliceWins()..endSoiree();
       expect(soiree.endSoiree(), isA<Rejected>());
     });
+
+    test('its players, in the order they first played', () {
+      final soiree = afterAliceWins()..startGame([chloe, bob, alice]);
+      expect(soiree.state.players, [alice, bob, chloe]);
+    });
+
+    test(
+      'a player renamed between games is listed once, with the new name',
+      () {
+        final soiree = afterAliceWins();
+        const alicia = Player(id: 'alice', name: 'Alicia');
+        soiree.startGame([bob, alicia], config: forty);
+        expect(soiree.state.players, [alicia, bob]);
+      },
+    );
   });
 }
