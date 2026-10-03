@@ -180,4 +180,18 @@ void main() {
     await tester.pump();
     expect(find.byKey(const Key('darts-in-visit')), findsOneWidget);
   });
+
+  testWidgets('a checkout route shows once the remaining is in reach', (
+    tester,
+  ) async {
+    await startGame(tester);
+    final suggestion = find.byKey(const Key('checkout-suggestion'));
+    expect(suggestion, findsNothing);
+
+    await playVisits(tester, [180, 26, 180, 26]);
+    expect(
+      find.descendant(of: suggestion, matching: find.text('T20  T19  D12')),
+      findsOneWidget,
+    );
+  });
 }

@@ -6,7 +6,15 @@
 
 **Status:** ready-for-agent
 
-- [ ] Tests de façade sur un échantillon : 170, 100, 40, 3, 2 en Double-out ; reste impossible (ex. 169) → aucune suggestion
-- [ ] Tests de façade : suggestion recalculée après une fléchette (moins de fléchettes restantes)
-- [ ] Tests de façade : suggestion en Straight-out
-- [ ] UI : suggestion visible sur le scoreboard (token checkout possible)
+- [x] Tests de façade sur un échantillon : 170, 100, 40, 3, 2 en Double-out ; reste impossible (ex. 169) → aucune suggestion
+- [x] Tests de façade : suggestion recalculée après une fléchette (moins de fléchettes restantes)
+- [x] Tests de façade : suggestion en Straight-out
+- [x] UI : suggestion visible sur le scoreboard (token checkout possible)
+
+## Comments
+
+- 2026-10-03 — Implémenté : `GameState.checkoutSuggestion`, à partir du reste en direct et des fléchettes restantes de la volée.
+  - Au lieu d’une table saisie à la main (169 lignes, risque de coquilles), les routes sont **calculées puis mémorisées** : le moins de fléchettes possible, puis les fléchettes préférées (simples, T20/T19…, finish sur D16/D20/D8…).
+  - Le résultat se comporte comme une table statique. Un test vérifie que les 2–170 finissables ont une route valide et la plus courte, et que 159/162/163/165/166/168/169 n’en ont pas.
+  - Routes proches des charts usuels (170 T20 T20 Bull, 141 T20 T19 D12, 81 T19 D12, 61 25 D18…), sans les recopier exactement (ex. 99 → T19 2 D20).
+  - UI : pastille en couleur `checkout` sous le reste du joueur actif.

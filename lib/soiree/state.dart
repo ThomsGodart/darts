@@ -1,3 +1,4 @@
+import 'checkout.dart';
 import 'dart.dart';
 import 'player.dart';
 import 'x01_config.dart';
@@ -97,6 +98,16 @@ class GameState {
 
   /// The active player's remaining score, counting darts already thrown.
   int get activeRemaining => activeScore.remaining - dartsInVisitScore;
+
+  /// The route to call for the active player to check out with the darts
+  /// left in their visit; null when they cannot finish this visit.
+  List<Dart>? get checkoutSuggestion => isFinished
+      ? null
+      : suggestCheckout(
+          activeRemaining,
+          dartsPerVisit - dartsInVisit.length,
+          config.outRule,
+        );
 
   /// Points of the darts already thrown in the visit in progress.
   int get dartsInVisitScore => dartsInVisit.fold(0, (sum, d) => sum + d.score);

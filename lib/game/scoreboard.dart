@@ -18,6 +18,7 @@ class Scoreboard extends StatelessWidget {
           child: _ActivePlayer(
             score: game.activeScore,
             remaining: game.activeRemaining,
+            checkout: game.checkoutSuggestion,
           ),
         ),
         for (final score in game.waitingInTurnOrder)
@@ -38,9 +39,16 @@ String _visitSummary(PlayerScore score) {
 }
 
 class _ActivePlayer extends StatelessWidget {
-  const _ActivePlayer({required this.score, required this.remaining});
+  const _ActivePlayer({
+    required this.score,
+    required this.remaining,
+    this.checkout,
+  });
 
   final PlayerScore score;
+
+  /// Route to call for a checkout this visit; null when out of reach.
+  final List<Dart>? checkout;
 
   /// Live remaining, darts of the visit in progress included.
   final int remaining;
@@ -86,6 +94,27 @@ class _ActivePlayer extends StatelessWidget {
                 ),
               ),
             ),
+            if (checkout case final route?)
+              Container(
+                key: const Key('checkout-suggestion'),
+                margin: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: tokens.checkout,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  route.map((d) => d.notation).join('  '),
+                  style: TextStyle(
+                    fontSize: tokens.visitSummaryFontSize,
+                    color: tokens.onCheckout,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
