@@ -188,4 +188,19 @@ void main() {
     // Which route is the rules tests' business; here, that one shows.
     expect(suggestion, findsOneWidget);
   });
+
+  testWidgets('a bust from the last round is not shown on the next turn', (
+    tester,
+  ) async {
+    await startGame(tester);
+    await playVisits(tester, [180, 26, 180, 26]);
+    await typeTotal(tester, 160); // Joueur 1 busts on 141
+    expect(find.textContaining('BUST'), findsOneWidget);
+
+    await quickScore(tester, 60); // Joueur 2 scores normally
+
+    // Joueur 1 is up again: their old bust must not look like a new one.
+    expect(find.textContaining('BUST'), findsNothing);
+  });
 }
+

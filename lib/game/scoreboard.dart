@@ -20,6 +20,9 @@ class Scoreboard extends StatelessWidget {
             score: game.activeScore,
             remaining: game.activeRemaining,
             checkout: game.checkoutSuggestion,
+            // Alone, the last visit is the one just entered; with others it
+            // is a round old and would read as the visit just typed.
+            showLastVisit: game.scores.length == 1,
           ),
         ),
         for (final score in game.waitingInTurnOrder)
@@ -30,8 +33,9 @@ class Scoreboard extends StatelessWidget {
 }
 
 /// "60 · moy. 45.2", or "BUST · moy. 45.2"; empty before the first visit.
-String _visitSummary(PlayerScore score) {
-  final lastVisit = score.lastVisit;
+/// Without [withLastVisit], only the average.
+String _visitSummary(PlayerScore score, {bool withLastVisit = true}) {
+  final lastVisit = withLastVisit ? score.lastVisit : null;
   final average = score.threeDartAverage;
   return [
     if (lastVisit != null) lastVisit.isBust ? 'BUST' : '${lastVisit.points}',
@@ -43,10 +47,12 @@ class _ActivePlayer extends StatelessWidget {
   const _ActivePlayer({
     required this.score,
     required this.remaining,
+    required this.showLastVisit,
     this.checkout,
   });
 
   final PlayerScore score;
+  final bool showLastVisit;
 
   /// Route to call for a checkout this visit; null when out of reach.
   final List<Dart>? checkout;
@@ -57,7 +63,8 @@ class _ActivePlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<DartsTokens>()!;
-    final busted = score.lastVisit?.isBust ?? false;
+    final busted = showLastVisit && (score.lastVisit?.isBust ?? false);
+    final summary = _visitSummary(score, withLastVisit: showLastVisit);
     return Container(
       width: double.infinity,
       color: tokens.activePlayer,
@@ -89,7 +96,7 @@ class _ActivePlayer extends StatelessWidget {
               color: busted ? tokens.bust : null,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                _visitSummary(score),
+                summary,
                 style: TextStyle(
                   fontSize: tokens.visitSummaryFontSize,
                   color: busted ? tokens.onBust : tokens.onActivePlayer,
