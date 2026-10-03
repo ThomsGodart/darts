@@ -15,23 +15,40 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     required this.onBust,
     required this.checkout,
     required this.onCheckout,
+    required this.cricketMark,
+    required this.cricketClosed,
+    required this.cricketDead,
     required this.remainingFontSize,
     required this.playerNameFontSize,
     required this.compactRemainingFontSize,
     required this.visitSummaryFontSize,
+    required this.cricketMarkFontSize,
+    required this.cricketPointsFontSize,
   });
 
   /// Highlight of the player whose turn it is.
   final Color activePlayer;
+
   final Color onActivePlayer;
 
   /// Signal shown when a visit busts.
   final Color bust;
+
   final Color onBust;
 
   /// Accent when the remaining score is finishable.
   final Color checkout;
+
   final Color onCheckout;
+
+  /// Marks on a number still open for that player.
+  final Color cricketMark;
+
+  /// Marks on a number the player has closed.
+  final Color cricketClosed;
+
+  /// A number every player has closed: it no longer scores.
+  final Color cricketDead;
 
   /// Active player's remaining score, meant to be read from 2–3 m.
   final double remainingFontSize;
@@ -45,6 +62,12 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
   /// Last visit and average under the active player's remaining score.
   final double visitSummaryFontSize;
 
+  /// Marks on the cricket board, meant to be read from 2–3 m.
+  final double cricketMarkFontSize;
+
+  /// Points under the cricket board.
+  final double cricketPointsFontSize;
+
   @override
   DartsTokens copyWith({
     Color? activePlayer,
@@ -53,10 +76,15 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     Color? onBust,
     Color? checkout,
     Color? onCheckout,
+    Color? cricketMark,
+    Color? cricketClosed,
+    Color? cricketDead,
     double? remainingFontSize,
     double? playerNameFontSize,
     double? compactRemainingFontSize,
     double? visitSummaryFontSize,
+    double? cricketMarkFontSize,
+    double? cricketPointsFontSize,
   }) {
     return DartsTokens(
       activePlayer: activePlayer ?? this.activePlayer,
@@ -65,11 +93,17 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       onBust: onBust ?? this.onBust,
       checkout: checkout ?? this.checkout,
       onCheckout: onCheckout ?? this.onCheckout,
+      cricketMark: cricketMark ?? this.cricketMark,
+      cricketClosed: cricketClosed ?? this.cricketClosed,
+      cricketDead: cricketDead ?? this.cricketDead,
       remainingFontSize: remainingFontSize ?? this.remainingFontSize,
       playerNameFontSize: playerNameFontSize ?? this.playerNameFontSize,
       compactRemainingFontSize:
           compactRemainingFontSize ?? this.compactRemainingFontSize,
       visitSummaryFontSize: visitSummaryFontSize ?? this.visitSummaryFontSize,
+      cricketMarkFontSize: cricketMarkFontSize ?? this.cricketMarkFontSize,
+      cricketPointsFontSize:
+          cricketPointsFontSize ?? this.cricketPointsFontSize,
     );
   }
 
@@ -83,6 +117,9 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       onBust: Color.lerp(onBust, other.onBust, t)!,
       checkout: Color.lerp(checkout, other.checkout, t)!,
       onCheckout: Color.lerp(onCheckout, other.onCheckout, t)!,
+      cricketMark: Color.lerp(cricketMark, other.cricketMark, t)!,
+      cricketClosed: Color.lerp(cricketClosed, other.cricketClosed, t)!,
+      cricketDead: Color.lerp(cricketDead, other.cricketDead, t)!,
       remainingFontSize: lerpDouble(
         remainingFontSize,
         other.remainingFontSize,
@@ -103,6 +140,16 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
         other.visitSummaryFontSize,
         t,
       )!,
+      cricketMarkFontSize: lerpDouble(
+        cricketMarkFontSize,
+        other.cricketMarkFontSize,
+        t,
+      )!,
+      cricketPointsFontSize: lerpDouble(
+        cricketPointsFontSize,
+        other.cricketPointsFontSize,
+        t,
+      )!,
     );
   }
 
@@ -115,22 +162,32 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       other.onBust == onBust &&
       other.checkout == checkout &&
       other.onCheckout == onCheckout &&
+      other.cricketMark == cricketMark &&
+      other.cricketClosed == cricketClosed &&
+      other.cricketDead == cricketDead &&
       other.remainingFontSize == remainingFontSize &&
       other.playerNameFontSize == playerNameFontSize &&
       other.compactRemainingFontSize == compactRemainingFontSize &&
-      other.visitSummaryFontSize == visitSummaryFontSize;
+      other.visitSummaryFontSize == visitSummaryFontSize &&
+      other.cricketMarkFontSize == cricketMarkFontSize &&
+      other.cricketPointsFontSize == cricketPointsFontSize;
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     activePlayer,
     onActivePlayer,
     bust,
     onBust,
     checkout,
     onCheckout,
+    cricketMark,
+    cricketClosed,
+    cricketDead,
     remainingFontSize,
     playerNameFontSize,
     compactRemainingFontSize,
     visitSummaryFontSize,
-  );
+    cricketMarkFontSize,
+    cricketPointsFontSize,
+  ]);
 }

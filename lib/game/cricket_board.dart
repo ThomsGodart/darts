@@ -13,7 +13,8 @@ String markSymbol(int marks) => switch (marks) {
 };
 
 /// Cricket scoreboard: a row per number (20 at the top, the bull last), a
-/// column per player, points underneath.
+/// column per player, points and MPR underneath. Player columns share the
+/// width, so up to eight players fit a phone without scrolling sideways.
 class CricketBoard extends StatelessWidget {
   const CricketBoard({super.key, required this.game});
 
@@ -23,19 +24,6 @@ class CricketBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<DartsTokens>()!;
     final textTheme = Theme.of(context).textTheme;
-    final active = game.activeIndex;
-
-    Widget cell(int column, Widget child) => Container(
-      color: column == active ? tokens.activePlayer : null,
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-      alignment: Alignment.center,
-      child: child,
-    );
-
-    TextStyle onColumn(int column, TextStyle? base) =>
-        (base ?? const TextStyle()).copyWith(
-          color: column == active ? tokens.onActivePlayer : null,
-        );
 
     return SingleChildScrollView(
       key: const Key('cricket-board'),
@@ -52,95 +40,122 @@ class CricketBoard extends StatelessWidget {
             style: textTheme.labelLarge,
           ),
           const SizedBox(height: 4),
-          _table(game, cell, onColumn, textTheme),
+          Table(
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            columnWidths: const {0: IntrinsicColumnWidth()},
+            defaultColumnWidth: const FlexColumnWidth(),
+            children: [
+              _row(
+                label: const SizedBox.shrink(),
+                cellOf: (score) => Text(
+                  score.player.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall,
+                ),
+                tokens: tokens,
+              ),
+              for (final number in cricketNumbers)
+                _row(
+                  label: Text(
+                    number == Dart.bullSector ? 'Bull' : '$number',
+                    style: textTheme.titleLarge?.copyWith(
+                      color: game.isDead(number) ? tokens.cricketDead : null,
+                      decoration: game.isDead(number)
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
+                  cellOf: (score) => _Mark(
+                    marks: score.marksOn(number),
+                    color: game.isDead(number)
+                        ? tokens.cricketDead
+                        : score.isClosed(number)
+                        ? tokens.cricketClosed
+                        : tokens.cricketMark,
+                    fontSize: tokens.cricketMarkFontSize,
+                  ),
+                  tokens: tokens,
+                ),
+              _row(
+                label: const SizedBox.shrink(),
+                cellOf: (score) => FittedBox(
+                  child: Text(
+                    '${score.points}',
+                    style: TextStyle(
+                      fontSize: tokens.cricketPointsFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                tokens: tokens,
+              ),
+              _row(
+                label: Text('MPR', style: textTheme.labelLarge),
+                cellOf: (score) => Text(
+                  averageLabel(game.marksPerRound(score.player)),
+                  style: textTheme.labelLarge,
+                ),
+                tokens: tokens,
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _table(
-    CricketGame game,
-    Widget Function(int, Widget) cell,
-    TextStyle Function(int, TextStyle?) onColumn,
-    TextTheme textTheme,
-  ) {
-    return Table(
-      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-      columnWidths: const {0: IntrinsicColumnWidth()},
+  /// A board row: a label, then one cell per player, the active player's
+  /// column highlighted.
+  TableRow _row({
+    required Widget label,
+    required Widget Function(CricketScore) cellOf,
+    required DartsTokens tokens,
+  }) {
+    return TableRow(
       children: [
-        TableRow(
-          children: [
-            const SizedBox.shrink(),
-            for (final (i, score) in game.scores.indexed)
-              cell(
-                i,
-                Text(
-                  score.player.name,
-                  overflow: TextOverflow.ellipsis,
-                  style: onColumn(i, textTheme.titleMedium),
-                ),
-              ),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: label,
         ),
-        for (final number in cricketNumbers)
-          TableRow(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  number == Dart.bullSector ? 'Bull' : '$number',
-                  style: textTheme.titleLarge?.copyWith(
-                    decoration: game.isDead(number)
-                        ? TextDecoration.lineThrough
-                        : null,
-                  ),
-                ),
-              ),
-              for (final (i, score) in game.scores.indexed)
-                cell(
-                  i,
-                  Text(
-                    markSymbol(score.marksOn(number)),
-                    style: onColumn(i, textTheme.headlineSmall),
-                  ),
-                ),
-            ],
+        for (final (i, score) in game.scores.indexed)
+          Container(
+            color: i == game.activeIndex
+                ? tokens.activePlayer.withValues(alpha: 0.25)
+                : null,
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            alignment: Alignment.center,
+            child: cellOf(score),
           ),
-        TableRow(
-          children: [
-            const SizedBox.shrink(),
-            for (final (i, score) in game.scores.indexed)
-              cell(
-                i,
-                Text(
-                  '${score.points}',
-                  style: onColumn(
-                    i,
-                    textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        TableRow(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text('MPR', style: textTheme.labelLarge),
-            ),
-            for (final (i, score) in game.scores.indexed)
-              cell(
-                i,
-                Text(
-                  averageLabel(game.marksPerRound(score.player)),
-                  style: onColumn(i, textTheme.labelLarge),
-                ),
-              ),
-          ],
-        ),
       ],
     );
   }
+}
+
+class _Mark extends StatelessWidget {
+  const _Mark({
+    required this.marks,
+    required this.color,
+    required this.fontSize,
+  });
+
+  final int marks;
+  final Color color;
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: fontSize * 1.2,
+    child: FittedBox(
+      child: Text(
+        markSymbol(marks),
+        style: TextStyle(
+          fontSize: fontSize,
+          color: color,
+          fontWeight: FontWeight.bold,
+          height: 1,
+        ),
+      ),
+    ),
+  );
 }
