@@ -6,10 +6,10 @@ String variantLabel(CricketVariant variant) => switch (variant) {
   CricketVariant.cutThroat => 'Cut-Throat',
 };
 
-/// "501 DO", "301 SO", "Cricket", "Cut-Throat", "Shanghai 1–7", "Killer 3v".
+/// "501 Double-out", "301 Straight-out", "Cricket", "Shanghai 1–7", …
 String configLabel(GameConfig config) => switch (config) {
   X01Config(:final startScore, :final outRule) =>
-    '$startScore ${outRule == OutRule.double ? 'DO' : 'SO'}',
+    '$startScore ${outRule == OutRule.double ? 'Double-out' : 'Straight-out'}',
   CricketConfig(:final variant) => variantLabel(variant),
   ShanghaiConfig(:final length, :final instantShanghai) => [
     'Shanghai ${switch (length) {

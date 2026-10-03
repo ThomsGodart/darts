@@ -12,7 +12,7 @@ void main() {
     expect(find.text('Reprendre la session'), findsNothing);
 
     await launchGame(tester);
-    await tester.tap(find.widgetWithText(ActionChip, '60'));
+    await tester.tap(find.widgetWithText(FilledButton, '60'));
     await tester.pump();
 
     // Relaunch the app on the same storage.

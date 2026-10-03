@@ -48,7 +48,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Which winner and averages is the facade's business; here, they show.
-    expect(find.text('Partie 1 · 40 DO'), findsOneWidget);
+    expect(find.text('Partie 1 · 40 Double-out'), findsOneWidget);
     expect(find.byKey(const Key('session-stats')), findsOneWidget);
   });
 
@@ -76,7 +76,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Annuler'));
     await tester.pumpAndSettle();
-    expect(find.text('Partie 1 · 40 DO'), findsOneWidget);
+    expect(find.text('Partie 1 · 40 Double-out'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Supprimer la session'));
     await tester.pumpAndSettle();

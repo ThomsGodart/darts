@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../session/session.dart';
+import '../theme/darts_space.dart';
 
 /// Lives, numbers and Killer status.
 class KillerBoard extends StatelessWidget {
@@ -13,7 +14,7 @@ class KillerBoard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colors = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(DartsSpace.lg),
       child: Column(
         key: const Key('killer-board'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -26,7 +27,7 @@ class KillerBoard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: textTheme.titleLarge,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: DartsSpace.md),
           for (final (i, score) in game.scores.indexed)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
@@ -35,7 +36,7 @@ class KillerBoard extends StatelessWidget {
                   if (i == game.activeIndex)
                     Icon(Icons.play_arrow, color: colors.primary)
                   else
-                    const SizedBox(width: 24),
+                    const SizedBox(width: DartsSpace.xl),
                   Expanded(
                     child: Text(
                       [
@@ -81,7 +82,7 @@ class KillerAssignInput extends StatelessWidget {
     return Material(
       color: colors.surfaceContainerHigh,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(DartsSpace.sm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -95,9 +96,9 @@ class KillerAssignInput extends StatelessWidget {
                   )
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.all(2),
+                        padding: const EdgeInsets.all(DartsSpace.xxs),
                         child: SizedBox(
-                          height: 48,
+                          height: DartsSpace.tap,
                           child: FilledButton.tonal(
                             onPressed: taken.contains(sector)
                                 ? null
@@ -112,7 +113,7 @@ class KillerAssignInput extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onUndo,
               icon: const Icon(Icons.undo),
-              label: const Text('Annuler'),
+              label: const Text('Annuler la saisie'),
             ),
           ],
         ),
@@ -143,7 +144,7 @@ class KillerPlayInput extends StatelessWidget {
     return Material(
       color: colors.surfaceContainerHigh,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(DartsSpace.sm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -155,7 +156,7 @@ class KillerPlayInput extends StatelessWidget {
               key: const Key('darts-in-visit'),
               style: textTheme.headlineSmall,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: DartsSpace.sm),
             for (var row = 0; row < 4; row++)
               Row(
                 children: [
@@ -166,9 +167,9 @@ class KillerPlayInput extends StatelessWidget {
                   )
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.all(2),
+                        padding: const EdgeInsets.all(DartsSpace.xxs),
                         child: SizedBox(
-                          height: 44,
+                          height: DartsSpace.tap,
                           child: FilledButton.tonal(
                             onPressed: () => onDart(Dart.double(sector)),
                             child: Text('D$sector'),
@@ -182,9 +183,9 @@ class KillerPlayInput extends StatelessWidget {
               children: [
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(DartsSpace.xxs),
                     child: SizedBox(
-                      height: 48,
+                      height: DartsSpace.tap,
                       child: FilledButton.tonal(
                         onPressed: () => onDart(Dart.miss),
                         child: const Text('Raté'),
@@ -194,9 +195,9 @@ class KillerPlayInput extends StatelessWidget {
                 ),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(DartsSpace.xxs),
                     child: SizedBox(
-                      height: 48,
+                      height: DartsSpace.tap,
                       child: FilledButton.tonal(
                         onPressed: onEndVisit,
                         child: const Text('Fin de tour'),
@@ -209,7 +210,7 @@ class KillerPlayInput extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onUndo,
               icon: const Icon(Icons.undo),
-              label: const Text('Annuler'),
+              label: const Text('Annuler la saisie'),
             ),
           ],
         ),

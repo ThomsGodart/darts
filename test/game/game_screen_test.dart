@@ -13,7 +13,7 @@ Future<void> startGame(WidgetTester tester) async {
 }
 
 Future<void> quickScore(WidgetTester tester, int score) async {
-  await tester.tap(find.widgetWithText(ActionChip, '$score'));
+  await tester.tap(find.widgetWithText(FilledButton, '$score'));
   await tester.pump();
 }
 
@@ -45,7 +45,7 @@ void main() {
     await startGame(tester);
     expect(activeRemaining(tester), '501');
 
-    await tester.tap(find.widgetWithText(ActionChip, '60'));
+    await tester.tap(find.widgetWithText(FilledButton, '60'));
     await tester.pump();
 
     // Joueur 2 is now up; Joueur 1 waits with 441.
@@ -116,7 +116,7 @@ void main() {
     expect(
       tester
           .widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Annuler'),
+            find.widgetWithText(OutlinedButton, 'Annuler la saisie'),
           )
           .onPressed,
       isNull,
@@ -130,7 +130,7 @@ void main() {
     expect(find.text('Joueur 1 gagne !'), findsNothing);
     expect(activeRemaining(tester), '141');
 
-    await tester.tap(find.text('Annuler'));
+    await tester.tap(find.text('Annuler la saisie'));
     await tester.pump();
     expect(find.text('Joueur 2'), findsOneWidget);
     // Joueur 2's second 26 is taken back: back to 501 - 26.
@@ -160,7 +160,7 @@ void main() {
 
     expect(find.text('Joueur 2'), findsOneWidget);
     expect(find.text('386'), findsOneWidget);
-    expect(find.widgetWithText(ActionChip, '60'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, '60'), findsOneWidget);
   });
 
   testWidgets('a dart-by-dart visit cannot switch back to total', (

@@ -51,6 +51,8 @@ class SetupController extends ChangeNotifier {
 
   List<Player> _players = const [];
   bool _disposed = false;
+  bool _loading = true;
+  String? _loadError;
   final List<Player> _picked;
   GameKind _kind;
   CricketVariant _variant;
@@ -63,6 +65,12 @@ class SetupController extends ChangeNotifier {
 
   /// Players of the catalog, by name.
   List<Player> get players => _players;
+
+  /// True until the first [load] finishes.
+  bool get loading => _loading;
+
+  /// Set when [load] fails; cleared on the next successful load.
+  String? get loadError => _loadError;
 
   /// Players picked for the game, in throwing order.
   List<Player> get picked => List.unmodifiable(_picked);
@@ -133,12 +141,20 @@ class SetupController extends ChangeNotifier {
   GameSetup get result => (players: picked, config: config);
 
   Future<void> load() async {
-    _players = await _catalog.active();
-    // A prefilled setup may carry names changed since: take the catalog's.
-    for (final (i, picked) in _picked.indexed) {
-      final current = _players.where((p) => p.id == picked.id).firstOrNull;
-      if (current != null) _picked[i] = current;
+    _loading = true;
+    _loadError = null;
+    _notify();
+    try {
+      _players = await _catalog.active();
+      // A prefilled setup may carry names changed since: take the catalog's.
+      for (final (i, picked) in _picked.indexed) {
+        final current = _players.where((p) => p.id == picked.id).firstOrNull;
+        if (current != null) _picked[i] = current;
+      }
+    } catch (_) {
+      _loadError = 'Impossible de charger les joueurs.';
     }
+    _loading = false;
     _notify();
   }
 

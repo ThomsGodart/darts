@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../session/session.dart';
+import '../theme/darts_space.dart';
 import 'setup_controller.dart';
 
 /// Picks who plays, in which order, and the rules; pops a [GameSetup].
@@ -88,32 +89,67 @@ class _SetupScreenState extends State<SetupScreen> {
       body: ListenableBuilder(
         listenable: setup,
         builder: (context, _) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(DartsSpace.lg),
           children: [
             Text('Joueurs', style: textTheme.titleLarge),
-            for (final player in setup.players)
-              CheckboxListTile(
-                value: setup.isPicked(player),
-                onChanged: setup.canPick(player)
-                    ? (_) => setup.toggle(player)
-                    : null,
-                title: Text(player.name),
-                controlAffinity: ListTileControlAffinity.leading,
-                secondary: PopupMenuButton<void Function()>(
-                  tooltip: 'Options de ${player.name}',
-                  onSelected: (action) => action(),
-                  itemBuilder: (_) => [
-                    PopupMenuItem(
-                      value: () => _rename(player),
-                      child: const Text('Renommer'),
-                    ),
-                    PopupMenuItem(
-                      value: () => _remove(player),
-                      child: const Text('Supprimer'),
-                    ),
-                  ],
+            if (setup.loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: DartsSpace.lg),
+                child: Center(
+                  child: SizedBox(
+                    key: Key('setup-catalog-loading'),
+                    width: DartsSpace.tap,
+                    height: DartsSpace.tap,
+                    child: CircularProgressIndicator(),
+                  ),
                 ),
-              ),
+              )
+            else if (setup.loadError != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: DartsSpace.md),
+                child: Text(
+                  setup.loadError!,
+                  key: const Key('setup-catalog-error'),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              )
+            else if (setup.players.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: DartsSpace.md),
+                child: Text(
+                  'Aucun joueur — ajoutez-en un ci-dessous',
+                  key: const Key('setup-catalog-empty'),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              )
+            else
+              for (final player in setup.players)
+                CheckboxListTile(
+                  value: setup.isPicked(player),
+                  onChanged: setup.canPick(player)
+                      ? (_) => setup.toggle(player)
+                      : null,
+                  title: Text(player.name),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  secondary: PopupMenuButton<void Function()>(
+                    tooltip: 'Options de ${player.name}',
+                    onSelected: (action) => action(),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: () => _rename(player),
+                        child: const Text('Renommer'),
+                      ),
+                      PopupMenuItem(
+                        value: () => _remove(player),
+                        child: const Text('Supprimer'),
+                      ),
+                    ],
+                  ),
+                ),
             TextField(
               controller: _newName,
               textCapitalization: TextCapitalization.words,
@@ -129,7 +165,7 @@ class _SetupScreenState extends State<SetupScreen> {
               onSubmitted: (_) => _addPlayer(),
             ),
             if (setup.picked.length > 1) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: DartsSpace.xl),
               Text('Ordre de jeu', style: textTheme.titleLarge),
               ReorderableListView(
                 shrinkWrap: true,
@@ -145,12 +181,12 @@ class _SetupScreenState extends State<SetupScreen> {
                 ],
               ),
             ],
-            const SizedBox(height: 24),
+            const SizedBox(height: DartsSpace.xl),
             Text('Partie', style: textTheme.titleLarge),
-            const SizedBox(height: 8),
+            const SizedBox(height: DartsSpace.sm),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: DartsSpace.sm,
+              runSpacing: DartsSpace.sm,
               children: [
                 for (final kind in GameKind.values)
                   ChoiceChip(
@@ -165,7 +201,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: DartsSpace.sm),
             ...switch (setup.kind) {
               GameKind.x01 => [
                 SegmentedButton<int>(
@@ -236,7 +272,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   showSelectedIcon: false,
                   onSelectionChanged: (s) => setup.killerLives = s.single,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: DartsSpace.sm),
                 SegmentedButton<int>(
                   segments: const [
                     ButtonSegment(value: 1, label: Text('1 double')),
@@ -248,7 +284,7 @@ class _SetupScreenState extends State<SetupScreen> {
                 ),
                 if (setup.picked.length < minKillerPlayers)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(top: DartsSpace.sm),
                     child: Text(
                       'Killer : au moins $minKillerPlayers joueurs',
                       style: textTheme.bodyMedium?.copyWith(
@@ -263,7 +299,7 @@ class _SetupScreenState extends State<SetupScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(DartsSpace.lg),
           child: ListenableBuilder(
             listenable: setup,
             builder: (context, _) => FilledButton(

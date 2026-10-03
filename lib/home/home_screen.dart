@@ -7,6 +7,7 @@ import '../setup/setup_controller.dart';
 import '../setup/setup_screen.dart';
 import '../session_controller.dart';
 import '../session_launcher.dart';
+import '../theme/darts_space.dart';
 import '../ui/persist_failure_banner.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -126,10 +127,12 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       if (setup == null || !mounted) return;
       await widget.launcher.nextGame(controller, setup);
-    } catch (error) {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Impossible de lancer la partie : $error')),
+        const SnackBar(
+          content: Text('Impossible de lancer la partie. Réessayez.'),
+        ),
       );
     } finally {
       _changingSetup = false;
@@ -177,38 +180,83 @@ class _HomeScreenState extends State<HomeScreen> {
               if (launcher.persistFailure != null) const PersistFailureBanner(),
               Expanded(
                 child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('Darts', style: textTheme.displayMedium),
-                      const SizedBox(height: 32),
-                      FutureBuilder(
-                        future: _canResume,
-                        builder: (context, snapshot) {
-                          if (snapshot.data != true) {
-                            return const SizedBox.shrink();
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: FilledButton.icon(
-                              onPressed: _resume,
-                              icon: const Icon(Icons.play_arrow),
-                              label: const Text('Reprendre la session'),
-                            ),
-                          );
-                        },
-                      ),
-                      FilledButton.tonal(
-                        onPressed: _newGame,
-                        child: const Text('Nouvelle session'),
-                      ),
-                      const SizedBox(height: 12),
-                      TextButton.icon(
-                        onPressed: _openHistory,
-                        icon: const Icon(Icons.history),
-                        label: const Text('Historique'),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(DartsSpace.lg),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Darts', style: textTheme.displayMedium),
+                        const SizedBox(height: DartsSpace.xxl),
+                        FutureBuilder(
+                          future: _canResume,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState !=
+                                ConnectionState.done) {
+                              return const Padding(
+                                padding: EdgeInsets.only(bottom: DartsSpace.md),
+                                child: SizedBox(
+                                  key: Key('home-resume-loading'),
+                                  width: DartsSpace.tap,
+                                  height: DartsSpace.tap,
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: DartsSpace.md,
+                                ),
+                                child: Text(
+                                  'Impossible de vérifier une session en cours.',
+                                  key: const Key('home-resume-error'),
+                                  textAlign: TextAlign.center,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                ),
+                              );
+                            }
+                            if (snapshot.data == true) {
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: DartsSpace.md,
+                                ),
+                                child: FilledButton.icon(
+                                  onPressed: _resume,
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('Reprendre la session'),
+                                ),
+                              );
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: DartsSpace.md,
+                              ),
+                              child: Text(
+                                'Aucune session à reprendre',
+                                key: const Key('home-resume-empty'),
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        FilledButton.tonal(
+                          onPressed: _newGame,
+                          child: const Text('Nouvelle session'),
+                        ),
+                        const SizedBox(height: DartsSpace.md),
+                        TextButton.icon(
+                          onPressed: _openHistory,
+                          icon: const Icon(Icons.history),
+                          label: const Text('Historique'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

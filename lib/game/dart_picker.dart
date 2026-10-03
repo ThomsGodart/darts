@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../session/session.dart';
+import '../theme/darts_space.dart';
 
 /// Enters one dart: pick single, double or treble, then the sector.
 class DartPicker extends StatefulWidget {
@@ -75,9 +76,9 @@ class _DartKey extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(2),
+        padding: const EdgeInsets.all(DartsSpace.xxs),
         child: SizedBox(
-          height: 44,
+          height: DartsSpace.tap,
           child: FilledButton.tonal(
             onPressed: onTap,
             style: FilledButton.styleFrom(padding: EdgeInsets.zero),

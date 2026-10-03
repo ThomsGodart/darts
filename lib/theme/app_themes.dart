@@ -21,10 +21,12 @@ ThemeData _buildDefault() {
     extensions: const [
       DartsTokens(
         activePlayer: Color(0xFFFFC107),
-        onActivePlayer: Color(0xFF1A1A1A),
-        bust: Color(0xFFE53935),
+        onActivePlayer: Color(0xFF000000),
+        // Darker red so onBust (white) clears WCAG AA 4.5:1.
+        bust: Color(0xFFB71C1C),
         onBust: Color(0xFFFFFFFF),
-        checkout: Color(0xFF43A047),
+        // Near-black green so onCheckout (white) clears WCAG AA 4.5:1.
+        checkout: Color(0xFF0B3D0F),
         onCheckout: Color(0xFFFFFFFF),
         cricketMark: Color(0xFFE0E0E0),
         cricketClosed: Color(0xFF66BB6A),

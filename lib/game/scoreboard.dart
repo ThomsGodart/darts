@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/darts_space.dart';
 import '../session/session.dart';
 import '../theme/darts_tokens.dart';
 import '../ui/average_label.dart';
@@ -68,7 +69,7 @@ class _ActivePlayer extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: tokens.activePlayer,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(DartsSpace.lg),
       child: FittedBox(
         child: Column(
           children: [
@@ -106,7 +107,7 @@ class _ActivePlayer extends StatelessWidget {
             if (checkout case final route?)
               Container(
                 key: const Key('checkout-suggestion'),
-                margin: const EdgeInsets.only(top: 8),
+                margin: const EdgeInsets.only(top: DartsSpace.sm),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 4,

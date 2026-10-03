@@ -15,12 +15,12 @@ Future<AppStorage> threePlayers() async {
 }
 
 void main() {
-  testWidgets('Changer… switches from X01 to Shanghai', (tester) async {
+  testWidgets('Partie suivante switches from X01 to Shanghai', (tester) async {
     await pumpApp(tester, await AppStorage.withTwoPlayers());
     await launchGame(tester);
     await joueur1Wins(tester);
 
-    await tester.tap(find.text('Changer…'));
+    await tester.tap(find.text('Partie suivante'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Shanghai'));
     await tester.tap(find.text('Shanghai'));
@@ -31,7 +31,9 @@ void main() {
     expect(find.byKey(const Key('shanghai-board')), findsOneWidget);
   });
 
-  testWidgets('Changer… switches from Shanghai to Killer', (tester) async {
+  testWidgets('Partie suivante switches from Shanghai to Killer', (
+    tester,
+  ) async {
     await pumpApp(tester, await threePlayers());
     await launchGame(tester, const [
       'Joueur 1',
@@ -46,7 +48,7 @@ void main() {
     await tester.tap(find.text('T1'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Changer…'));
+    await tester.tap(find.text('Partie suivante'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Killer'));
     await tester.tap(find.text('Killer'));

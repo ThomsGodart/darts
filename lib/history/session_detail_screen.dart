@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../session/session.dart';
+import '../theme/darts_space.dart';
 import '../ui/game_labels.dart';
 import '../ui/average_label.dart';
 import 'formatting.dart';
@@ -39,10 +40,12 @@ class SessionDetailScreen extends StatelessWidget {
     if (confirmed != true || !context.mounted) return;
     try {
       await onDelete();
-    } catch (error) {
+    } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Suppression impossible : $error')),
+        const SnackBar(
+          content: Text('Impossible de supprimer cette session.'),
+        ),
       );
       return;
     }
@@ -65,10 +68,10 @@ class SessionDetailScreen extends StatelessWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(DartsSpace.lg),
         children: [
           Text('Stats de la session', style: textTheme.titleLarge),
-          const SizedBox(height: 8),
+          const SizedBox(height: DartsSpace.sm),
           _StatsTable(
             key: const Key('session-stats'),
             rows: [
@@ -77,7 +80,7 @@ class SessionDetailScreen extends StatelessWidget {
             ],
           ),
           for (final (i, game) in state.games.indexed) ...[
-            const SizedBox(height: 24),
+            const SizedBox(height: DartsSpace.xl),
             Text(
               'Partie ${i + 1} · ${configLabel(game.config)}',
               style: textTheme.titleMedium,
@@ -86,7 +89,7 @@ class SessionDetailScreen extends StatelessWidget {
               final winner? => 'Gagnant : ${winner.name}',
               null => 'Non terminée',
             }, style: textTheme.bodyMedium),
-            const SizedBox(height: 4),
+            const SizedBox(height: DartsSpace.xs),
             _StatsTable(
               rows: switch (game) {
                 X01Game(:final scores) => [

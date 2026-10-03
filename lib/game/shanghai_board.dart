@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/darts_space.dart';
 import '../session/session.dart';
 
 /// Scores and the number of the round for a Shanghai game.
@@ -13,7 +14,7 @@ class ShanghaiBoard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colors = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(DartsSpace.lg),
       child: Column(
         key: const Key('shanghai-board'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -24,7 +25,7 @@ class ShanghaiBoard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: textTheme.displaySmall,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: DartsSpace.lg),
           for (final (i, score) in game.scores.indexed)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
@@ -33,7 +34,7 @@ class ShanghaiBoard extends StatelessWidget {
                   if (i == game.activeIndex)
                     Icon(Icons.play_arrow, color: colors.primary)
                   else
-                    const SizedBox(width: 24),
+                    const SizedBox(width: DartsSpace.xl),
                   Expanded(
                     child: Text(
                       score.player.name,
@@ -76,7 +77,7 @@ class ShanghaiInput extends StatelessWidget {
     return Material(
       color: colors.surfaceContainerHigh,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(DartsSpace.sm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -88,7 +89,7 @@ class ShanghaiInput extends StatelessWidget {
               key: const Key('darts-in-visit'),
               style: textTheme.headlineSmall,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: DartsSpace.sm),
             Row(
               children: [
                 _Key(
@@ -111,13 +112,13 @@ class ShanghaiInput extends StatelessWidget {
                 _Key(label: 'Fin de tour', onTap: onEndVisit),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: DartsSpace.xs),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: onUndo,
                 icon: const Icon(Icons.undo),
-                label: const Text('Annuler'),
+                label: const Text('Annuler la saisie'),
               ),
             ),
           ],
@@ -137,7 +138,7 @@ class _Key extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(2),
+        padding: const EdgeInsets.all(DartsSpace.xxs),
         child: SizedBox(
           height: 52,
           child: FilledButton.tonal(onPressed: onTap, child: Text(label)),

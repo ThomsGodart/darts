@@ -4,9 +4,9 @@
 
 **Blocked by:** 01 Tokens spacing/type + contrastes
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Home : empty / loading / error compréhensible
-- [ ] Setup : empty / loading / error catalogue
-- [ ] Pas de SnackBar `$error` brut sur ces flux
-- [ ] Widget tests des trois états (au moins empty + loading) sur Home et Setup
+- [x] Home : empty / loading / error compréhensible
+- [x] Setup : empty / loading / error catalogue
+- [x] Pas de SnackBar `$error` brut sur ces flux
+- [x] Widget tests des trois états (au moins empty + loading) sur Home et Setup

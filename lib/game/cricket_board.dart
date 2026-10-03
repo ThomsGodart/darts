@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/darts_space.dart';
 import '../session/session.dart';
 import '../theme/darts_tokens.dart';
 import '../ui/average_label.dart';
@@ -28,7 +29,7 @@ class CricketBoard extends StatelessWidget {
 
     return SingleChildScrollView(
       key: const Key('cricket-board'),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(DartsSpace.sm),
       child: Column(
         children: [
           Text(
@@ -40,7 +41,7 @@ class CricketBoard extends StatelessWidget {
             key: const Key('cricket-variant'),
             style: textTheme.labelLarge,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: DartsSpace.xs),
           Table(
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             columnWidths: const {0: IntrinsicColumnWidth()},

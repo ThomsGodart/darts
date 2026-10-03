@@ -4,9 +4,9 @@
 
 **Blocked by:** None (can start immediately) — requires v1.3 shipped.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Spacing + type tokens ; gaps courants sans littéraux ad hoc
-- [ ] Checkout (et autres sémantiques critiques) ≥ 4.5:1
-- [ ] Scoreboard-first préservé (reste / nom actifs)
-- [ ] Tests thème/contraste (prior art app_themes tests)
+- [x] Spacing + type tokens ; gaps courants sans littéraux ad hoc
+- [x] Checkout (et autres sémantiques critiques) ≥ 4.5:1
+- [x] Scoreboard-first préservé (reste / nom actifs)
+- [x] Tests thème/contraste (prior art app_themes tests)

@@ -1,8 +1,7 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../theme/darts_space.dart';
 import '../session/session.dart';
 import '../session_controller.dart';
 import '../session_launcher.dart';
@@ -51,19 +50,12 @@ class _GameScreenState extends State<GameScreen> {
   /// Name shown by the turn banner; null when no banner shows.
   String? _bannerPlayerName;
 
-  /// Pointer-downs on the screen, to measure taps per visit (debug only).
-  int _taps = 0;
-  int _visitsCounted = 0;
-
   @override
   void initState() {
     super.initState();
     _gamesSeen = controller.state.games.length;
     _visitsSeen = controller.state.game!.visitsPlayed;
     controller.addListener(_onGameChanged);
-    if (kDebugMode) {
-      GestureBinding.instance.pointerRouter.addGlobalRoute(_countTap);
-    }
     // Game screens may rotate; home/setup stay natural portrait when we leave.
     SystemChrome.setPreferredOrientations(const [
       DeviceOrientation.portraitUp,
@@ -77,16 +69,9 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void dispose() {
     controller.removeListener(_onGameChanged);
-    if (kDebugMode) {
-      GestureBinding.instance.pointerRouter.removeGlobalRoute(_countTap);
-    }
     if (_screenKeptOn) widget.screenAwake.release();
     SystemChrome.setPreferredOrientations(const [DeviceOrientation.portraitUp]);
     super.dispose();
-  }
-
-  void _countTap(PointerEvent event) {
-    if (event is PointerDownEvent) _taps++;
   }
 
   void _onGameChanged() {
@@ -103,7 +88,6 @@ class _GameScreenState extends State<GameScreen> {
     } else if (game.visitsPlayed < _visitsSeen) {
       setState(() => _bannerPlayerName = null);
     }
-    if (!isNewGame) _visitsCounted += game.visitsPlayed - _visitsSeen;
     _gamesSeen = state.games.length;
     _visitsSeen = game.visitsPlayed;
     _syncScreenAwake();
@@ -190,13 +174,6 @@ class _GameScreenState extends State<GameScreen> {
                   playerName: bannerPlayerName,
                   onDone: () => setState(() => _bannerPlayerName = null),
                 ),
-              ),
-            if (kDebugMode)
-              Positioned(
-                // Keep clear of the landscape input pad (top-right).
-                bottom: 4,
-                left: 8,
-                child: _TapCounter(taps: _taps, visits: _visitsCounted),
               ),
           ],
         );
@@ -318,7 +295,7 @@ class _GameOverPanel extends StatelessWidget {
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(DartsSpace.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -326,7 +303,7 @@ class _GameOverPanel extends StatelessWidget {
               '${game.winner!.name} gagne !',
               style: textTheme.headlineMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: DartsSpace.sm),
             Table(
               key: const Key('game-averages'),
               columnWidths: const {0: FlexColumnWidth()},
@@ -348,7 +325,7 @@ class _GameOverPanel extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: DartsSpace.lg),
             SizedBox(
               width: double.infinity,
               height: 56,
@@ -358,16 +335,16 @@ class _GameOverPanel extends StatelessWidget {
                 label: Text('Rejouer', style: textTheme.titleLarge),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: DartsSpace.sm),
             Wrap(
               alignment: WrapAlignment.center,
-              spacing: 8,
+              spacing: DartsSpace.sm,
               children: [
                 if (onChangeSetup != null)
                   TextButton.icon(
                     onPressed: onChangeSetup,
                     icon: const Icon(Icons.group),
-                    label: const Text('Changer…'),
+                    label: const Text('Partie suivante'),
                   ),
                 TextButton.icon(
                   onPressed: onUndo,
@@ -472,21 +449,4 @@ class _Cell extends StatelessWidget {
     padding: const EdgeInsets.only(left: 16),
     child: Text(text, textAlign: TextAlign.end, style: style),
   );
-}
-
-/// Debug-only measure of the "≤ 2 taps per visit" goal.
-class _TapCounter extends StatelessWidget {
-  const _TapCounter({required this.taps, required this.visits});
-
-  final int taps;
-  final int visits;
-
-  @override
-  Widget build(BuildContext context) {
-    if (visits <= 0) return const SizedBox.shrink();
-    return Text(
-      '${(taps / visits).toStringAsFixed(1)} taps/volée',
-      style: Theme.of(context).textTheme.labelSmall,
-    );
-  }
 }

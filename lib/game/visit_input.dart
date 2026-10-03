@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../session/session.dart';
+import '../theme/darts_space.dart';
 import 'dart_picker.dart';
 
 /// Visit totals players hit most often, entered in a single tap.
@@ -62,7 +63,7 @@ class _VisitInputState extends State<VisitInput> {
     return Material(
       color: colors.surfaceContainerHigh,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(DartsSpace.sm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -74,7 +75,7 @@ class _VisitInputState extends State<VisitInput> {
                     ? null
                     : (value) => setState(() => _dartByDart = value),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: DartsSpace.sm),
             ],
             if (_inDartMode) ...[
               Text(
@@ -85,22 +86,22 @@ class _VisitInputState extends State<VisitInput> {
                 key: const Key('darts-in-visit'),
                 style: textTheme.headlineSmall,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: DartsSpace.sm),
               DartPicker(onDart: widget.onDart),
             ] else
               ..._totalPad(textTheme),
-            const SizedBox(height: 4),
+            const SizedBox(height: DartsSpace.xs),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: widget.onUndo,
                     icon: const Icon(Icons.undo),
-                    label: const Text('Annuler'),
+                    label: const Text('Annuler la saisie'),
                   ),
                 ),
                 if (!_inDartMode) ...[
-                  const SizedBox(width: 6),
+                  const SizedBox(width: DartsSpace.sm),
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => _submit(0),
@@ -117,25 +118,30 @@ class _VisitInputState extends State<VisitInput> {
   }
 
   List<Widget> _totalPad(TextTheme textTheme) => [
+    // Quick-scores are primary: filled, large targets.
     Wrap(
-      spacing: 6,
-      runSpacing: 6,
+      spacing: DartsSpace.sm,
+      runSpacing: DartsSpace.sm,
       alignment: WrapAlignment.center,
       children: [
         for (final score in quickScores)
-          ActionChip(
-            label: Text('$score', style: textTheme.titleMedium),
-            onPressed: () => _submit(score),
+          SizedBox(
+            height: DartsSpace.tap,
+            child: FilledButton(
+              onPressed: () => _submit(score),
+              child: Text('$score', style: textTheme.titleMedium),
+            ),
           ),
       ],
     ),
-    const SizedBox(height: 8),
+    const SizedBox(height: DartsSpace.sm),
     Text(
       _typed.isEmpty ? '–' : _typed,
       key: const Key('typed-total'),
       style: textTheme.headlineMedium,
     ),
-    const SizedBox(height: 8),
+    const SizedBox(height: DartsSpace.sm),
+    // Digits are secondary to the quick-scores.
     for (final row in const [
       [1, 2, 3],
       [4, 5, 6],
@@ -201,9 +207,9 @@ class _PadKey extends StatelessWidget {
     final child = Text(label, style: style);
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(3),
+        padding: const EdgeInsets.all(DartsSpace.xxs),
         child: SizedBox(
-          height: 48,
+          height: DartsSpace.tap,
           child: emphasized
               ? FilledButton(onPressed: onTap, child: child)
               : FilledButton.tonal(onPressed: onTap, child: child),

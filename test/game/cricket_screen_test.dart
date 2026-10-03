@@ -64,14 +64,14 @@ void main() {
     );
   });
 
-  testWidgets('Changer… switches from X01 to cricket mid-session', (
+  testWidgets('Partie suivante switches from X01 to cricket mid-session', (
     tester,
   ) async {
     await pumpApp(tester, await AppStorage.withTwoPlayers());
     await launchGame(tester);
     await joueur1Wins(tester);
 
-    await tester.tap(find.text('Changer…'));
+    await tester.tap(find.text('Partie suivante'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Cricket'));
     await tester.tap(find.text('Cricket'));

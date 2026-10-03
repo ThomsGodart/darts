@@ -27,13 +27,15 @@ void main() {
     expect(activeRemaining(tester), '501');
   });
 
-  testWidgets('Changer… lets a late player join the next game', (tester) async {
+  testWidgets('Partie suivante lets a late player join the next game', (
+    tester,
+  ) async {
     final storage = await AppStorage.withTwoPlayers();
     await pumpApp(tester, storage);
     await launchGame(tester);
     await joueur1Wins(tester);
 
-    await tester.tap(find.text('Changer…'));
+    await tester.tap(find.text('Partie suivante'));
     await tester.pumpAndSettle();
     expect(find.text('Partie suivante'), findsOneWidget);
 
@@ -83,7 +85,7 @@ void main() {
     final storage = await AppStorage.withTwoPlayers();
     await pumpApp(tester, storage);
     await launchGame(tester);
-    await tester.tap(find.widgetWithText(ActionChip, '60'));
+    await tester.tap(find.widgetWithText(FilledButton, '60'));
     await tester.pump();
     // Leave the game mid-way with the system back gesture.
     await tester.binding.handlePopRoute();

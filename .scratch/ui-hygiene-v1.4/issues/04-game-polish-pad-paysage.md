@@ -4,9 +4,9 @@
 
 **Blocked by:** 01 Tokens spacing/type + contrastes
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Hiérarchie pad X01 (quick-scores > digits) ; one-tap préservé
-- [ ] Pas de chrome debug visible hors kDebug intentionally gated
-- [ ] Targets ≥ 48 dp + pas d’overflow paysage sur les 4 jeux
-- [ ] Smoke widget / surface landscape ; pas de régression saisie
+- [x] Hiérarchie pad X01 (quick-scores > digits) ; one-tap préservé
+- [x] Pas de chrome debug visible hors kDebug intentionally gated
+- [x] Targets ≥ 48 dp + pas d’overflow paysage sur les 4 jeux
+- [x] Smoke widget / surface landscape ; pas de régression saisie

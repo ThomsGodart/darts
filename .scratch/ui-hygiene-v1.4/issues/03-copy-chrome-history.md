@@ -4,9 +4,9 @@
 
 **Blocked by:** 01 Tokens spacing/type + contrastes
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Undo saisie renommé de façon honnête
-- [ ] « Changer… » → libellé honnête type « Partie suivante »
-- [ ] History : Double-out / Straight-out (ou libellés FR clairs)
-- [ ] Tests / smoke vérifiant les chaînes clés
+- [x] Undo saisie renommé de façon honnête
+- [x] « Changer… » → libellé honnête type « Partie suivante »
+- [x] History : Double-out / Straight-out (ou libellés FR clairs)
+- [x] Tests / smoke vérifiant les chaînes clés

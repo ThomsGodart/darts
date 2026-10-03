@@ -9,3 +9,7 @@
 - [ ] Décision go/no-go documentée sous Comments après soirées Cricket
 - [ ] Si go : marks lisibles à ~2–3 m (glyphes ou équivalent) + tests/smoke matrice
 - [ ] Si no-go : Status → wontfix
+
+## Comments
+
+- 2026-10-03: pas de feedback soirée v1.1 « pastilles illisibles » — ticket laissé bloqué (hors implémentation v1.4).

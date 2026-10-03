@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/darts_space.dart';
 
 /// Warns that local storage stopped accepting writes.
 class PersistFailureBanner extends StatelessWidget {
@@ -18,7 +19,7 @@ class PersistFailureBanner extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: scheme.onErrorContainer),
-            const SizedBox(width: 12),
+            const SizedBox(width: DartsSpace.md),
             Expanded(
               child: Text(
                 message,

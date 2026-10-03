@@ -42,8 +42,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
         future: _history,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(
-              child: Text('Historique illisible : ${snapshot.error}'),
+            return const Center(
+              child: Text(
+                'Impossible de charger l’historique.',
+                key: Key('history-load-error'),
+                textAlign: TextAlign.center,
+              ),
             );
           }
           final history = snapshot.data;

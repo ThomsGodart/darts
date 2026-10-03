@@ -62,7 +62,7 @@ void main() {
       await pumpGame(tester);
       expect(find.byKey(const Key('turn-banner')), findsNothing);
 
-      await tester.tap(find.widgetWithText(ActionChip, '60'));
+      await tester.tap(find.widgetWithText(FilledButton, '60'));
       await tester.pump();
 
       final banner = find.byKey(const Key('turn-banner'));
@@ -78,7 +78,7 @@ void main() {
 
     testWidgets('no banner on an undo', (tester) async {
       final controller = await pumpGame(tester);
-      await tester.tap(find.widgetWithText(ActionChip, '60'));
+      await tester.tap(find.widgetWithText(FilledButton, '60'));
       await tester.pumpAndSettle();
 
       controller.undo();
@@ -88,7 +88,7 @@ void main() {
 
     testWidgets('an undo during the banner hides it', (tester) async {
       final controller = await pumpGame(tester);
-      await tester.tap(find.widgetWithText(ActionChip, '60'));
+      await tester.tap(find.widgetWithText(FilledButton, '60'));
       await tester.pump();
       expect(find.byKey(const Key('turn-banner')), findsOneWidget);
 
@@ -99,10 +99,10 @@ void main() {
 
     testWidgets('the banner never blocks the next input', (tester) async {
       await pumpGame(tester);
-      await tester.tap(find.widgetWithText(ActionChip, '60'));
+      await tester.tap(find.widgetWithText(FilledButton, '60'));
       await tester.pump();
 
-      await tester.tap(find.widgetWithText(ActionChip, '45'));
+      await tester.tap(find.widgetWithText(FilledButton, '45'));
       await tester.pump();
       expect(find.text('456'), findsOneWidget);
     });
@@ -137,9 +137,9 @@ void main() {
     });
   });
 
-  testWidgets('debug builds count taps per visit', (tester) async {
+  testWidgets('no player-facing tap-count HUD', (tester) async {
     await pumpGame(tester);
-    await tester.tap(find.widgetWithText(ActionChip, '60'));
+    await tester.tap(find.widgetWithText(FilledButton, '60'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, '4'));
     await tester.pump();
@@ -148,7 +148,6 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'OK'));
     await tester.pump();
 
-    // 1 tap + 3 taps over 2 visits.
-    expect(find.text('2.0 taps/volée'), findsOneWidget);
+    expect(find.textContaining('taps/volée'), findsNothing);
   });
 }
