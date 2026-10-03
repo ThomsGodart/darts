@@ -9,6 +9,7 @@ import '../session_launcher.dart';
 import '../ui/average_label.dart';
 import '../ui/persist_failure_banner.dart';
 import 'cricket_board.dart';
+import 'game_shell.dart';
 import 'killer_board.dart';
 import 'scoreboard.dart';
 import 'screen_awake.dart';
@@ -63,6 +64,13 @@ class _GameScreenState extends State<GameScreen> {
     if (kDebugMode) {
       GestureBinding.instance.pointerRouter.addGlobalRoute(_countTap);
     }
+    // Game screens may rotate; home/setup stay natural portrait when we leave.
+    SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _syncScreenAwake();
   }
 
@@ -73,6 +81,7 @@ class _GameScreenState extends State<GameScreen> {
       GestureBinding.instance.pointerRouter.removeGlobalRoute(_countTap);
     }
     if (_screenKeptOn) widget.screenAwake.release();
+    SystemChrome.setPreferredOrientations(const [DeviceOrientation.portraitUp]);
     super.dispose();
   }
 
@@ -115,68 +124,62 @@ class _GameScreenState extends State<GameScreen> {
       builder: (context, _) {
         final game = controller.state.game!;
         final bannerPlayerName = _bannerPlayerName;
+        final statePane = switch (game) {
+          final X01Game game => Scoreboard(game: game),
+          final CricketGame game => CricketBoard(game: game),
+          final ShanghaiGame game => ShanghaiBoard(game: game),
+          final KillerGame game => KillerBoard(game: game),
+        };
+        final inputPane = game.isFinished
+            ? _GameOverPanel(
+                session: controller.state,
+                onRematch: controller.rematch,
+                onUndo: controller.undo,
+                onChangeSetup: widget.onChangeSetup,
+                onEnd: () => _endSession(context),
+              )
+            : switch (game) {
+                final KillerGame game
+                    when game.phase == KillerPhase.assigning =>
+                  KillerAssignInput(
+                    key: ValueKey('assign-${game.activeIndex}'),
+                    taken: game.takenNumbers,
+                    onAssign: controller.assignNumber,
+                    onUndo: controller.canUndo ? controller.undo : null,
+                  ),
+                final KillerGame game => KillerPlayInput(
+                  key: ValueKey(game.visitsPlayed),
+                  dartsInVisit: game.dartsInVisit,
+                  onDart: controller.throwDart,
+                  onEndVisit: () => _endVisit(controller),
+                  onUndo: controller.canUndo ? controller.undo : null,
+                ),
+                final ShanghaiGame game => ShanghaiInput(
+                  key: ValueKey(game.visitsPlayed),
+                  number: game.currentNumber,
+                  dartsInVisit: game.dartsInVisit,
+                  onDart: controller.throwDart,
+                  onEndVisit: () => _endVisit(controller),
+                  onUndo: controller.canUndo ? controller.undo : null,
+                ),
+                final X01Game game => VisitInput(
+                  key: ValueKey(game.visitsPlayed),
+                  onSubmit: (score) => _submit(context, game, score),
+                  onDart: controller.throwDart,
+                  dartsInVisit: game.dartsInVisit,
+                  onUndo: controller.canUndo ? controller.undo : null,
+                ),
+                CricketGame() => VisitInput(
+                  key: ValueKey(game.visitsPlayed),
+                  onSubmit: null,
+                  onDart: controller.throwDart,
+                  dartsInVisit: game.dartsInVisit,
+                  onUndo: controller.canUndo ? controller.undo : null,
+                ),
+              };
         return Stack(
           children: [
-            Column(
-              children: [
-                Expanded(
-                  child: switch (game) {
-                    final X01Game game => Scoreboard(game: game),
-                    final CricketGame game => CricketBoard(game: game),
-                    final ShanghaiGame game => ShanghaiBoard(game: game),
-                    final KillerGame game => KillerBoard(game: game),
-                  },
-                ),
-                if (game.isFinished)
-                  _GameOverPanel(
-                    session: controller.state,
-                    onRematch: controller.rematch,
-                    onUndo: controller.undo,
-                    onChangeSetup: widget.onChangeSetup,
-                    onEnd: () => _endSession(context),
-                  )
-                else
-                  switch (game) {
-                    final KillerGame game
-                        when game.phase == KillerPhase.assigning =>
-                      KillerAssignInput(
-                        key: ValueKey('assign-${game.activeIndex}'),
-                        taken: game.takenNumbers,
-                        onAssign: controller.assignNumber,
-                        onUndo: controller.canUndo ? controller.undo : null,
-                      ),
-                    final KillerGame game => KillerPlayInput(
-                      key: ValueKey(game.visitsPlayed),
-                      dartsInVisit: game.dartsInVisit,
-                      onDart: controller.throwDart,
-                      onEndVisit: () => _endVisit(controller),
-                      onUndo: controller.canUndo ? controller.undo : null,
-                    ),
-                    final ShanghaiGame game => ShanghaiInput(
-                      key: ValueKey(game.visitsPlayed),
-                      number: game.currentNumber,
-                      dartsInVisit: game.dartsInVisit,
-                      onDart: controller.throwDart,
-                      onEndVisit: () => _endVisit(controller),
-                      onUndo: controller.canUndo ? controller.undo : null,
-                    ),
-                    final X01Game game => VisitInput(
-                      key: ValueKey(game.visitsPlayed),
-                      onSubmit: (score) => _submit(context, game, score),
-                      onDart: controller.throwDart,
-                      dartsInVisit: game.dartsInVisit,
-                      onUndo: controller.canUndo ? controller.undo : null,
-                    ),
-                    CricketGame() => VisitInput(
-                      key: ValueKey(game.visitsPlayed),
-                      onSubmit: null,
-                      onDart: controller.throwDart,
-                      dartsInVisit: game.dartsInVisit,
-                      onUndo: controller.canUndo ? controller.undo : null,
-                    ),
-                  },
-              ],
-            ),
+            GameShell(statePane: statePane, inputPane: inputPane),
             if (bannerPlayerName != null)
               Positioned(
                 top: 0,
@@ -190,8 +193,9 @@ class _GameScreenState extends State<GameScreen> {
               ),
             if (kDebugMode)
               Positioned(
-                top: 4,
-                right: 8,
+                // Keep clear of the landscape input pad (top-right).
+                bottom: 4,
+                left: 8,
                 child: _TapCounter(taps: _taps, visits: _visitsCounted),
               ),
           ],

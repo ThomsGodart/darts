@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../game/game_screen.dart';
 import '../history/history_screen.dart';
+import '../settings/settings_screen.dart';
 import '../setup/setup_controller.dart';
 import '../setup/setup_screen.dart';
 import '../session_controller.dart';
@@ -111,6 +112,9 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   );
 
+  Future<void> _openSettings() => Navigator.of(context)
+      .push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+
   /// Between games: the setup screen, starting from the last game.
   Future<void> _changeSetup(SessionController controller) async {
     if (_changingSetup) return;
@@ -155,6 +159,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final textTheme = Theme.of(context).textTheme;
     final launcher = widget.launcher;
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            key: const Key('settings-button'),
+            tooltip: 'Réglages',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: _openSettings,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListenableBuilder(
           listenable: launcher,

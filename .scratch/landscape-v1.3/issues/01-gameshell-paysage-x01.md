@@ -4,10 +4,10 @@
 
 **Blocked by:** None (can start immediately) — requires v1.2 shipped.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Shell de layout jeu (slots état / saisie) branché sur X01
-- [ ] Portrait = stack actuel sans régression fonctionnelle
-- [ ] Paysage/wide = split ~50/50 ou 40/60 sans overflow bloquant sur téléphone courant
-- [ ] Rotation mid-visite conserve controller / visite en cours
-- [ ] Widget tests surface portrait + paysage (prior art game screen tests)
+- [x] Shell de layout jeu (slots état / saisie) branché sur X01
+- [x] Portrait = stack actuel sans régression fonctionnelle
+- [x] Paysage/wide = split ~50/50 ou 40/60 sans overflow bloquant sur téléphone courant
+- [x] Rotation mid-visite conserve controller / visite en cours
+- [x] Widget tests surface portrait + paysage (prior art game screen tests)

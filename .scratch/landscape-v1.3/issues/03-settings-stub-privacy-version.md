@@ -4,9 +4,9 @@
 
 **Blocked by:** None (can start immediately) — parallel with 01 ; requires v1.2 for product sequencing only.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Entrée Settings visible depuis Home
-- [ ] Privacy scrollable lisible offline
-- [ ] Version affichée (package_info ou équivalent)
-- [ ] Smoke widget : ouverture + présence version + scroll privacy
+- [x] Entrée Settings visible depuis Home
+- [x] Privacy scrollable lisible offline
+- [x] Version affichée (package_info ou équivalent)
+- [x] Smoke widget : ouverture + présence version + scroll privacy

@@ -1,0 +1,23 @@
+Politique de confidentialité
+
+Darts Points Counter (ci-après « l’application ») est un compteur de fléchettes
+local-first. Les données de jeu (sessions, joueurs, scores) sont stockées sur
+votre appareil.
+
+Données collectées
+- Aucun compte n’est requis.
+- Aucune donnée de jeu n’est envoyée à un serveur pour le fonctionnement normal
+  de l’application.
+- Si un reporting de plantages est activé dans une version ultérieure, seuls
+  des rapports de crash techniques pourront être transmis, sans analytics
+  comportementaux.
+
+Partage
+- Nous ne vendons pas vos données.
+- Pas de publicité dans l’application.
+
+Contact
+- Pour toute question relative à cette politique, contactez le mainteneur de
+  l’application via la fiche Google Play lorsque l’application y est publiée.
+
+Dernière mise à jour : octobre 2026

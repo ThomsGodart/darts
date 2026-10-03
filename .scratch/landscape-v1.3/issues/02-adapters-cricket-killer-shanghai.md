@@ -4,9 +4,9 @@
 
 **Blocked by:** 01 GameShell paysage + X01
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Cricket paysage : matrice | grille D/S/T
-- [ ] Killer paysage : vies/OUT/statut (ou attribution) | grille / picker
-- [ ] Shanghai paysage : scores + chiffre du tour | grille S/D/T
-- [ ] Smoke widget paysage au moins un écran par kind ; pas de régression portrait
+- [x] Cricket paysage : matrice | grille D/S/T
+- [x] Killer paysage : vies/OUT/statut (ou attribution) | grille / picker
+- [x] Shanghai paysage : scores + chiffre du tour | grille S/D/T
+- [x] Smoke widget paysage au moins un écran par kind ; pas de régression portrait
