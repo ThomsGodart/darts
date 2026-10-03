@@ -1,5 +1,5 @@
 name: darts_points_counter
-description: "A new Flutter project."
+description: "Compteur de fléchettes offline — sessions X01, Cricket, Killer, Shanghai."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -38,6 +38,8 @@ dependencies:
   drift: ^2.35.1
   drift_flutter: ^0.3.1
   wakelock_plus: ^1.8.1
+  firebase_core: ^4.15.0
+  firebase_crashlytics: ^5.4.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

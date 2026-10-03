@@ -6,7 +6,11 @@
 
 **Status:** ready-for-human
 
-- [ ] Textes FR (titre, short, full) prêts à coller dans Play Console
+- [x] Textes FR (titre, short, full) prêts à coller dans Play Console
 - [ ] 4–8 screenshots incluant paysage
 - [ ] Icône + feature graphic
-- [ ] Mentions gratuit / sans pubs / local dans le copy
+- [x] Mentions gratuit / sans pubs / local dans le copy
+
+## Comments
+
+- 2026-10-03: brouillon textes dans `docs/release/play-listing-fr.md`. Screenshots / icône / feature graphic restent humains.

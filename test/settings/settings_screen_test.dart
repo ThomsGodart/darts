@@ -16,5 +16,7 @@ void main() {
     expect(find.text(appVersionName), findsOneWidget);
     expect(find.byKey(const Key('privacy-policy')), findsOneWidget);
     expect(find.textContaining('local-first'), findsOneWidget);
+    expect(find.textContaining('Crashlytics'), findsOneWidget);
+    expect(find.textContaining('analytics comportementaux'), findsOneWidget);
   });
 }

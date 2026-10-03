@@ -6,18 +6,25 @@ votre appareil.
 
 Données collectées
 - Aucun compte n’est requis.
-- Aucune donnée de jeu n’est envoyée à un serveur pour le fonctionnement normal
-  de l’application.
-- Si un reporting de plantages est activé dans une version ultérieure, seuls
-  des rapports de crash techniques pourront être transmis, sans analytics
-  comportementaux.
+- Aucune donnée de jeu (scores, noms, sessions) n’est envoyée à un serveur pour
+  le fonctionnement normal de l’application.
+- Dans les builds de production, l’application peut transmettre des rapports de
+  plantage techniques (Firebase Crashlytics) afin de corriger des bugs. Ces
+  rapports concernent uniquement les crashes : pas d’analytics comportementaux,
+  pas de suivi publicitaire, pas de profilage.
 
 Partage
 - Nous ne vendons pas vos données.
-- Pas de publicité dans l’application.
+- Pas de publicité ni d’achats intégrés dans l’application.
+- Les rapports de crash, lorsqu’ils sont activés, sont traités par Google
+  Firebase selon leur politique respective.
+
+Stockage local
+- Les sessions et le catalogue de joueurs restent sur l’appareil (base locale).
+- Désinstaller l’application efface ces données locales.
 
 Contact
-- Pour toute question relative à cette politique, contactez le mainteneur de
-  l’application via la fiche Google Play lorsque l’application y est publiée.
+- Pour toute question relative à cette politique, contactez le mainteneur via
+  la fiche Google Play lorsque l’application y est publiée.
 
 Dernière mise à jour : octobre 2026

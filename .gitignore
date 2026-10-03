@@ -57,3 +57,9 @@ package-lock.json
 # Supabase CLI local state
 supabase/.branches/
 supabase/.temp/
+
+# Firebase / Play release secrets (see docs/release/android-1.0.0.md)
+android/app/google-services.json
+android/key.properties
+*.jks
+*.keystore

@@ -4,9 +4,16 @@
 
 **Blocked by:** 01 Crashlytics + privacy / Data safety
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
-- [ ] versionName / versionCode = 1.0.0
-- [ ] Signing release documenté ; aucune clé dans le dépôt
-- [ ] Build release installable ; pas de bannières/debug joueur-facing
-- [ ] Smoke manuel ou automatisé du parcours Session de base
+- [x] versionName / versionCode = 1.0.0 (`pubspec` + `appVersionName`)
+- [x] Signing Gradle + `key.properties.example` ; secrets gitignored ; docs
+- [x] `flutter build apk --release` OK (fallback debug signing sans keystore)
+- [x] Smoke widget parcours Session (suite existante)
+- [ ] Changer `applicationId` hors `com.example…` avant premier upload
+- [ ] Créer keystore + `android/key.properties` ; AAB signé upload-ready
+- [ ] Smoke manuel install release sur device
+
+## Comments
+
+- 2026-10-03: agent — version 1.0.0, signing conditionnel, docs release. Upload Play = humain (id + keystore).
