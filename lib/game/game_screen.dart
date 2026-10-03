@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../soiree/soiree.dart';
 import '../soiree_controller.dart';
+import '../ui/average_label.dart';
 import 'scoreboard.dart';
 import 'screen_awake.dart';
 import 'turn_banner.dart';
@@ -233,8 +234,6 @@ class _GameOverPanel extends StatelessWidget {
   final Future<void> Function()? onChangeSetup;
   final VoidCallback onEnd;
 
-  static String _average(double? value) => value?.toStringAsFixed(1) ?? '–';
-
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -270,9 +269,9 @@ class _GameOverPanel extends StatelessWidget {
                   TableRow(
                     children: [
                       Text(score.player.name, style: textTheme.titleMedium),
-                      _Cell(_average(score.threeDartAverage)),
+                      _Cell(averageLabel(score.threeDartAverage)),
                       if (showSoiree)
-                        _Cell(_average(soiree.averageOf(score.player))),
+                        _Cell(averageLabel(soiree.averageOf(score.player))),
                     ],
                   ),
               ],

@@ -104,19 +104,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return confirmed ?? false;
   }
 
-  Future<void> _openHistory() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => HistoryScreen(launcher: widget.launcher),
-      ),
-    );
-    if (!mounted) return;
-    // The open soirée may have been deleted from the history.
-    final canResume = widget.launcher.canResume();
-    setState(() {
-      _canResume = canResume;
-    });
-  }
+  Future<void> _openHistory() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => HistoryScreen(launcher: widget.launcher),
+    ),
+  );
 
   /// Between games: the setup screen, starting from the last game.
   Future<void> _changeSetup(SoireeController controller) async {

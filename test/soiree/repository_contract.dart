@@ -161,23 +161,28 @@ void repositoryContract(
         expect(await open().history(), isEmpty);
       });
 
-      test('every soirée with a game, newest first', () async {
+      test('ended soirées only, newest first', () async {
         final repository = open();
         final first = await repository.create();
         first
           ..startGame([alice, bob])
           ..endSoiree();
-        await repository.create(); // never played: not history
+        (await repository.create()).endSoiree(); // never played
         final second = await repository.create();
-        second.startGame([bob]);
+        second
+          ..startGame([bob])
+          ..endSoiree();
+        (await repository.create()).startGame([alice]); // still open
 
         final history = await (await relaunch(repository)).history();
 
-        expect(history, hasLength(2));
-        expect(history.first.state.players, [bob]);
-        expect(history.first.state.isEnded, isFalse);
-        expect(history.last.state.players, [alice, bob]);
-        expect(history.last.state.isEnded, isTrue);
+        expect(
+          [for (final r in history) r.state.players],
+          [
+            [bob],
+            [alice, bob],
+          ],
+        );
         expect(history.first.id, isNot(history.last.id));
         expect(
           history.first.createdAt.isBefore(history.last.createdAt),
@@ -185,18 +190,34 @@ void repositoryContract(
         );
       });
 
-      test('a soirée is replayed in full, games and averages', () async {
+      test('several soirées keep their winners and averages', () async {
         final repository = open();
-        final soiree = await repository.create();
-        soiree.startGame([alice, bob], config: const X01Config(startScore: 40));
-        checkOut(soiree, 40, darts: 1);
-        soiree.rematch();
-        checkOut(soiree, 40, darts: 2);
-        soiree.endSoiree();
+        const forty = X01Config(startScore: 40);
+        final first = await repository.create();
+        first.startGame([alice, bob], config: forty);
+        checkOut(first, 40, darts: 1); // Alice: 40 in 1
+        first.rematch();
+        play(first, [20]); // Bob: 20 in 3
+        checkOut(first, 40, darts: 2); // Alice: 40 in 2
+        first.endSoiree();
+        final second = await repository.create();
+        second.startGame([bob, alice], config: forty);
+        checkOut(second, 40, darts: 3); // Bob: 40 in 3
+        second.endSoiree();
 
-        final entry = (await (await relaunch(repository)).history()).single;
-        expect([for (final g in entry.state.games) g.winner], [alice, bob]);
-        expect(entry.state.averageOf(alice), 120);
+        final history = await (await relaunch(repository)).history();
+        final (latest, earliest) = (history.first.state, history.last.state);
+
+        expect([for (final g in earliest.games) g.winner], [alice, alice]);
+        expect([for (final g in latest.games) g.winner], [bob]);
+        expect(earliest.games[0].scoreOf(alice).threeDartAverage, 120);
+        expect(earliest.games[0].scoreOf(bob).threeDartAverage, isNull);
+        expect(earliest.games[1].scoreOf(bob).threeDartAverage, 20);
+        expect(earliest.games[1].scoreOf(alice).threeDartAverage, 60);
+        expect(earliest.averageOf(alice), 80 / 3 * 3);
+        expect(earliest.averageOf(bob), 20);
+        expect(latest.averageOf(bob), 40);
+        expect(latest.averageOf(alice), isNull);
       });
 
       test('a deleted soirée is gone for good', () async {
@@ -206,17 +227,27 @@ void repositoryContract(
           ..startGame([alice])
           ..endSoiree();
         final deleted = await repository.create();
-        deleted.startGame([bob]);
-        play(deleted, [60]);
+        deleted
+          ..startGame([bob])
+          ..endSoiree();
         final doomed = (await repository.history()).first;
 
         await repository.delete(doomed.id);
 
-        final reopened = await relaunch(repository);
-        final history = await reopened.history();
+        final history = await (await relaunch(repository)).history();
         expect(history, hasLength(1));
         expect(history.single.state.players, [alice]);
-        expect(await reopened.resumable(), isNull);
+      });
+
+      test('an unknown id is refused, as is deleting twice', () async {
+        final repository = open();
+        await expectLater(repository.delete('not-an-id'), throwsArgumentError);
+        (await repository.create())
+          ..startGame([alice])
+          ..endSoiree();
+        final id = (await repository.history()).single.id;
+        await repository.delete(id);
+        await expectLater(repository.delete(id), throwsArgumentError);
       });
     });
   });

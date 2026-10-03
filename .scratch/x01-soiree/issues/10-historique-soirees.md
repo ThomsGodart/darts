@@ -18,3 +18,10 @@
   - `SoireeState.players` : joueurs dans l’ordre de première apparition, sous leur dernier nom.
   - Écrans « Historique » (date en français, joueurs, nombre de parties, pastille « en cours » pour la soirée ouverte) et détail : moyennes de la soirée, puis chaque partie avec sa config, son gagnant (ou « Non terminée » pour une partie abandonnée) et les moyennes.
   - Suppression avec confirmation. Supprimer la soirée ouverte retire aussi « Reprendre la soirée ».
+- 2026-10-03 — Suite à la code review :
+  - L’historique ne liste que les soirées **terminées** (« soirées passées », US 46). La soirée ouverte se reprend depuis l’accueil et ne peut donc plus être supprimée par erreur.
+  - Contrat : plusieurs soirées persistées → gagnants et moyennes par partie et par soirée, pour chaque joueur.
+  - `delete` refuse un id inconnu ou déjà supprimé (en mémoire comme en drift).
+  - Historique chargé en une seule requête d’événements.
+  - Erreurs affichées : historique illisible, suppression impossible.
+  - Formatage des moyennes partagé (`averageLabel`) entre scoreboard, fin de partie et historique.

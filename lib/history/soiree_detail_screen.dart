@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../soiree/soiree.dart';
+import '../ui/average_label.dart';
 import 'formatting.dart';
 
-/// One soirée: everyone's average over it, then each game with its winner.
+/// One ended soirée: everyone's average over it, then each game with its
+/// winner.
 /// Pops true once the soirée was deleted.
 class SoireeDetailScreen extends StatelessWidget {
   const SoireeDetailScreen({
@@ -34,7 +36,15 @@ class SoireeDetailScreen extends StatelessWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    await onDelete();
+    try {
+      await onDelete();
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Suppression impossible : $error')),
+      );
+      return;
+    }
     if (context.mounted) Navigator.of(context).pop(true);
   }
 
@@ -103,7 +113,7 @@ class _AveragesTable extends StatelessWidget {
           TableRow(
             children: [
               Text(name),
-              Text('moy. ${average(value)}', textAlign: TextAlign.end),
+              Text('moy. ${averageLabel(value)}', textAlign: TextAlign.end),
             ],
           ),
       ],

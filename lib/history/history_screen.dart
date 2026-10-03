@@ -5,7 +5,7 @@ import '../soiree_launcher.dart';
 import 'formatting.dart';
 import 'soiree_detail_screen.dart';
 
-/// Past soirées, newest first; the open one is marked as such.
+/// Ended soirées, newest first.
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key, required this.launcher});
 
@@ -41,6 +41,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: FutureBuilder(
         future: _history,
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Historique illisible : ${snapshot.error}'),
+            );
+          }
           final history = snapshot.data;
           if (history == null) {
             return const Center(child: CircularProgressIndicator());
@@ -59,9 +64,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       gamesCount(record.state.games.length),
                     ].join(' · '),
                   ),
-                  trailing: record.state.isEnded
-                      ? const Icon(Icons.chevron_right)
-                      : const Chip(label: Text('en cours')),
+                  trailing: const Icon(Icons.chevron_right),
                   onTap: () => _open(record),
                 ),
             ],

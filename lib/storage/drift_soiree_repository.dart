@@ -46,32 +46,46 @@ class DriftSoireeRepository implements SoireeRepository {
     final soirees = await (_db.select(
       _db.soirees,
     )..orderBy([(s) => OrderingTerm.desc(s.id)])).get();
-    final records = <SoireeRecord>[];
-    for (final soiree in soirees) {
-      final state = Soiree(InMemoryJournal.of(await _eventsOf(soiree.id)))
-          .state;
-      if (state.game == null) continue;
-      records.add(
-        SoireeRecord(
-          id: '${soiree.id}',
-          createdAt: soiree.createdAt,
-          state: state,
-        ),
-      );
+    // One query for every journal, grouped here, rather than one per soirée.
+    final eventsBySoiree = <int, List<SoireeEvent>>{};
+    final rows =
+        await (_db.select(_db.soireeEvents)..orderBy([
+              (e) => OrderingTerm.asc(e.soireeId),
+              (e) => OrderingTerm.asc(e.seq),
+            ]))
+            .get();
+    for (final row in rows) {
+      (eventsBySoiree[row.soireeId] ??= []).add(_decode(row));
     }
-    return records;
+    return [
+      for (final soiree in soirees)
+        if (Soiree(InMemoryJournal.of(eventsBySoiree[soiree.id] ?? const []))
+                .state
+            case final state when isHistory(state))
+          SoireeRecord(
+            id: '${soiree.id}',
+            createdAt: soiree.createdAt,
+            state: state,
+          ),
+    ];
   }
 
   @override
   Future<void> delete(String id) async {
     await _writes;
-    final soireeId = int.tryParse(id);
-    if (soireeId == null) return;
+    final soireeId =
+        int.tryParse(id) ??
+        (throw ArgumentError.value(id, 'id', 'no such soirée'));
     await _db.transaction(() async {
       await (_db.delete(
         _db.soireeEvents,
       )..where((e) => e.soireeId.equals(soireeId))).go();
-      await (_db.delete(_db.soirees)..where((s) => s.id.equals(soireeId))).go();
+      final deleted = await (_db.delete(
+        _db.soirees,
+      )..where((s) => s.id.equals(soireeId))).go();
+      if (deleted == 0) {
+        throw ArgumentError.value(id, 'id', 'no such soirée');
+      }
     });
   }
 
@@ -81,11 +95,11 @@ class DriftSoireeRepository implements SoireeRepository {
               ..where((e) => e.soireeId.equals(soireeId))
               ..orderBy([(e) => OrderingTerm.asc(e.seq)]))
             .get();
-    return [
-      for (final row in rows)
-        decodeEvent(row.type, jsonDecode(row.payload) as Map<String, Object?>),
-    ];
+    return [for (final row in rows) _decode(row)];
   }
+
+  SoireeEvent _decode(StoredEvent row) =>
+      decodeEvent(row.type, jsonDecode(row.payload) as Map<String, Object?>);
 
   /// Completes once every write has run; throws if one of them failed.
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../soiree/soiree.dart';
 import '../theme/darts_tokens.dart';
+import '../ui/average_label.dart';
 
 /// Scoreboard-first view: the active player and their remaining score in
 /// very large type, readable from the oche; everyone else in a compact list.
@@ -34,7 +35,7 @@ String _visitSummary(PlayerScore score) {
   final average = score.threeDartAverage;
   return [
     if (lastVisit != null) lastVisit.isBust ? 'BUST' : '${lastVisit.points}',
-    if (average != null) 'moy. ${average.toStringAsFixed(1)}',
+    if (average != null) 'moy. ${averageLabel(average)}',
   ].join(' · ');
 }
 

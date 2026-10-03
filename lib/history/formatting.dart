@@ -17,5 +17,3 @@ String gamesCount(int count) => count == 1 ? '1 partie' : '$count parties';
 /// "501 DO", "301 SO".
 String configLabel(X01Config config) =>
     '${config.startScore} ${config.outRule == OutRule.double ? 'DO' : 'SO'}';
-
-String average(double? value) => value?.toStringAsFixed(1) ?? '–';

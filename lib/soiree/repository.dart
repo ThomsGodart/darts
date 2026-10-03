@@ -23,10 +23,12 @@ abstract interface class SoireeRepository {
   /// The most recently created soirée, if any.
   Future<Soiree?> latest();
 
-  /// Every soirée that had at least one game, newest first.
+  /// Ended soirées that had at least one game, newest first. The open
+  /// soirée is not history yet: it is resumed instead.
   Future<List<SoireeRecord>> history();
 
-  /// Deletes a soirée and its journal for good.
+  /// Deletes a soirée and its journal for good; throws [ArgumentError] for
+  /// an id this repository never gave.
   Future<void> delete(String id);
 
   /// Completes once every change made so far is stored; throws if some
@@ -45,14 +47,24 @@ extension Resumable on SoireeRepository {
   }
 }
 
+/// Whether a soirée belongs in the history.
+bool isHistory(SoireeState state) => state.isEnded && state.game != null;
+
+class _StoredSoiree {
+  _StoredSoiree(this.id, this.journal) : createdAt = DateTime.now();
+
+  final String id;
+  final DateTime createdAt;
+  final InMemoryJournal journal;
+}
+
 /// Journals kept in memory; outlives the repositories opened on it.
 class InMemorySoireeStorage {
-  final List<({String id, DateTime createdAt, InMemoryJournal journal})>
-  entries = [];
-  int nextId = 1;
+  final List<_StoredSoiree> _soirees = [];
+  int _nextId = 1;
 
   /// Journals, oldest first.
-  List<InMemoryJournal> get journals => [for (final e in entries) e.journal];
+  List<InMemoryJournal> get journals => [for (final s in _soirees) s.journal];
 }
 
 class InMemorySoireeRepository implements SoireeRepository {
@@ -64,11 +76,7 @@ class InMemorySoireeRepository implements SoireeRepository {
   @override
   Future<Soiree> create() async {
     final journal = InMemoryJournal();
-    _storage.entries.add((
-      id: '${_storage.nextId++}',
-      createdAt: DateTime.now(),
-      journal: journal,
-    ));
+    _storage._soirees.add(_StoredSoiree('${_storage._nextId++}', journal));
     return Soiree(journal);
   }
 
@@ -80,14 +88,19 @@ class InMemorySoireeRepository implements SoireeRepository {
 
   @override
   Future<List<SoireeRecord>> history() async => [
-    for (final entry in _storage.entries.reversed)
-      if (Soiree(entry.journal).state case final state when state.game != null)
-        SoireeRecord(id: entry.id, createdAt: entry.createdAt, state: state),
+    for (final stored in _storage._soirees.reversed)
+      if (Soiree(stored.journal).state case final state when isHistory(state))
+        SoireeRecord(id: stored.id, createdAt: stored.createdAt, state: state),
   ];
 
   @override
-  Future<void> delete(String id) async =>
-      _storage.entries.removeWhere((e) => e.id == id);
+  Future<void> delete(String id) async {
+    final before = _storage._soirees.length;
+    _storage._soirees.removeWhere((s) => s.id == id);
+    if (_storage._soirees.length == before) {
+      throw ArgumentError.value(id, 'id', 'no such soirée');
+    }
+  }
 
   @override
   Future<void> flush() async {}

@@ -44,32 +44,42 @@ void main() {
     await tester.tap(find.text('Joueur 1, Joueur 2 · 1 partie'));
     await tester.pumpAndSettle();
 
+    // Which winner and averages is the facade's business; here, they show.
     expect(find.text('Partie 1 · 40 DO'), findsOneWidget);
-    expect(find.text('Gagnant : Joueur 1'), findsOneWidget);
     expect(find.byKey(const Key('soiree-averages')), findsOneWidget);
   });
 
-  testWidgets('the open soirée is marked, then can be deleted', (tester) async {
-    final storage = await AppStorage.withTwoPlayers();
-    await pumpApp(tester, storage);
+  testWidgets('the open soirée is not listed: it is resumed instead', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
     await launchGame(tester);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(find.text('Reprendre la soirée'), findsOneWidget);
 
     await openHistory(tester);
-    expect(find.text('en cours'), findsOneWidget);
+    expect(find.text('Aucune soirée pour l’instant'), findsOneWidget);
+  });
 
-    await tester.tap(find.text('en cours'));
+  testWidgets('a soirée can be deleted after confirming', (tester) async {
+    final storage = await AppStorage.withTwoPlayers();
+    await playedSoiree(storage);
+    await pumpApp(tester, storage);
+    await openHistory(tester);
+    await tester.tap(find.text('Joueur 1, Joueur 2 · 1 partie'));
     await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Supprimer la soirée'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Annuler'));
+    await tester.pumpAndSettle();
+    expect(find.text('Partie 1 · 40 DO'), findsOneWidget);
+
     await tester.tap(find.byTooltip('Supprimer la soirée'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Supprimer'));
     await tester.pumpAndSettle();
 
     expect(find.text('Aucune soirée pour l’instant'), findsOneWidget);
-    await tester.pageBack();
-    await tester.pumpAndSettle();
-    expect(find.text('Reprendre la soirée'), findsNothing);
   });
 }
