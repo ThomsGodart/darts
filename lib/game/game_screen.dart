@@ -109,6 +109,7 @@ class _GameScreenState extends State<GameScreen> {
       builder: (context, _) {
         final game = controller.state.game!;
         final bannerPlayerName = _bannerPlayerName;
+        final onUndo = controller.canUndo ? controller.undo : null;
         final statePane = switch (game) {
           final X01Game game => Scoreboard(game: game),
           final CricketGame game => CricketBoard(
@@ -135,14 +136,14 @@ class _GameScreenState extends State<GameScreen> {
                     key: ValueKey('assign-${game.activeIndex}'),
                     taken: game.takenNumbers,
                     onAssign: controller.assignNumber,
-                    onUndo: controller.canUndo ? controller.undo : null,
+                    onUndo: onUndo,
                   ),
                 final KillerGame game => KillerPlayInput(
                   key: ValueKey(game.visitsPlayed),
                   dartsInVisit: game.dartsInVisit,
                   onDart: controller.throwDart,
                   onEndVisit: controller.endVisit,
-                  onUndo: controller.canUndo ? controller.undo : null,
+                  onUndo: onUndo,
                 ),
                 final ShanghaiGame game => ShanghaiInput(
                   key: ValueKey(game.visitsPlayed),
@@ -150,7 +151,7 @@ class _GameScreenState extends State<GameScreen> {
                   dartsInVisit: game.dartsInVisit,
                   onDart: controller.throwDart,
                   onEndVisit: controller.endVisit,
-                  onUndo: controller.canUndo ? controller.undo : null,
+                  onUndo: onUndo,
                 ),
                 final X01Game game => VisitInput(
                   key: ValueKey(game.visitsPlayed),
@@ -158,7 +159,7 @@ class _GameScreenState extends State<GameScreen> {
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
                   onEndVisit: controller.endVisit,
-                  onUndo: controller.canUndo ? controller.undo : null,
+                  onUndo: onUndo,
                 ),
                 final CricketGame game
                     when game.config.input == CricketInput.board =>
@@ -166,7 +167,7 @@ class _GameScreenState extends State<GameScreen> {
                     dartsInVisit: game.dartsInVisit,
                     onDart: controller.throwDart,
                     onEndVisit: controller.endVisit,
-                    onUndo: controller.canUndo ? controller.undo : null,
+                    onUndo: onUndo,
                   ),
                 CricketGame() => VisitInput(
                   key: ValueKey(game.visitsPlayed),
@@ -174,7 +175,7 @@ class _GameScreenState extends State<GameScreen> {
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
                   onEndVisit: controller.endVisit,
-                  onUndo: controller.canUndo ? controller.undo : null,
+                  onUndo: onUndo,
                 ),
               };
         return Stack(

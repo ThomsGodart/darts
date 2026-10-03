@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../session/session.dart';
 import '../theme/darts_space.dart';
+import 'input_pane.dart';
 
 /// Enters one dart: pick single, double or treble, then the sector.
 class DartPicker extends StatefulWidget {
@@ -44,48 +45,18 @@ class _DartPickerState extends State<DartPicker> {
           onSelectionChanged: (s) => setState(() => _multiplier = s.single),
         ),
         const SizedBox(height: DartsSpace.xs),
-        for (var row = 0; row < 4; row++)
-          Row(
-            children: [
-              for (var sector = row * 5 + 1; sector <= row * 5 + 5; sector++)
-                _DartKey(
-                  label: _sector(sector).notation,
-                  onTap: () => _throw(_sector(sector)),
-                ),
-            ],
-          ),
+        SectorGrid(
+          labelOf: (sector) => _sector(sector).notation,
+          onSector: (sector) => _throw(_sector(sector)),
+        ),
         Row(
           children: [
-            _DartKey(label: '25', onTap: () => _throw(Dart.outerBull)),
-            _DartKey(label: 'Bull', onTap: () => _throw(Dart.bull)),
-            _DartKey(label: 'Raté', onTap: () => _throw(Dart.miss)),
+            PadKey(label: '25', onTap: () => _throw(Dart.outerBull)),
+            PadKey(label: 'Bull', onTap: () => _throw(Dart.bull)),
+            PadKey(label: 'Raté', onTap: () => _throw(Dart.miss)),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _DartKey extends StatelessWidget {
-  const _DartKey({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(DartsSpace.xxs),
-        child: SizedBox(
-          height: DartsSpace.tap,
-          child: FilledButton.tonal(
-            onPressed: onTap,
-            style: FilledButton.styleFrom(padding: EdgeInsets.zero),
-            child: Text(label, style: Theme.of(context).textTheme.titleMedium),
-          ),
-        ),
-      ),
     );
   }
 }

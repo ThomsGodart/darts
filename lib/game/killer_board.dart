@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../session/session.dart';
 import '../theme/darts_space.dart';
+import 'input_pane.dart';
 
 /// Lives, numbers and Killer status.
 class KillerBoard extends StatelessWidget {
@@ -77,52 +78,19 @@ class KillerAssignInput extends StatelessWidget {
   final VoidCallback? onUndo;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: colors.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.all(DartsSpace.sm),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var row = 0; row < 4; row++)
-              Row(
-                children: [
-                  for (
-                    var sector = row * 5 + 1;
-                    sector <= row * 5 + 5;
-                    sector++
-                  )
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(DartsSpace.xxs),
-                        child: SizedBox(
-                          height: DartsSpace.tap,
-                          child: FilledButton.tonal(
-                            onPressed: taken.contains(sector)
-                                ? null
-                                : () => onAssign(sector),
-                            child: Text('$sector'),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            OutlinedButton.icon(
-              onPressed: onUndo,
-              icon: const Icon(Icons.undo),
-              label: const Text('Annuler la saisie'),
-            ),
-          ],
-        ),
+  Widget build(BuildContext context) => InputPane(
+    onUndo: onUndo,
+    children: [
+      SectorGrid(
+        labelOf: (sector) => '$sector',
+        onSector: onAssign,
+        isEnabled: (sector) => !taken.contains(sector),
       ),
-    );
-  }
+    ],
+  );
 }
 
-/// Doubles grid + miss + end of visit for Killer play.
+/// Doubles grid and miss for Killer play.
 class KillerPlayInput extends StatelessWidget {
   const KillerPlayInput({
     super.key,
@@ -138,83 +106,18 @@ class KillerPlayInput extends StatelessWidget {
   final VoidCallback? onUndo;
 
   @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: colors.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.all(DartsSpace.sm),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              [
-                for (var i = 0; i < dartsPerVisit; i++)
-                  dartsInVisit.elementAtOrNull(i)?.notation ?? '–',
-              ].join('  ·  '),
-              key: const Key('darts-in-visit'),
-              style: textTheme.headlineSmall,
-            ),
-            const SizedBox(height: DartsSpace.sm),
-            for (var row = 0; row < 4; row++)
-              Row(
-                children: [
-                  for (
-                    var sector = row * 5 + 1;
-                    sector <= row * 5 + 5;
-                    sector++
-                  )
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(DartsSpace.xxs),
-                        child: SizedBox(
-                          height: DartsSpace.tap,
-                          child: FilledButton.tonal(
-                            onPressed: () => onDart(Dart.double(sector)),
-                            child: Text('D$sector'),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            Row(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(DartsSpace.xxs),
-                    child: SizedBox(
-                      height: DartsSpace.tap,
-                      child: FilledButton.tonal(
-                        onPressed: () => onDart(Dart.miss),
-                        child: const Text('Raté'),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(DartsSpace.xxs),
-                    child: SizedBox(
-                      height: DartsSpace.tap,
-                      child: FilledButton.tonal(
-                        onPressed: onEndVisit,
-                        child: const Text('Fin de tour'),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            OutlinedButton.icon(
-              onPressed: onUndo,
-              icon: const Icon(Icons.undo),
-              label: const Text('Annuler la saisie'),
-            ),
-          ],
-        ),
+  Widget build(BuildContext context) => InputPane(
+    dartsInVisit: dartsInVisit,
+    onUndo: onUndo,
+    onEndVisit: onEndVisit,
+    children: [
+      SectorGrid(
+        labelOf: (sector) => 'D$sector',
+        onSector: (sector) => onDart(Dart.double(sector)),
       ),
-    );
-  }
+      Row(
+        children: [PadKey(label: 'Raté', onTap: () => onDart(Dart.miss))],
+      ),
+    ],
+  );
 }

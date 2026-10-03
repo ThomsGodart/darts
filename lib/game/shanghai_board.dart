@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/darts_space.dart';
+import 'input_pane.dart';
 import '../session/session.dart';
 
 /// Scores and the number of the round for a Shanghai game.
@@ -71,79 +72,21 @@ class ShanghaiInput extends StatelessWidget {
   final VoidCallback? onUndo;
 
   @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: colors.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.all(DartsSpace.sm),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              [
-                for (var i = 0; i < dartsPerVisit; i++)
-                  dartsInVisit.elementAtOrNull(i)?.notation ?? '–',
-              ].join('  ·  '),
-              key: const Key('darts-in-visit'),
-              style: textTheme.headlineSmall,
-            ),
-            const SizedBox(height: DartsSpace.sm),
-            Row(
-              children: [
-                _Key(
-                  label: 'S$number',
-                  onTap: () => onDart(Dart.single(number)),
-                ),
-                _Key(
-                  label: 'D$number',
-                  onTap: () => onDart(Dart.double(number)),
-                ),
-                _Key(
-                  label: 'T$number',
-                  onTap: () => onDart(Dart.treble(number)),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                _Key(label: 'Raté', onTap: () => onDart(Dart.miss)),
-                _Key(label: 'Fin de tour', onTap: onEndVisit),
-              ],
-            ),
-            const SizedBox(height: DartsSpace.xs),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onUndo,
-                icon: const Icon(Icons.undo),
-                label: const Text('Annuler la saisie'),
-              ),
-            ),
-          ],
-        ),
+  Widget build(BuildContext context) => InputPane(
+    dartsInVisit: dartsInVisit,
+    onUndo: onUndo,
+    onEndVisit: onEndVisit,
+    children: [
+      Row(
+        children: [
+          PadKey(label: 'S$number', onTap: () => onDart(Dart.single(number))),
+          PadKey(label: 'D$number', onTap: () => onDart(Dart.double(number))),
+          PadKey(label: 'T$number', onTap: () => onDart(Dart.treble(number))),
+        ],
       ),
-    );
-  }
-}
-
-class _Key extends StatelessWidget {
-  const _Key({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(DartsSpace.xxs),
-        child: SizedBox(
-          height: 52,
-          child: FilledButton.tonal(onPressed: onTap, child: Text(label)),
-        ),
+      Row(
+        children: [PadKey(label: 'Raté', onTap: () => onDart(Dart.miss))],
       ),
-    );
-  }
+    ],
+  );
 }

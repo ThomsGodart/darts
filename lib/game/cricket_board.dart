@@ -5,6 +5,7 @@ import '../session/session.dart';
 import '../theme/darts_tokens.dart';
 import '../ui/average_label.dart';
 import '../ui/game_labels.dart';
+import 'input_pane.dart';
 
 /// "/", "X" or "Ⓧ" for 1, 2 or 3 marks; empty for none.
 String markSymbol(int marks) => switch (marks) {
@@ -221,60 +222,16 @@ class CricketBoardInput extends StatelessWidget {
   final VoidCallback? onUndo;
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.all(DartsSpace.sm),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              [
-                for (var i = 0; i < dartsPerVisit; i++)
-                  dartsInVisit.elementAtOrNull(i)?.notation ?? '–',
-              ].join('  ·  '),
-              key: const Key('darts-in-visit'),
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: DartsSpace.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: DartsSpace.tap,
-                    child: FilledButton.tonal(
-                      onPressed: () => onDart(Dart.miss),
-                      child: const Text('Raté'),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: DartsSpace.sm),
-                Expanded(
-                  child: SizedBox(
-                    height: DartsSpace.tap,
-                    child: FilledButton(
-                      onPressed: onEndVisit,
-                      child: const Text('Fin de tour'),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: DartsSpace.xs),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onUndo,
-                icon: const Icon(Icons.undo),
-                label: const Text('Annuler la saisie'),
-              ),
-            ),
-          ],
-        ),
+  Widget build(BuildContext context) => InputPane(
+    dartsInVisit: dartsInVisit,
+    onUndo: onUndo,
+    onEndVisit: onEndVisit,
+    children: [
+      Row(
+        children: [PadKey(label: 'Raté', onTap: () => onDart(Dart.miss))],
       ),
-    );
-  }
+    ],
+  );
 }
 
 class _Mark extends StatelessWidget {

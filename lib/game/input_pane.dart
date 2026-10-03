@@ -1,0 +1,174 @@
+import 'package:flutter/material.dart';
+
+import '../session/session.dart';
+import '../theme/darts_space.dart';
+
+/// The pane a visit is entered in, whatever the game: the darts thrown so
+/// far, the game's own keys, then what every visit offers — taking the
+/// latest input back and ending the visit early.
+class InputPane extends StatelessWidget {
+  const InputPane({
+    super.key,
+    this.header,
+    this.dartsInVisit,
+    required this.children,
+    required this.onUndo,
+    this.onEndVisit,
+    this.secondaryAction,
+  });
+
+  /// Shown above everything else, e.g. a mode switch.
+  final Widget? header;
+
+  /// Darts of the visit in progress; null when no dart is being entered.
+  final List<Dart>? dartsInVisit;
+
+  /// The keys of the game.
+  final List<Widget> children;
+
+  /// Takes back the latest input; null when there is nothing to undo.
+  final VoidCallback? onUndo;
+
+  /// Ends the visit before its third dart; null hides the option.
+  final VoidCallback? onEndVisit;
+
+  /// Sits next to the undo when the visit cannot be ended early.
+  final Widget? secondaryAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final header = this.header;
+    final dartsInVisit = this.dartsInVisit;
+    final trailing = switch (onEndVisit) {
+      final onEndVisit? => FilledButton.tonal(
+        onPressed: onEndVisit,
+        child: const Text('Fin de tour'),
+      ),
+      null => secondaryAction,
+    };
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(DartsSpace.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (header != null) ...[
+              header,
+              const SizedBox(height: DartsSpace.sm),
+            ],
+            if (dartsInVisit != null) ...[
+              Text(
+                [
+                  for (var i = 0; i < dartsPerVisit; i++)
+                    dartsInVisit.elementAtOrNull(i)?.notation ?? '–',
+                ].join('  ·  '),
+                key: const Key('darts-in-visit'),
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: DartsSpace.sm),
+            ],
+            ...children,
+            const SizedBox(height: DartsSpace.xs),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onUndo,
+                    icon: const Icon(Icons.undo),
+                    label: const Text('Annuler la saisie'),
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: DartsSpace.sm),
+                  Expanded(child: trailing),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One key of an input pane, sharing its row's width; disabled without
+/// [onTap].
+class PadKey extends StatelessWidget {
+  const PadKey({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.emphasized = false,
+    this.large = false,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+
+  /// Filled rather than tonal: the key that confirms.
+  final bool emphasized;
+
+  /// Larger label, for keys read at arm's length.
+  final bool large;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final style = FilledButton.styleFrom(padding: EdgeInsets.zero);
+    final child = Text(
+      label,
+      style: large ? textTheme.titleLarge : textTheme.titleMedium,
+    );
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(DartsSpace.xxs),
+        child: SizedBox(
+          height: DartsSpace.tap,
+          child: emphasized
+              ? FilledButton(onPressed: onTap, style: style, child: child)
+              : FilledButton.tonal(
+                  onPressed: onTap,
+                  style: style,
+                  child: child,
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The sectors 1–20, five to a row.
+class SectorGrid extends StatelessWidget {
+  const SectorGrid({
+    super.key,
+    required this.labelOf,
+    required this.onSector,
+    this.isEnabled,
+  });
+
+  final String Function(int sector) labelOf;
+  final ValueChanged<int> onSector;
+
+  /// Sectors that can be tapped; all of them when null.
+  final bool Function(int sector)? isEnabled;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (var row = 0; row < 4; row++)
+        Row(
+          children: [
+            for (var sector = row * 5 + 1; sector <= row * 5 + 5; sector++)
+              PadKey(
+                label: labelOf(sector),
+                onTap: isEnabled?.call(sector) ?? true
+                    ? () => onSector(sector)
+                    : null,
+              ),
+          ],
+        ),
+    ],
+  );
+}

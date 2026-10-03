@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../session/session.dart';
 import '../theme/darts_space.dart';
 import 'dart_picker.dart';
+import 'input_pane.dart';
 
 /// Visit totals players hit most often, entered in a single tap.
 const quickScores = [26, 41, 45, 60, 81, 85, 100, 140, 180];
@@ -63,72 +64,28 @@ class _VisitInputState extends State<VisitInput> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Material(
-      color: colors.surfaceContainerHigh,
-      child: Padding(
-        padding: const EdgeInsets.all(DartsSpace.sm),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_takesTotals) ...[
-              _ModeSwitch(
-                dartByDart: _inDartMode,
-                // Once a dart is in, the visit is finished dart by dart.
-                onChanged: widget.dartsInVisit.isNotEmpty
-                    ? null
-                    : (value) => setState(() => _dartByDart = value),
-              ),
-              const SizedBox(height: DartsSpace.sm),
-            ],
-            if (_inDartMode) ...[
-              Text(
-                [
-                  for (var i = 0; i < dartsPerVisit; i++)
-                    widget.dartsInVisit.elementAtOrNull(i)?.notation ?? '–',
-                ].join('  ·  '),
-                key: const Key('darts-in-visit'),
-                style: textTheme.headlineSmall,
-              ),
-              const SizedBox(height: DartsSpace.sm),
-              DartPicker(onDart: widget.onDart),
-            ] else
-              ..._totalPad(textTheme),
-            const SizedBox(height: DartsSpace.xs),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: widget.onUndo,
-                    icon: const Icon(Icons.undo),
-                    label: const Text('Annuler la saisie'),
-                  ),
-                ),
-                if (_inDartMode) ...[
-                  if (widget.onEndVisit case final onEndVisit?) ...[
-                    const SizedBox(width: DartsSpace.sm),
-                    Expanded(
-                      child: FilledButton.tonal(
-                        onPressed: onEndVisit,
-                        child: const Text('Fin de tour'),
-                      ),
-                    ),
-                  ],
-                ] else ...[
-                  const SizedBox(width: DartsSpace.sm),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _submit(0),
-                      child: const Text('0 / raté'),
-                    ),
-                  ),
-                ],
-              ],
+    return InputPane(
+      header: _takesTotals
+          ? _ModeSwitch(
+              dartByDart: _inDartMode,
+              // Once a dart is in, the visit is finished dart by dart.
+              onChanged: widget.dartsInVisit.isNotEmpty
+                  ? null
+                  : (value) => setState(() => _dartByDart = value),
+            )
+          : null,
+      dartsInVisit: _inDartMode ? widget.dartsInVisit : null,
+      onUndo: widget.onUndo,
+      onEndVisit: _inDartMode ? widget.onEndVisit : null,
+      secondaryAction: _inDartMode
+          ? null
+          : OutlinedButton(
+              onPressed: () => _submit(0),
+              child: const Text('0 / raté'),
             ),
-          ],
-        ),
-      ),
+      children: _inDartMode
+          ? [DartPicker(onDart: widget.onDart)]
+          : _totalPad(Theme.of(context).textTheme),
     );
   }
 
@@ -165,15 +122,20 @@ class _VisitInputState extends State<VisitInput> {
       Row(
         children: [
           for (final digit in row)
-            _PadKey(label: '$digit', onTap: () => _appendDigit(digit)),
+            PadKey(
+              label: '$digit',
+              large: true,
+              onTap: () => _appendDigit(digit),
+            ),
         ],
       ),
     Row(
       children: [
-        _PadKey(label: 'C', onTap: _clear),
-        _PadKey(label: '0', onTap: () => _appendDigit(0)),
-        _PadKey(
+        PadKey(label: 'C', large: true, onTap: _clear),
+        PadKey(label: '0', large: true, onTap: () => _appendDigit(0)),
+        PadKey(
           label: 'OK',
+          large: true,
           emphasized: true,
           onTap: _typed.isEmpty ? null : () => _submit(int.parse(_typed)),
         ),
@@ -201,35 +163,6 @@ class _ModeSwitch extends StatelessWidget {
       onSelectionChanged: onChanged == null
           ? null
           : (selection) => onChanged(selection.single),
-    );
-  }
-}
-
-class _PadKey extends StatelessWidget {
-  const _PadKey({
-    required this.label,
-    required this.onTap,
-    this.emphasized = false,
-  });
-
-  final String label;
-  final VoidCallback? onTap;
-  final bool emphasized;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.titleLarge;
-    final child = Text(label, style: style);
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(DartsSpace.xxs),
-        child: SizedBox(
-          height: DartsSpace.tap,
-          child: emphasized
-              ? FilledButton(onPressed: onTap, child: child)
-              : FilledButton.tonal(onPressed: onTap, child: child),
-        ),
-      ),
     );
   }
 }
