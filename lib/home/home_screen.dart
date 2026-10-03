@@ -160,8 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
           listenable: launcher,
           builder: (context, _) => Column(
             children: [
-              if (launcher.persistFailure != null)
-                const PersistFailureBanner(),
+              if (launcher.persistFailure != null) const PersistFailureBanner(),
               Expanded(
                 child: Center(
                   child: Column(

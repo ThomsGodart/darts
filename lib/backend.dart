@@ -25,8 +25,5 @@ Future<void> _initSupabase() async {
     debugPrint('Backend skipped: no SUPABASE_URL / SUPABASE_ANON_KEY defines');
     return;
   }
-  await Supabase.initialize(
-    url: supabaseUrl,
-    publishableKey: supabaseAnonKey,
-  );
+  await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseAnonKey);
 }
