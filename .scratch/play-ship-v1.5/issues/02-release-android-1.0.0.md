@@ -10,10 +10,11 @@
 - [x] Signing Gradle + `key.properties.example` ; secrets gitignored ; docs
 - [x] `flutter build apk --release` OK (fallback debug signing sans keystore)
 - [x] Smoke widget parcours Session (suite existante)
-- [ ] Changer `applicationId` hors `com.example…` avant premier upload
-- [ ] Créer keystore + `android/key.properties` ; AAB signé upload-ready
+- [x] `applicationId` = `com.godart.darts`
+- [x] Keystore upload local + `key.properties` (hors git) ; AAB `app-release.aab` signé
 - [ ] Smoke manuel install release sur device
+- [ ] Upload Play Console + App Signing
 
 ## Comments
 
-- 2026-10-03: agent — version 1.0.0, signing conditionnel, docs release. Upload Play = humain (id + keystore).
+- 2026-10-03: agent — version 1.0.0, id `com.godart.darts`, keystore `~/keys/darts-upload.jks`, AAB signé. Reste : install device + Console.

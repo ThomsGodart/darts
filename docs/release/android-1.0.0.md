@@ -2,23 +2,26 @@
 
 Semver store = **1.0.0** (`pubspec.yaml` `version: 1.0.0+1`, `lib/app_version.dart`).
 
+**Application id:** `com.godart.darts` (stable — do not change after first Play upload).
+
 ## Signing (secrets hors git)
 
-1. Create an upload keystore (once):
+Upload keystore lives **outside** the repo (e.g. `~/keys/darts-upload.jks`). Local wiring:
+
+1. `android/key.properties` (gitignored) — copy from `android/key.properties.example`.
+2. Password backup: keep a copy of the store password in a password manager (also optional local file next to the keystore, never commit).
+3. Enable **Play App Signing** in Play Console; upload an AAB signed with the upload key.
 
 ```bash
-keytool -genkey -v -keystore ~/keys/darts-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+flutter build appbundle --release
+# → build/app/outputs/bundle/release/app-release.aab
 ```
 
-2. Copy `android/key.properties.example` → `android/key.properties` and fill paths/passwords.
-3. Never commit `*.jks`, `*.keystore`, or `key.properties` (already gitignored under `android/`).
-4. Enable **Play App Signing** in Play Console; upload the AAB signed with the upload key.
-
-Release Gradle uses the release signingConfig when `key.properties` exists; otherwise it falls back to debug signing so local `flutter run --release` still works.
+Without `key.properties`, Gradle falls back to debug signing so `flutter run --release` still works.
 
 ## Crashlytics (crashes only)
 
-1. Create a Firebase Android app whose package name matches `applicationId` in `android/app/build.gradle.kts`.
+1. Create a Firebase Android app with package name **`com.godart.darts`**.
 2. Place `android/app/google-services.json` (gitignored).
 3. Run `flutterfire configure` and replace `lib/firebase_options.dart`, then set `DefaultFirebaseOptions.isConfigured = true`.
 4. Rebuild release. `initCrashReporting()` runs only in release and never blocks offline startup.
@@ -26,18 +29,6 @@ Release Gradle uses the release signingConfig when `key.properties` exists; othe
 
 Without steps 2–3, release still starts; Crashlytics is a quiet no-op.
 
-## Build
-
-```bash
-flutter build appbundle --release
-# or
-flutter build apk --release
-```
-
 ## Smoke (manual)
 
 Home → Nouvelle session → Game → Partie suivante / History → Settings (version `1.0.0` + privacy) → resume Session after kill.
-
-## Application id
-
-Change `com.example.darts_points_counter` to a stable reverse-DNS id **before** the first Play upload; it cannot be changed later.

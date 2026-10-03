@@ -1,6 +1,6 @@
 # Listing Google Play (FR) — brouillon à coller
 
-Assets graphiques (icône, feature graphic, screenshots) : ticket humain 03.
+Assets graphiques de base : `docs/release/assets/` (`icon-512.png`, `feature-graphic-1024x500.png`). Screenshots device : ticket humain 03.
 
 ## Titre
 

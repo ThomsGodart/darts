@@ -20,7 +20,7 @@ if (googleServicesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.darts_points_counter"
+    namespace = "com.godart.darts"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -30,8 +30,8 @@ android {
     }
 
     defaultConfig {
-        // Change before first Play upload — cannot rename later.
-        applicationId = "com.example.darts_points_counter"
+        // Stable Play application id — do not change after first upload.
+        applicationId = "com.godart.darts"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
