@@ -9,6 +9,10 @@ void main() {
     return decodeEvent(encoded.type, encoded.payload);
   }
 
+  test('an ended visit is stored as such', () {
+    expect(roundTrip(const VisitEnded()), isA<VisitEnded>());
+  });
+
   test('a cricket game keeps how it is entered', () {
     for (final input in CricketInput.values) {
       final event = GameStarted(

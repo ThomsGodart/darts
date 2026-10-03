@@ -19,12 +19,10 @@ SessionState applyEvent(SessionState state, SessionEvent event) {
         _ => throw const FormatException('A visit total outside an X01 game'),
       },
     ),
-    DartThrown(:final dart) => state.replaceCurrentGame(switch (state.game!) {
-      final X01Game game => _dartThrown(game, dart),
-      final CricketGame game => _cricketDart(game, dart),
-      final ShanghaiGame game => _shanghaiDart(game, dart),
-      final KillerGame game => _killerDart(game, dart),
-    }),
+    DartThrown(:final dart) => state.replaceCurrentGame(
+      _dartThrown(state.game!, dart),
+    ),
+    VisitEnded() => state.replaceCurrentGame(_visitEnded(state.game!)),
     NumberAssigned(:final sector) => state.replaceCurrentGame(
       switch (state.game) {
         final KillerGame game => _assignNumber(game, sector),
@@ -64,9 +62,102 @@ Game _newGame(List<Player> players, GameConfig config) => switch (config) {
   ),
 };
 
+/// Adds [dart] to the active player's visit: what it scores is each
+/// game's business, as is what ends the visit before its last dart.
+Game _dartThrown(Game game, Dart dart) => switch (game) {
+  X01Game() => _x01Dart(game, dart),
+  CricketGame() => _cricketDart(game, dart),
+  ShanghaiGame() => _shanghaiDart(game, dart),
+  KillerGame() => _killerDart(game, dart),
+};
+
+/// Fills the visit with misses until the turn passes (or the game ends).
+Game _visitEnded(Game game) {
+  final visits = game.visitsPlayed;
+  var next = game;
+  while (!next.isFinished && next.visitsPlayed == visits) {
+    next = _dartThrown(next, Dart.miss);
+  }
+  return next;
+}
+
+/// Whether a visit of [darts] has had its last dart.
+bool _isFull(List<Dart> darts) => darts.length >= dartsPerVisit;
+
+// Each game below is rebuilt through its `_next`: the visit is over unless
+// `dartsInVisit` is given, and whatever is not given stays as it was.
+
+extension on X01Game {
+  X01Game _next({
+    List<PlayerScore>? scores,
+    int? activeIndex,
+    List<Dart> dartsInVisit = const [],
+    Player? winner,
+  }) => X01Game(
+    config: config,
+    scores: List.unmodifiable(scores ?? this.scores),
+    activeIndex: activeIndex ?? this.activeIndex,
+    dartsInVisit: List.unmodifiable(dartsInVisit),
+    winner: winner,
+  );
+}
+
+extension on CricketGame {
+  CricketGame _next({
+    List<CricketScore>? scores,
+    int? activeIndex,
+    List<Dart> dartsInVisit = const [],
+    Player? winner,
+  }) => CricketGame(
+    config: config,
+    scores: List.unmodifiable(scores ?? this.scores),
+    activeIndex: activeIndex ?? this.activeIndex,
+    dartsInVisit: List.unmodifiable(dartsInVisit),
+    winner: winner,
+  );
+}
+
+extension on ShanghaiGame {
+  ShanghaiGame _next({
+    List<ShanghaiScore>? scores,
+    int? activeIndex,
+    int? numberIndex,
+    int? visitsPlayed,
+    List<Dart> dartsInVisit = const [],
+    Player? winner,
+  }) => ShanghaiGame(
+    config: config,
+    scores: List.unmodifiable(scores ?? this.scores),
+    activeIndex: activeIndex ?? this.activeIndex,
+    numberIndex: numberIndex ?? this.numberIndex,
+    visitsPlayed: visitsPlayed ?? this.visitsPlayed,
+    dartsInVisit: List.unmodifiable(dartsInVisit),
+    winner: winner,
+  );
+}
+
+extension on KillerGame {
+  KillerGame _next({
+    List<KillerScore>? scores,
+    int? activeIndex,
+    KillerPhase? phase,
+    int? visitsPlayed,
+    List<Dart> dartsInVisit = const [],
+    Player? winner,
+  }) => KillerGame(
+    config: config,
+    scores: List.unmodifiable(scores ?? this.scores),
+    activeIndex: activeIndex ?? this.activeIndex,
+    phase: phase ?? this.phase,
+    visitsPlayed: visitsPlayed ?? this.visitsPlayed,
+    dartsInVisit: List.unmodifiable(dartsInVisit),
+    winner: winner,
+  );
+}
+
 X01Game _visitTotal(X01Game game, int score, int darts) {
   final after = game.activeScore.remaining - score;
-  return _completeVisit(
+  return _x01CompleteVisit(
     game,
     Visit(
       score: score,
@@ -76,23 +167,17 @@ X01Game _visitTotal(X01Game game, int score, int darts) {
   );
 }
 
-/// Adds [dart] to the visit, which ends on a bust, a checkout or the
-/// last dart.
-X01Game _dartThrown(X01Game game, Dart dart) {
+/// The X01 visit ends on a bust, a checkout or the last dart.
+X01Game _x01Dart(X01Game game, Dart dart) {
   final darts = [...game.dartsInVisit, dart];
   final after = game.activeRemaining - dart.score;
   final outRule = game.config.outRule;
   final isBust =
       outRule.bustsOn(after) || (after == 0 && !outRule.allowsFinishOn(dart));
-  if (!isBust && after != 0 && darts.length < dartsPerVisit) {
-    return X01Game(
-      config: game.config,
-      scores: game.scores,
-      activeIndex: game.activeIndex,
-      dartsInVisit: List.unmodifiable(darts),
-    );
+  if (!isBust && after != 0 && !_isFull(darts)) {
+    return game._next(dartsInVisit: darts);
   }
-  return _completeVisit(
+  return _x01CompleteVisit(
     game,
     Visit(
       score: game.dartsInVisitScore + dart.score,
@@ -102,23 +187,19 @@ X01Game _dartThrown(X01Game game, Dart dart) {
   );
 }
 
-X01Game _completeVisit(X01Game game, Visit visit) {
+X01Game _x01CompleteVisit(X01Game game, Visit visit) {
   final current = game.activeScore;
   final updated = current.after(visit);
-  final scores = [...game.scores]..[game.activeIndex] = updated;
   final won = updated.remaining == 0;
-  return X01Game(
-    config: game.config,
-    scores: scores,
-    activeIndex: won
-        ? game.activeIndex
-        : (game.activeIndex + 1) % scores.length,
+  return game._next(
+    scores: [...game.scores]..[game.activeIndex] = updated,
+    activeIndex: won ? game.activeIndex : game.nextIndex,
     winner: won ? current.player : null,
   );
 }
 
-/// Adds [dart] to the cricket visit, which ends on its third dart or as
-/// soon as the thrower wins.
+/// The cricket visit ends on its third dart or as soon as the thrower
+/// wins.
 CricketGame _cricketDart(CricketGame game, Dart dart) {
   final darts = [...game.dartsInVisit, dart];
   final scores = [...game.scores];
@@ -151,65 +232,39 @@ CricketGame _cricketDart(CricketGame game, Dart dart) {
       game.config.variant.wins(active.points, [
         for (final s in scores) s.points,
       ]);
-  if (!won && darts.length < dartsPerVisit) {
-    return CricketGame(
-      config: game.config,
-      scores: List.unmodifiable(scores),
-      activeIndex: game.activeIndex,
-      dartsInVisit: List.unmodifiable(darts),
-    );
+  if (!won && !_isFull(darts)) {
+    return game._next(scores: scores, dartsInVisit: darts);
   }
   scores[game.activeIndex] = active.copyWith(
     visitsPlayed: active.visitsPlayed + 1,
   );
-  return CricketGame(
-    config: game.config,
-    scores: List.unmodifiable(scores),
-    activeIndex: won
-        ? game.activeIndex
-        : (game.activeIndex + 1) % scores.length,
+  return game._next(
+    scores: scores,
+    activeIndex: won ? game.activeIndex : game.nextIndex,
     winner: won ? active.player : null,
   );
 }
 
+/// The Shanghai visit ends on its third dart, or wins at once on a
+/// single, a double and a treble of the number.
 ShanghaiGame _shanghaiDart(ShanghaiGame game, Dart dart) {
   final darts = [...game.dartsInVisit, dart];
   final number = game.currentNumber;
   final hit = dart.sector == number ? dart.score : 0;
-  final points = game.activeScore.points + hit;
   final scores = [...game.scores];
-  scores[game.activeIndex] = game.activeScore.copyWith(points: points);
+  scores[game.activeIndex] = game.activeScore.copyWith(
+    points: game.activeScore.points + hit,
+  );
 
-  final shanghai = game.config.instantShanghai && _isShanghai(darts, number);
-  if (shanghai) {
-    return ShanghaiGame(
-      config: game.config,
-      scores: List.unmodifiable(scores),
-      activeIndex: game.activeIndex,
-      numberIndex: game.numberIndex,
+  if (game.config.instantShanghai && _isShanghai(darts, number)) {
+    return game._next(
+      scores: scores,
       visitsPlayed: game.visitsPlayed + 1,
       winner: game.activePlayer,
     );
   }
-  if (darts.length < dartsPerVisit) {
-    return ShanghaiGame(
-      config: game.config,
-      scores: List.unmodifiable(scores),
-      activeIndex: game.activeIndex,
-      numberIndex: game.numberIndex,
-      visitsPlayed: game.visitsPlayed,
-      dartsInVisit: List.unmodifiable(darts),
-    );
-  }
-  return _shanghaiCompleteVisit(
-    ShanghaiGame(
-      config: game.config,
-      scores: List.unmodifiable(scores),
-      activeIndex: game.activeIndex,
-      numberIndex: game.numberIndex,
-      visitsPlayed: game.visitsPlayed,
-    ),
-  );
+  if (!_isFull(darts)) return game._next(scores: scores, dartsInVisit: darts);
+  return _shanghaiCompleteVisit(game._next(scores: scores));
 }
 
 bool _isShanghai(List<Dart> darts, int number) {
@@ -220,24 +275,22 @@ bool _isShanghai(List<Dart> darts, int number) {
   return multipliers.containsAll({1, 2, 3});
 }
 
+/// Passes the turn; once everyone has thrown at the number, moves on to
+/// the next one, or ends the game on the last.
 ShanghaiGame _shanghaiCompleteVisit(ShanghaiGame game) {
-  final nextIndex = (game.activeIndex + 1) % game.scores.length;
-  var numberIndex = game.numberIndex;
-  Player? winner;
-  if (nextIndex == 0) {
-    if (numberIndex + 1 >= game.config.length.numbers.length) {
-      winner = _shanghaiLeader(game.scores);
-    } else {
-      numberIndex += 1;
-    }
+  final roundIsOver = game.nextIndex == 0;
+  final wasLastNumber =
+      game.numberIndex + 1 >= game.config.length.numbers.length;
+  if (roundIsOver && wasLastNumber) {
+    return game._next(
+      visitsPlayed: game.visitsPlayed + 1,
+      winner: _shanghaiLeader(game.scores),
+    );
   }
-  return ShanghaiGame(
-    config: game.config,
-    scores: game.scores,
-    activeIndex: winner != null ? game.activeIndex : nextIndex,
-    numberIndex: numberIndex,
+  return game._next(
+    activeIndex: game.nextIndex,
+    numberIndex: game.numberIndex + (roundIsOver ? 1 : 0),
     visitsPlayed: game.visitsPlayed + 1,
-    winner: winner,
   );
 }
 
@@ -258,26 +311,14 @@ KillerGame _assignNumber(KillerGame game, int sector) {
   }
   final scores = [...game.scores];
   scores[game.activeIndex] = game.activeScore.copyWith(number: sector);
-  final nextUnassigned = [
-    for (final (i, s) in scores.indexed)
-      if (!s.hasNumber) i,
-  ];
-  if (nextUnassigned.isEmpty) {
-    return KillerGame(
-      config: game.config,
-      scores: List.unmodifiable(scores),
-      activeIndex: 0,
-      phase: KillerPhase.playing,
-    );
-  }
-  return KillerGame(
-    config: game.config,
-    scores: List.unmodifiable(scores),
-    activeIndex: nextUnassigned.first,
-    phase: KillerPhase.assigning,
-  );
+  final nextUnassigned = scores.indexWhere((s) => !s.hasNumber);
+  return nextUnassigned == -1
+      ? game._next(scores: scores, activeIndex: 0, phase: KillerPhase.playing)
+      : game._next(scores: scores, activeIndex: nextUnassigned);
 }
 
+/// The Killer visit ends on its third dart, or with the game as soon as
+/// a single player is left alive.
 KillerGame _killerDart(KillerGame game, Dart dart) {
   if (game.phase != KillerPhase.playing) {
     throw const FormatException('Darts are only thrown while playing');
@@ -292,34 +333,16 @@ KillerGame _killerDart(KillerGame game, Dart dart) {
       if (!s.isOut) i,
   ];
   if (alive.length == 1) {
-    return KillerGame(
-      config: game.config,
-      scores: List.unmodifiable(scores),
+    return game._next(
+      scores: scores,
       activeIndex: alive.single,
       phase: KillerPhase.finished,
       visitsPlayed: game.visitsPlayed + 1,
       winner: scores[alive.single].player,
     );
   }
-  if (darts.length < dartsPerVisit) {
-    return KillerGame(
-      config: game.config,
-      scores: List.unmodifiable(scores),
-      activeIndex: game.activeIndex,
-      phase: KillerPhase.playing,
-      visitsPlayed: game.visitsPlayed,
-      dartsInVisit: List.unmodifiable(darts),
-    );
-  }
-  return _killerCompleteVisit(
-    KillerGame(
-      config: game.config,
-      scores: List.unmodifiable(scores),
-      activeIndex: game.activeIndex,
-      phase: KillerPhase.playing,
-      visitsPlayed: game.visitsPlayed,
-    ),
-  );
+  if (!_isFull(darts)) return game._next(scores: scores, dartsInVisit: darts);
+  return _killerCompleteVisit(game._next(scores: scores));
 }
 
 List<KillerScore> _applyKillerDouble(
@@ -360,34 +383,13 @@ List<KillerScore> _applyKillerDouble(
   return scores;
 }
 
+/// Passes the turn to the next player still alive.
 KillerGame _killerCompleteVisit(KillerGame game) {
   final n = game.scores.length;
-  var next = (game.activeIndex + 1) % n;
+  var next = game.nextIndex;
   for (var i = 0; i < n; i++) {
     if (!game.scores[next].isOut) break;
     next = (next + 1) % n;
   }
-  final alive = [
-    for (final s in game.scores)
-      if (!s.isOut) s,
-  ];
-  if (alive.length == 1) {
-    return KillerGame(
-      config: game.config,
-      scores: game.scores,
-      activeIndex: game.scores.indexWhere(
-        (s) => s.player.id == alive.single.player.id,
-      ),
-      phase: KillerPhase.finished,
-      visitsPlayed: game.visitsPlayed + 1,
-      winner: alive.single.player,
-    );
-  }
-  return KillerGame(
-    config: game.config,
-    scores: game.scores,
-    activeIndex: next,
-    phase: KillerPhase.playing,
-    visitsPlayed: game.visitsPlayed + 1,
-  );
+  return game._next(activeIndex: next, visitsPlayed: game.visitsPlayed + 1);
 }

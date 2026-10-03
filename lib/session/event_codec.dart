@@ -10,6 +10,7 @@ abstract final class EventTypes {
   static const gameStarted = 'game_started';
   static const visitTotalSubmitted = 'visit_total_submitted';
   static const dartThrown = 'dart_thrown';
+  static const visitEnded = 'visit_ended';
   static const numberAssigned = 'number_assigned';
   static const sessionEnded = 'session_ended';
 }
@@ -92,6 +93,7 @@ EncodedEvent encodeEvent(SessionEvent event) => switch (event) {
     type: EventTypes.dartThrown,
     payload: {'sector': dart.sector, 'multiplier': dart.multiplier},
   ),
+  VisitEnded() => (type: EventTypes.visitEnded, payload: const {}),
   NumberAssigned(:final sector) => (
     type: EventTypes.numberAssigned,
     payload: {'sector': sector},
@@ -118,6 +120,7 @@ SessionEvent decodeEvent(String type, Map<String, Object?> payload) =>
           multiplier: payload['multiplier']! as int,
         ),
       ),
+      EventTypes.visitEnded => const VisitEnded(),
       EventTypes.numberAssigned => NumberAssigned(payload['sector']! as int),
       EventTypes.sessionEnded => const SessionEnded(),
       _ => throw FormatException('Unknown event type "$type"'),

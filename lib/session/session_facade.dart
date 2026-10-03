@@ -116,6 +116,19 @@ class Session {
     return _record(DartThrown(dart));
   }
 
+  /// Ends the active player's visit before its third dart, the darts left
+  /// counting as misses. One [undo] takes it back whole.
+  CommandResult endVisit() {
+    final game = _state.game;
+    if (game == null || game.isFinished || _state.isEnded) {
+      return _notInProgress(game);
+    }
+    if (game is KillerGame && game.phase != KillerPhase.playing) {
+      return const Rejected('Assign numbers before throwing');
+    }
+    return _record(const VisitEnded());
+  }
+
   /// Claims [sector] (1–20) for the active player during Killer attribution.
   CommandResult assignNumber(int sector) {
     final game = _state.game;
@@ -139,7 +152,10 @@ class Session {
 
   /// Whether there is an input of the current game to take back.
   bool get canUndo => switch (_journal.events.lastOrNull) {
-    VisitTotalSubmitted() || DartThrown() || NumberAssigned() => true,
+    VisitTotalSubmitted() ||
+    DartThrown() ||
+    VisitEnded() ||
+    NumberAssigned() => true,
     GameStarted() || SessionEnded() || null => false,
   };
 

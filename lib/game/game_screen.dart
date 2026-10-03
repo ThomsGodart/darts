@@ -141,7 +141,7 @@ class _GameScreenState extends State<GameScreen> {
                   key: ValueKey(game.visitsPlayed),
                   dartsInVisit: game.dartsInVisit,
                   onDart: controller.throwDart,
-                  onEndVisit: () => _endVisit(controller),
+                  onEndVisit: controller.endVisit,
                   onUndo: controller.canUndo ? controller.undo : null,
                 ),
                 final ShanghaiGame game => ShanghaiInput(
@@ -149,7 +149,7 @@ class _GameScreenState extends State<GameScreen> {
                   number: game.currentNumber,
                   dartsInVisit: game.dartsInVisit,
                   onDart: controller.throwDart,
-                  onEndVisit: () => _endVisit(controller),
+                  onEndVisit: controller.endVisit,
                   onUndo: controller.canUndo ? controller.undo : null,
                 ),
                 final X01Game game => VisitInput(
@@ -157,7 +157,7 @@ class _GameScreenState extends State<GameScreen> {
                   onSubmit: (score) => _submit(context, game, score),
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
-                  onEndVisit: () => _endVisit(controller),
+                  onEndVisit: controller.endVisit,
                   onUndo: controller.canUndo ? controller.undo : null,
                 ),
                 final CricketGame game
@@ -165,7 +165,7 @@ class _GameScreenState extends State<GameScreen> {
                   CricketBoardInput(
                     dartsInVisit: game.dartsInVisit,
                     onDart: controller.throwDart,
-                    onEndVisit: () => _endVisit(controller),
+                    onEndVisit: controller.endVisit,
                     onUndo: controller.canUndo ? controller.undo : null,
                   ),
                 CricketGame() => VisitInput(
@@ -173,7 +173,7 @@ class _GameScreenState extends State<GameScreen> {
                   onSubmit: null,
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
-                  onEndVisit: () => _endVisit(controller),
+                  onEndVisit: controller.endVisit,
                   onUndo: controller.canUndo ? controller.undo : null,
                 ),
               };
@@ -242,15 +242,6 @@ class _GameScreenState extends State<GameScreen> {
     if (confirmed != true || !context.mounted) return;
     controller.endSession();
     Navigator.of(context).pop();
-  }
-
-  /// Pads the visit with misses so "Fin de tour" costs one action.
-  void _endVisit(SessionController controller) {
-    final startVisits = controller.state.game!.visitsPlayed;
-    while (!controller.state.game!.isFinished &&
-        controller.state.game!.visitsPlayed == startVisits) {
-      if (controller.throwDart(Dart.miss) is Rejected) return;
-    }
   }
 
   Future<void> _submit(BuildContext context, X01Game game, int score) async {

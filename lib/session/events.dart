@@ -37,6 +37,12 @@ class DartThrown extends SessionEvent {
   final Dart dart;
 }
 
+/// The active player ends their visit before its third dart: the darts
+/// left count as misses.
+class VisitEnded extends SessionEvent {
+  const VisitEnded();
+}
+
 /// The active Killer player claims [sector] (1–20) during attribution.
 class NumberAssigned extends SessionEvent {
   const NumberAssigned(this.sector);

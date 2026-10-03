@@ -25,6 +25,8 @@ class SessionController extends ChangeNotifier {
   CommandResult throwDart(Dart dart) =>
       _notifyIfAccepted(_session.throwDart(dart));
 
+  CommandResult endVisit() => _notifyIfAccepted(_session.endVisit());
+
   CommandResult assignNumber(int sector) =>
       _notifyIfAccepted(_session.assignNumber(sector));
 

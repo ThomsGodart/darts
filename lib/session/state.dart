@@ -153,6 +153,9 @@ sealed class Game {
 
   Player get activePlayer => players[activeIndex];
 
+  /// Whoever throws after the active player, in throwing order.
+  int get nextIndex => (activeIndex + 1) % players.length;
+
   /// Throwing order of a rematch: whoever started this game throws last.
   List<Player> get rematchOrder => [...players.skip(1), players.first];
 }
