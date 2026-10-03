@@ -1,5 +1,7 @@
 # Spec : Scorer X01 de soirée (v1)
 
+> **2026-10-03 :** le domaine « Soirée » a été renommé **Session** dans le code (`Session`, `SessionState`, `SessionRepository`…), dans la base (migration v3) et dans l’UI, pour être en anglais et ne pas impliquer de moment de la journée. Voir `CONTEXT.md`. Ce spec et ses tickets gardent l’ancien vocabulaire comme historique.
+
 Status: ready-for-agent
 Source: docs/ideas/darts-scoreboard-ui-first.md
 

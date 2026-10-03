@@ -8,7 +8,7 @@ void main() {
     await pumpApp(tester, AppStorage());
 
     expect(find.text('Darts'), findsOneWidget);
-    expect(find.text('Nouvelle soirée'), findsOneWidget);
+    expect(find.text('Nouvelle session'), findsOneWidget);
   });
 
   test('a failing backend init never escapes to the caller', () async {

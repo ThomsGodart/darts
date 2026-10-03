@@ -8,13 +8,13 @@ import 'x01_rules.dart';
 double? averagePerVisit(int points, int darts) =>
     darts == 0 ? null : points / darts * dartsPerVisit;
 
-class SoireeState {
-  const SoireeState({this.games = const [], this.isEnded = false});
+class SessionState {
+  const SessionState({this.games = const [], this.isEnded = false});
 
-  /// Every game of the soirée, in the order they were played.
+  /// Every game of the session, in the order they were played.
   final List<GameState> games;
 
-  /// Whether the soirée was ended; nothing more can be played then.
+  /// Whether the session was ended; nothing more can be played then.
   final bool isEnded;
 
   /// The current (latest) game, or null when none has been started.
@@ -31,7 +31,7 @@ class SoireeState {
     return byId.values.toList();
   }
 
-  /// Three-dart average of [player] over all their games of the soirée;
+  /// Three-dart average of [player] over all their games of the session;
   /// null if they have not thrown yet.
   /// Matched by id: a player renamed between games stays one player.
   double? averageOf(Player player) {
@@ -47,10 +47,12 @@ class SoireeState {
     return averagePerVisit(points, darts);
   }
 
-  SoireeState addGame(GameState game) =>
-      SoireeState(games: List.unmodifiable([...games, game]), isEnded: isEnded);
+  SessionState addGame(GameState game) => SessionState(
+    games: List.unmodifiable([...games, game]),
+    isEnded: isEnded,
+  );
 
-  SoireeState replaceCurrentGame(GameState game) => SoireeState(
+  SessionState replaceCurrentGame(GameState game) => SessionState(
     games: List.unmodifiable([...games.take(games.length - 1), game]),
     isEnded: isEnded,
   );

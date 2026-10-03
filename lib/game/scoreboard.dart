@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../soiree/soiree.dart';
+import '../session/session.dart';
 import '../theme/darts_tokens.dart';
 import '../ui/average_label.dart';
 

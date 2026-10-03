@@ -6,7 +6,7 @@ import 'app.dart';
 import 'backend.dart';
 import 'storage/app_database.dart';
 import 'storage/drift_player_catalog.dart';
-import 'storage/drift_soiree_repository.dart';
+import 'storage/drift_session_repository.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +15,7 @@ void main() {
   final database = AppDatabase.onDevice();
   runApp(
     DartsApp(
-      repository: DriftSoireeRepository(database),
+      repository: DriftSessionRepository(database),
       catalog: DriftPlayerCatalog(database),
     ),
   );

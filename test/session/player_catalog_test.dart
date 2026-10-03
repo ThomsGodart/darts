@@ -1,4 +1,4 @@
-import 'package:darts_points_counter/soiree/soiree.dart';
+import 'package:darts_points_counter/session/session.dart';
 
 import 'player_catalog_contract.dart';
 

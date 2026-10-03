@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 
-import '../soiree/soiree.dart';
+import '../session/session.dart';
 import '../ui/average_label.dart';
 import 'formatting.dart';
 
-/// One ended soirée: everyone's average over it, then each game with its
+/// One ended session: everyone's average over it, then each game with its
 /// winner.
-/// Pops true once the soirée was deleted.
-class SoireeDetailScreen extends StatelessWidget {
-  const SoireeDetailScreen({
+/// Pops true once the session was deleted.
+class SessionDetailScreen extends StatelessWidget {
+  const SessionDetailScreen({
     super.key,
     required this.record,
     required this.onDelete,
   });
 
-  final SoireeRecord record;
+  final SessionRecord record;
   final Future<void> Function() onDelete;
 
   Future<void> _delete(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer cette soirée ?'),
+        title: const Text('Supprimer cette session ?'),
         content: const Text('Ses parties seront effacées pour de bon.'),
         actions: [
           TextButton(
@@ -54,10 +54,10 @@ class SoireeDetailScreen extends StatelessWidget {
     final state = record.state;
     return Scaffold(
       appBar: AppBar(
-        title: Text(soireeDate(record.createdAt)),
+        title: Text(sessionDate(record.createdAt)),
         actions: [
           IconButton(
-            tooltip: 'Supprimer la soirée',
+            tooltip: 'Supprimer la session',
             icon: const Icon(Icons.delete_outline),
             onPressed: () => _delete(context),
           ),
@@ -66,10 +66,10 @@ class SoireeDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Moyennes de la soirée', style: textTheme.titleLarge),
+          Text('Moyennes de la session', style: textTheme.titleLarge),
           const SizedBox(height: 8),
           _AveragesTable(
-            key: const Key('soiree-averages'),
+            key: const Key('session-averages'),
             rows: [
               for (final player in state.players)
                 (player.name, state.averageOf(player)),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../soiree/soiree.dart';
+import '../session/session.dart';
 
 /// Enters one dart: pick single, double or treble, then the sector.
 class DartPicker extends StatefulWidget {

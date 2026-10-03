@@ -3,18 +3,18 @@ import 'package:drift_flutter/drift_flutter.dart';
 
 part 'app_database.g.dart';
 
-@DataClassName('StoredSoiree')
-class Soirees extends Table {
+@DataClassName('StoredSession')
+class Sessions extends Table {
   IntColumn get id => integer().autoIncrement()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-/// The journal of each soirée: one row per event, in order.
+/// The journal of each session: one row per event, in order.
 @DataClassName('StoredEvent')
-class SoireeEvents extends Table {
-  IntColumn get soireeId => integer().references(Soirees, #id)();
+class SessionEvents extends Table {
+  IntColumn get sessionId => integer().references(Sessions, #id)();
 
-  /// Position of the event in its soirée's journal, from 0.
+  /// Position of the event in its session's journal, from 0.
   IntColumn get seq => integer()();
   TextColumn get type => text()();
 
@@ -23,7 +23,7 @@ class SoireeEvents extends Table {
   DateTimeColumn get recordedAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
-  Set<Column<Object>> get primaryKey => {soireeId, seq};
+  Set<Column<Object>> get primaryKey => {sessionId, seq};
 }
 
 /// The player catalog.
@@ -35,7 +35,7 @@ class Players extends Table {
   BoolColumn get hasPlayed => boolean().withDefault(const Constant(false))();
 }
 
-@DriftDatabase(tables: [Soirees, SoireeEvents, Players])
+@DriftDatabase(tables: [Sessions, SessionEvents, Players])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
@@ -43,12 +43,26 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.onDevice() => AppDatabase(driftDatabase(name: 'darts'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (m, from, to) async {
       if (from < 2) await m.createTable(players);
+      if (from < 3) {
+        // The domain was renamed from "soirée" to "session".
+        await customStatement('ALTER TABLE soirees RENAME TO sessions');
+        await customStatement(
+          'ALTER TABLE soiree_events RENAME TO session_events',
+        );
+        await customStatement(
+          'ALTER TABLE session_events RENAME COLUMN soiree_id TO session_id',
+        );
+        await customStatement(
+          "UPDATE session_events SET type = 'session_ended' "
+          "WHERE type = 'soiree_ended'",
+        );
+      }
     },
   );
 }

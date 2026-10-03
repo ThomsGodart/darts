@@ -4,10 +4,10 @@ import 'state.dart';
 import 'x01_config.dart';
 
 /// Rebuilds the state from scratch by replaying [events].
-SoireeState foldEvents(Iterable<SoireeEvent> events) =>
-    events.fold(const SoireeState(), applyEvent);
+SessionState foldEvents(Iterable<SessionEvent> events) =>
+    events.fold(const SessionState(), applyEvent);
 
-SoireeState applyEvent(SoireeState state, SoireeEvent event) {
+SessionState applyEvent(SessionState state, SessionEvent event) {
   return switch (event) {
     GameStarted(:final players, :final config) => state.addGame(
       GameState(
@@ -25,7 +25,7 @@ SoireeState applyEvent(SoireeState state, SoireeEvent event) {
     DartThrown(:final dart) => state.replaceCurrentGame(
       _dartThrown(state.game!, dart),
     ),
-    SoireeEnded() => SoireeState(games: state.games, isEnded: true),
+    SessionEnded() => SessionState(games: state.games, isEnded: true),
   };
 }
 

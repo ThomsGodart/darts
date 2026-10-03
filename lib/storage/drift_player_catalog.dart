@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../soiree/player_catalog_rules.dart';
-import '../soiree/soiree.dart';
+import '../session/player_catalog_rules.dart';
+import '../session/session.dart';
 import 'app_database.dart';
 
 /// Keeps the player catalog in the app's SQLite database.

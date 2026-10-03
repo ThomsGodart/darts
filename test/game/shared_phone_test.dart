@@ -1,7 +1,7 @@
 import 'package:darts_points_counter/game/game_screen.dart';
 import 'package:darts_points_counter/game/screen_awake.dart';
-import 'package:darts_points_counter/soiree/soiree.dart';
-import 'package:darts_points_counter/soiree_controller.dart';
+import 'package:darts_points_counter/session/session.dart';
+import 'package:darts_points_counter/session_controller.dart';
 import 'package:darts_points_counter/theme/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,7 +19,7 @@ class FakeScreenAwake implements ScreenAwake {
   Future<void> release() async => isOn = false;
 }
 
-Future<SoireeController> pumpGame(
+Future<SessionController> pumpGame(
   WidgetTester tester, {
   ScreenAwake? screenAwake,
   int startScore = 501,
@@ -27,7 +27,7 @@ Future<SoireeController> pumpGame(
   tester.view.physicalSize = const Size(1080, 2340);
   tester.view.devicePixelRatio = 2.75;
   addTearDown(tester.view.reset);
-  final controller = SoireeController(Soiree(InMemoryJournal()))
+  final controller = SessionController(Session(InMemoryJournal()))
     ..startGame([alice, bob], config: X01Config(startScore: startScore));
   await tester.pumpWidget(
     MaterialApp(

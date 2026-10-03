@@ -12,4 +12,6 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 ### Domain docs
 
+Glossary in `CONTEXT.md` (code in English, UI in French; the group of games is a **Session**).
+
 Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

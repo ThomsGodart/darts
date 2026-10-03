@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../soiree/soiree.dart';
+import '../session/session.dart';
 import 'setup_controller.dart';
 
 /// Picks who plays, in which order, and the rules; pops a [GameSetup].
@@ -9,7 +9,7 @@ class SetupScreen extends StatefulWidget {
   const SetupScreen({
     super.key,
     required this.controller,
-    this.title = 'Nouvelle soirée',
+    this.title = 'Nouvelle session',
   });
 
   final SetupController controller;

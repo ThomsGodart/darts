@@ -3,8 +3,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../soiree/soiree.dart';
-import '../soiree_controller.dart';
+import '../session/session.dart';
+import '../session_controller.dart';
 import '../ui/average_label.dart';
 import 'scoreboard.dart';
 import 'screen_awake.dart';
@@ -19,7 +19,7 @@ class GameScreen extends StatefulWidget {
     this.screenAwake = const WakelockScreenAwake(),
   });
 
-  final SoireeController controller;
+  final SessionController controller;
 
   /// Between games: lets players join, leave or reorder, or the rules
   /// change, then starts the next game. Null hides the option.
@@ -31,7 +31,7 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen> {
-  SoireeController get controller => widget.controller;
+  SessionController get controller => widget.controller;
 
   /// What the listener last saw, to tell a new game, a visit or an undo.
   late int _gamesSeen;
@@ -114,11 +114,11 @@ class _GameScreenState extends State<GameScreen> {
                     Expanded(child: Scoreboard(game: game)),
                     if (game.isFinished)
                       _GameOverPanel(
-                        soiree: controller.state,
+                        session: controller.state,
                         onRematch: controller.rematch,
                         onUndo: controller.undo,
                         onChangeSetup: widget.onChangeSetup,
-                        onEnd: () => _endSoiree(context),
+                        onEnd: () => _endSession(context),
                       )
                     else
                       VisitInput(
@@ -155,11 +155,11 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Future<void> _endSoiree(BuildContext context) async {
+  Future<void> _endSession(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Terminer la soirée ?'),
+        title: const Text('Terminer la session ?'),
         content: const Text('Elle passera dans l’historique.'),
         actions: [
           TextButton(
@@ -174,7 +174,7 @@ class _GameScreenState extends State<GameScreen> {
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    controller.endSoiree();
+    controller.endSession();
     Navigator.of(context).pop();
   }
 
@@ -219,14 +219,14 @@ Future<int?> _askCheckoutDarts(BuildContext context, List<int> options) {
 /// End of a game: the winner, everyone's averages, and what comes next.
 class _GameOverPanel extends StatelessWidget {
   const _GameOverPanel({
-    required this.soiree,
+    required this.session,
     required this.onRematch,
     required this.onUndo,
     required this.onEnd,
     this.onChangeSetup,
   });
 
-  final SoireeState soiree;
+  final SessionState session;
   final VoidCallback onRematch;
 
   /// Reopens the game by taking back the checkout.
@@ -237,8 +237,8 @@ class _GameOverPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final game = soiree.game!;
-    final showSoiree = soiree.games.length > 1;
+    final game = session.game!;
+    final showSession = session.games.length > 1;
     final onChangeSetup = this.onChangeSetup;
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -261,8 +261,8 @@ class _GameOverPanel extends StatelessWidget {
                   children: [
                     const SizedBox.shrink(),
                     _Cell('moy.', style: textTheme.labelMedium),
-                    if (showSoiree)
-                      _Cell('soirée', style: textTheme.labelMedium),
+                    if (showSession)
+                      _Cell('session', style: textTheme.labelMedium),
                   ],
                 ),
                 for (final score in game.scores)
@@ -270,8 +270,8 @@ class _GameOverPanel extends StatelessWidget {
                     children: [
                       Text(score.player.name, style: textTheme.titleMedium),
                       _Cell(averageLabel(score.threeDartAverage)),
-                      if (showSoiree)
-                        _Cell(averageLabel(soiree.averageOf(score.player))),
+                      if (showSession)
+                        _Cell(averageLabel(session.averageOf(score.player))),
                     ],
                   ),
               ],
@@ -304,8 +304,8 @@ class _GameOverPanel extends StatelessWidget {
                 ),
                 TextButton.icon(
                   onPressed: onEnd,
-                  icon: const Icon(Icons.nightlight),
-                  label: const Text('Terminer la soirée'),
+                  icon: const Icon(Icons.flag_outlined),
+                  label: const Text('Terminer la session'),
                 ),
               ],
             ),

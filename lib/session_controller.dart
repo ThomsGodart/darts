@@ -1,34 +1,34 @@
 import 'package:flutter/foundation.dart';
 
 import 'setup/setup_controller.dart' show GameSetup;
-import 'soiree/soiree.dart';
+import 'session/session.dart';
 
-/// Exposes the [Soiree] facade to widgets; widgets never touch the domain
+/// Exposes the [Session] facade to widgets; widgets never touch the domain
 /// or storage directly.
-class SoireeController extends ChangeNotifier {
-  SoireeController(this._soiree);
+class SessionController extends ChangeNotifier {
+  SessionController(this._session);
 
-  final Soiree _soiree;
+  final Session _session;
 
-  SoireeState get state => _soiree.state;
+  SessionState get state => _session.state;
 
   CommandResult startGame(
     List<Player> players, {
     X01Config config = const X01Config(),
-  }) => _notifyIfAccepted(_soiree.startGame(players, config: config));
+  }) => _notifyIfAccepted(_session.startGame(players, config: config));
 
   CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) =>
       _notifyIfAccepted(
-        _soiree.submitVisitTotal(score, dartsAtCheckout: dartsAtCheckout),
+        _session.submitVisitTotal(score, dartsAtCheckout: dartsAtCheckout),
       );
 
   CommandResult throwDart(Dart dart) =>
-      _notifyIfAccepted(_soiree.throwDart(dart));
+      _notifyIfAccepted(_session.throwDart(dart));
 
   CommandResult rematch({X01Config? config}) =>
-      _notifyIfAccepted(_soiree.rematch(config: config));
+      _notifyIfAccepted(_session.rematch(config: config));
 
-  CommandResult endSoiree() => _notifyIfAccepted(_soiree.endSoiree());
+  CommandResult endSession() => _notifyIfAccepted(_session.endSession());
 
   /// Setup of the next game: same rules, the rotated throwing order.
   GameSetup? get nextSetup {
@@ -38,9 +38,9 @@ class SoireeController extends ChangeNotifier {
         : (players: game.rematchOrder, config: game.config);
   }
 
-  bool get canUndo => _soiree.canUndo;
+  bool get canUndo => _session.canUndo;
 
-  CommandResult undo() => _notifyIfAccepted(_soiree.undo());
+  CommandResult undo() => _notifyIfAccepted(_session.undo());
 
   CommandResult _notifyIfAccepted(CommandResult result) {
     if (result is Accepted) notifyListeners();

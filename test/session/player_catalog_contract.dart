@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:darts_points_counter/soiree/soiree.dart';
+import 'package:darts_points_counter/session/session.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Opens a catalog on storage that outlives it; opening a second one

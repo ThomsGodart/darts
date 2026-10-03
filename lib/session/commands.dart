@@ -1,4 +1,4 @@
-/// Outcome of a command sent to the [Soiree] facade.
+/// Outcome of a command sent to the [Session] facade.
 sealed class CommandResult {
   const CommandResult();
 }

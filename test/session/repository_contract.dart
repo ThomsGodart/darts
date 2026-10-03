@@ -1,15 +1,15 @@
 import 'dart:async';
 
-import 'package:darts_points_counter/soiree/soiree.dart';
+import 'package:darts_points_counter/session/session.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers.dart';
 
 /// Opens a repository on storage that outlives it, so that opening a second
 /// one simulates killing and relaunching the app.
-typedef OpenRepository = SoireeRepository Function();
+typedef OpenRepository = SessionRepository Function();
 
-/// Behaviour every [SoireeRepository] must have, whatever its storage.
+/// Behaviour every [SessionRepository] must have, whatever its storage.
 /// [newStorage] sets up empty storage for one test and cleans it up itself.
 void repositoryContract(
   String name,
@@ -21,7 +21,7 @@ void repositoryContract(
     setUp(() async => open = await newStorage());
 
     /// Waits for [repository]'s writes, then relaunches on the same storage.
-    Future<SoireeRepository> relaunch(SoireeRepository repository) async {
+    Future<SessionRepository> relaunch(SessionRepository repository) async {
       await repository.flush();
       return open();
     }
@@ -32,10 +32,10 @@ void repositoryContract(
 
     test('a game in progress is resumed exactly where it was', () async {
       final repository = open();
-      final soiree = await repository.create();
-      soiree.startGame([alice, bob]);
-      play(soiree, [180, 41, 140]);
-      final before = scoreboardOf(soiree);
+      final session = await repository.create();
+      session.startGame([alice, bob]);
+      play(session, [180, 41, 140]);
+      final before = scoreboardOf(session);
 
       final resumed = await (await relaunch(repository)).resumable();
 
@@ -46,14 +46,14 @@ void repositoryContract(
 
     test('checkouts, dart counts and undos survive a relaunch', () async {
       final repository = open();
-      final soiree = await repository.create();
-      soiree.startGame([alice, bob], config: const X01Config(startScore: 301));
-      play(soiree, [180, 0]);
-      checkOut(soiree, 121);
-      soiree.undo();
-      play(soiree, [21, 0]);
-      checkOut(soiree, 100, darts: 2);
-      final before = scoreboardOf(soiree);
+      final session = await repository.create();
+      session.startGame([alice, bob], config: const X01Config(startScore: 301));
+      play(session, [180, 0]);
+      checkOut(session, 121);
+      session.undo();
+      play(session, [21, 0]);
+      checkOut(session, 100, darts: 2);
+      final before = scoreboardOf(session);
 
       final rebuilt = await (await relaunch(repository)).latest();
 
@@ -62,17 +62,17 @@ void repositoryContract(
 
     test('an undo is persisted', () async {
       final repository = open();
-      final soiree = await repository.create();
-      soiree.startGame([alice, bob]);
-      play(soiree, [180, 41]);
-      soiree.undo();
+      final session = await repository.create();
+      session.startGame([alice, bob]);
+      play(session, [180, 41]);
+      session.undo();
 
       final resumed = await (await relaunch(repository)).resumable();
       expect(resumed!.state.game!.scoreOf(bob).lastVisit, isNull);
       expect(resumed.state.game!.activePlayer, bob);
     });
 
-    test('a resumed soirée keeps recording', () async {
+    test('a resumed session keeps recording', () async {
       final repository = open();
       (await repository.create())
         ..startGame([alice, bob])
@@ -86,37 +86,37 @@ void repositoryContract(
 
     test('darts of a visit in progress survive a relaunch', () async {
       final repository = open();
-      final soiree = await repository.create();
-      soiree.startGame([alice, bob]);
-      soiree
+      final session = await repository.create();
+      session.startGame([alice, bob]);
+      session
         ..throwDart(Dart.treble(20))
         ..throwDart(Dart.outerBull)
         ..throwDart(Dart.miss)
         ..throwDart(Dart.bull);
-      final before = scoreboardOf(soiree);
+      final before = scoreboardOf(session);
 
       final resumed = await (await relaunch(repository)).resumable();
       expect(scoreboardOf(resumed!), before);
       expect(resumed.state.game!.dartsInVisit, [Dart.bull]);
     });
 
-    test('a soirée whose game is over is offered, to play again', () async {
+    test('a session whose game is over is offered, to play again', () async {
       final repository = open();
-      final soiree = await repository.create();
-      soiree.startGame([alice], config: const X01Config(startScore: 40));
-      checkOut(soiree, 40, darts: 1);
+      final session = await repository.create();
+      session.startGame([alice], config: const X01Config(startScore: 40));
+      checkOut(session, 40, darts: 1);
 
       final resumed = await (await relaunch(repository)).resumable();
       expect(resumed!.state.game!.winner, alice);
       expect(resumed.rematch(), isA<Accepted>());
     });
 
-    test('an ended soirée is not offered, and stays ended', () async {
+    test('an ended session is not offered, and stays ended', () async {
       final repository = open();
-      final soiree = await repository.create();
-      soiree.startGame([alice], config: const X01Config(startScore: 40));
-      checkOut(soiree, 40, darts: 1);
-      soiree.endSoiree();
+      final session = await repository.create();
+      session.startGame([alice], config: const X01Config(startScore: 40));
+      checkOut(session, 40, darts: 1);
+      session.endSession();
 
       final reopened = await relaunch(repository);
       expect(await reopened.resumable(), isNull);
@@ -125,24 +125,24 @@ void repositoryContract(
 
     test('rematches survive a relaunch', () async {
       final repository = open();
-      final soiree = await repository.create();
-      soiree.startGame([alice, bob], config: const X01Config(startScore: 40));
-      checkOut(soiree, 40, darts: 1);
-      soiree.rematch();
-      play(soiree, [20]);
+      final session = await repository.create();
+      session.startGame([alice, bob], config: const X01Config(startScore: 40));
+      checkOut(session, 40, darts: 1);
+      session.rematch();
+      play(session, [20]);
 
       final resumed = await (await relaunch(repository)).resumable();
       expect(resumed!.state.games, hasLength(2));
-      expect(scoreboardOf(resumed), scoreboardOf(soiree));
+      expect(scoreboardOf(resumed), scoreboardOf(session));
     });
 
-    test('a soirée without a game is not offered for resuming', () async {
+    test('a session without a game is not offered for resuming', () async {
       final repository = open();
       await repository.create();
       expect(await (await relaunch(repository)).resumable(), isNull);
     });
 
-    test('only the latest soirée is offered', () async {
+    test('only the latest session is offered', () async {
       final repository = open();
       final first = await repository.create();
       first.startGame([alice, bob]);
@@ -161,17 +161,17 @@ void repositoryContract(
         expect(await open().history(), isEmpty);
       });
 
-      test('ended soirées only, newest first', () async {
+      test('ended sessions only, newest first', () async {
         final repository = open();
         final first = await repository.create();
         first
           ..startGame([alice, bob])
-          ..endSoiree();
-        (await repository.create()).endSoiree(); // never played
+          ..endSession();
+        (await repository.create()).endSession(); // never played
         final second = await repository.create();
         second
           ..startGame([bob])
-          ..endSoiree();
+          ..endSession();
         (await repository.create()).startGame([alice]); // still open
 
         final history = await (await relaunch(repository)).history();
@@ -190,7 +190,7 @@ void repositoryContract(
         );
       });
 
-      test('several soirées keep their winners and averages', () async {
+      test('several sessions keep their winners and averages', () async {
         final repository = open();
         const forty = X01Config(startScore: 40);
         final first = await repository.create();
@@ -199,11 +199,11 @@ void repositoryContract(
         first.rematch();
         play(first, [20]); // Bob: 20 in 3
         checkOut(first, 40, darts: 2); // Alice: 40 in 2
-        first.endSoiree();
+        first.endSession();
         final second = await repository.create();
         second.startGame([bob, alice], config: forty);
         checkOut(second, 40, darts: 3); // Bob: 40 in 3
-        second.endSoiree();
+        second.endSession();
 
         final history = await (await relaunch(repository)).history();
         final (latest, earliest) = (history.first.state, history.last.state);
@@ -220,16 +220,16 @@ void repositoryContract(
         expect(latest.averageOf(alice), isNull);
       });
 
-      test('a deleted soirée is gone for good', () async {
+      test('a deleted session is gone for good', () async {
         final repository = open();
         final kept = await repository.create();
         kept
           ..startGame([alice])
-          ..endSoiree();
+          ..endSession();
         final deleted = await repository.create();
         deleted
           ..startGame([bob])
-          ..endSoiree();
+          ..endSession();
         final doomed = (await repository.history()).first;
 
         await repository.delete(doomed.id);
@@ -244,7 +244,7 @@ void repositoryContract(
         await expectLater(repository.delete('not-an-id'), throwsArgumentError);
         (await repository.create())
           ..startGame([alice])
-          ..endSoiree();
+          ..endSession();
         final id = (await repository.history()).single.id;
         await repository.delete(id);
         await expectLater(repository.delete(id), throwsArgumentError);

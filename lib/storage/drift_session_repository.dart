@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 
-import '../soiree/event_codec.dart';
-import '../soiree/soiree.dart';
+import '../session/event_codec.dart';
+import '../session/session.dart';
 import 'app_database.dart';
 
-/// Keeps soirées in the app's SQLite database.
-class DriftSoireeRepository implements SoireeRepository {
-  DriftSoireeRepository(this._db);
+/// Keeps sessions in the app's SQLite database.
+class DriftSessionRepository implements SessionRepository {
+  DriftSessionRepository(this._db);
 
   final AppDatabase _db;
 
@@ -21,50 +21,50 @@ class DriftSoireeRepository implements SoireeRepository {
   Object? _failure;
 
   @override
-  Future<Soiree> create() async {
+  Future<Session> create() async {
     await _writes;
-    final id = await _db.into(_db.soirees).insert(SoireesCompanion.insert());
-    return Soiree(_DriftJournal(id, const [], _enqueue, _db));
+    final id = await _db.into(_db.sessions).insert(SessionsCompanion.insert());
+    return Session(_DriftJournal(id, const [], _enqueue, _db));
   }
 
   @override
-  Future<Soiree?> latest() async {
+  Future<Session?> latest() async {
     await _writes;
-    final soiree =
-        await (_db.select(_db.soirees)
+    final session =
+        await (_db.select(_db.sessions)
               ..orderBy([(s) => OrderingTerm.desc(s.id)])
               ..limit(1))
             .getSingleOrNull();
-    if (soiree == null) return null;
-    final events = await _eventsOf(soiree.id);
-    return Soiree(_DriftJournal(soiree.id, events, _enqueue, _db));
+    if (session == null) return null;
+    final events = await _eventsOf(session.id);
+    return Session(_DriftJournal(session.id, events, _enqueue, _db));
   }
 
   @override
-  Future<List<SoireeRecord>> history() async {
+  Future<List<SessionRecord>> history() async {
     await _writes;
-    final soirees = await (_db.select(
-      _db.soirees,
+    final sessions = await (_db.select(
+      _db.sessions,
     )..orderBy([(s) => OrderingTerm.desc(s.id)])).get();
-    // One query for every journal, grouped here, rather than one per soirée.
-    final eventsBySoiree = <int, List<SoireeEvent>>{};
+    // One query for every journal, grouped here, rather than one per session.
+    final eventsBySession = <int, List<SessionEvent>>{};
     final rows =
-        await (_db.select(_db.soireeEvents)..orderBy([
-              (e) => OrderingTerm.asc(e.soireeId),
+        await (_db.select(_db.sessionEvents)..orderBy([
+              (e) => OrderingTerm.asc(e.sessionId),
               (e) => OrderingTerm.asc(e.seq),
             ]))
             .get();
     for (final row in rows) {
-      (eventsBySoiree[row.soireeId] ??= []).add(_decode(row));
+      (eventsBySession[row.sessionId] ??= []).add(_decode(row));
     }
     return [
-      for (final soiree in soirees)
-        if (Soiree(InMemoryJournal.of(eventsBySoiree[soiree.id] ?? const []))
+      for (final session in sessions)
+        if (Session(InMemoryJournal.of(eventsBySession[session.id] ?? const []))
                 .state
             case final state when isHistory(state))
-          SoireeRecord(
-            id: '${soiree.id}',
-            createdAt: soiree.createdAt,
+          SessionRecord(
+            id: '${session.id}',
+            createdAt: session.createdAt,
             state: state,
           ),
     ];
@@ -73,32 +73,32 @@ class DriftSoireeRepository implements SoireeRepository {
   @override
   Future<void> delete(String id) async {
     await _writes;
-    final soireeId =
+    final sessionId =
         int.tryParse(id) ??
-        (throw ArgumentError.value(id, 'id', 'no such soirée'));
+        (throw ArgumentError.value(id, 'id', 'no such session'));
     await _db.transaction(() async {
       await (_db.delete(
-        _db.soireeEvents,
-      )..where((e) => e.soireeId.equals(soireeId))).go();
+        _db.sessionEvents,
+      )..where((e) => e.sessionId.equals(sessionId))).go();
       final deleted = await (_db.delete(
-        _db.soirees,
-      )..where((s) => s.id.equals(soireeId))).go();
+        _db.sessions,
+      )..where((s) => s.id.equals(sessionId))).go();
       if (deleted == 0) {
-        throw ArgumentError.value(id, 'id', 'no such soirée');
+        throw ArgumentError.value(id, 'id', 'no such session');
       }
     });
   }
 
-  Future<List<SoireeEvent>> _eventsOf(int soireeId) async {
+  Future<List<SessionEvent>> _eventsOf(int sessionId) async {
     final rows =
-        await (_db.select(_db.soireeEvents)
-              ..where((e) => e.soireeId.equals(soireeId))
+        await (_db.select(_db.sessionEvents)
+              ..where((e) => e.sessionId.equals(sessionId))
               ..orderBy([(e) => OrderingTerm.asc(e.seq)]))
             .get();
     return [for (final row in rows) _decode(row)];
   }
 
-  SoireeEvent _decode(StoredEvent row) =>
+  SessionEvent _decode(StoredEvent row) =>
       decodeEvent(row.type, jsonDecode(row.payload) as Map<String, Object?>);
 
   /// Completes once every write has run; throws if one of them failed.
@@ -117,40 +117,40 @@ class DriftSoireeRepository implements SoireeRepository {
         // The game goes on from memory; what is stored stays a consistent
         // prefix of it.
         _failure = error;
-        debugPrint('Stopped storing soirée events: $error');
+        debugPrint('Stopped storing session events: $error');
       }
     });
   }
 }
 
-/// A soirée's journal: read from memory, written through to the database.
-class _DriftJournal implements SoireeJournal {
+/// A session's journal: read from memory, written through to the database.
+class _DriftJournal implements SessionJournal {
   _DriftJournal(
-    this._soireeId,
-    List<SoireeEvent> events,
+    this._sessionId,
+    List<SessionEvent> events,
     this._enqueue,
     this._db,
   ) : _events = [...events];
 
-  final int _soireeId;
-  final List<SoireeEvent> _events;
+  final int _sessionId;
+  final List<SessionEvent> _events;
   final void Function(Future<void> Function()) _enqueue;
   final AppDatabase _db;
 
   @override
-  List<SoireeEvent> get events => List.unmodifiable(_events);
+  List<SessionEvent> get events => List.unmodifiable(_events);
 
   @override
-  void append(SoireeEvent event) {
+  void append(SessionEvent event) {
     final seq = _events.length;
     _events.add(event);
     final encoded = encodeEvent(event);
     _enqueue(
       () => _db
-          .into(_db.soireeEvents)
+          .into(_db.sessionEvents)
           .insert(
-            SoireeEventsCompanion.insert(
-              soireeId: _soireeId,
+            SessionEventsCompanion.insert(
+              sessionId: _sessionId,
               seq: seq,
               type: encoded.type,
               payload: jsonEncode(encoded.payload),
@@ -165,8 +165,8 @@ class _DriftJournal implements SoireeJournal {
     final seq = _events.length;
     _enqueue(
       () => (_db.delete(
-        _db.soireeEvents,
-      )..where((e) => e.soireeId.equals(_soireeId) & e.seq.equals(seq))).go(),
+        _db.sessionEvents,
+      )..where((e) => e.sessionId.equals(_sessionId) & e.seq.equals(seq))).go(),
     );
   }
 }

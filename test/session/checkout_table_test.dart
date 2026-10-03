@@ -1,19 +1,19 @@
 import 'dart:io';
 
-import 'package:darts_points_counter/soiree/soiree.dart';
+import 'package:darts_points_counter/session/session.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers.dart';
 
-const _tablePath = 'test/soiree/checkout_table.txt';
+const _tablePath = 'test/session/checkout_table.txt';
 
 /// The double-out checkout table, one "remaining: route" line from 2 to 170.
 String currentTable() {
   final lines = <String>[];
   for (var remaining = 2; remaining <= 170; remaining++) {
-    final soiree = newSoiree()
+    final session = newSession()
       ..startGame([alice], config: X01Config(startScore: remaining));
-    final route = soiree.state.game!.checkoutSuggestion;
+    final route = session.state.game!.checkoutSuggestion;
     lines.add('$remaining: ${route?.map((d) => d.notation).join(' ') ?? '-'}');
   }
   return '${lines.join('\n')}\n';

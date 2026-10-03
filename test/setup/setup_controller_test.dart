@@ -1,6 +1,6 @@
 import 'package:darts_points_counter/setup/setup_controller.dart';
-import 'package:darts_points_counter/soiree/soiree.dart';
-import 'package:darts_points_counter/soiree_launcher.dart';
+import 'package:darts_points_counter/session/session.dart';
+import 'package:darts_points_counter/session_launcher.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Future<SetupController> setupWith(List<String> names) async {
@@ -112,7 +112,7 @@ void main() {
   test('a player whose game was refused is not marked as played', () async {
     final catalog = InMemoryPlayerCatalog();
     final ana = await catalog.add('Ana');
-    final launcher = SoireeLauncher(InMemorySoireeRepository(), catalog);
+    final launcher = SessionLauncher(InMemorySessionRepository(), catalog);
 
     await expectLater(
       launcher.newGame((players: [ana, ana], config: const X01Config())),
@@ -123,11 +123,14 @@ void main() {
     expect(await catalog.archived(), isEmpty, reason: 'deleted, not archived');
   });
 
-  test('a new soirée ends the one left open', () async {
+  test('a new session ends the one left open', () async {
     final catalog = InMemoryPlayerCatalog();
     final ana = await catalog.add('Ana');
-    final storage = InMemorySoireeStorage();
-    final launcher = SoireeLauncher(InMemorySoireeRepository(storage), catalog);
+    final storage = InMemorySessionStorage();
+    final launcher = SessionLauncher(
+      InMemorySessionRepository(storage),
+      catalog,
+    );
     final first = await launcher.newGame((
       players: [ana],
       config: const X01Config(),
@@ -136,7 +139,7 @@ void main() {
 
     await launcher.newGame((players: [ana], config: const X01Config()));
 
-    final firstAgain = Soiree(storage.journals.first);
+    final firstAgain = Session(storage.journals.first);
     expect(firstAgain.state.isEnded, isTrue);
   });
 

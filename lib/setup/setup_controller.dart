@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 
-import '../soiree/soiree.dart';
+import '../session/session.dart';
 
 /// What the setup screen hands back: who plays, in order, and the rules.
 typedef GameSetup = ({List<Player> players, X01Config config});
 
-/// State of the soirée setup screen, over the player catalog.
+/// State of the session setup screen, over the player catalog.
 class SetupController extends ChangeNotifier {
   /// A blank setup, or one starting from the players and rules of [from].
   SetupController(this._catalog, {GameSetup? from})

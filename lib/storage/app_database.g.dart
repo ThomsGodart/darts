@@ -3,12 +3,12 @@
 part of 'app_database.dart';
 
 // ignore_for_file: type=lint
-class $SoireesTable extends Soirees
-    with TableInfo<$SoireesTable, StoredSoiree> {
+class $SessionsTable extends Sessions
+    with TableInfo<$SessionsTable, StoredSession> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $SoireesTable(this.attachedDatabase, [this._alias]);
+  $SessionsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -40,10 +40,10 @@ class $SoireesTable extends Soirees
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'soirees';
+  static const String $name = 'sessions';
   @override
   VerificationContext validateIntegrity(
-    Insertable<StoredSoiree> instance, {
+    Insertable<StoredSession> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -63,9 +63,9 @@ class $SoireesTable extends Soirees
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  StoredSoiree map(Map<String, dynamic> data, {String? tablePrefix}) {
+  StoredSession map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return StoredSoiree(
+    return StoredSession(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -78,15 +78,15 @@ class $SoireesTable extends Soirees
   }
 
   @override
-  $SoireesTable createAlias(String alias) {
-    return $SoireesTable(attachedDatabase, alias);
+  $SessionsTable createAlias(String alias) {
+    return $SessionsTable(attachedDatabase, alias);
   }
 }
 
-class StoredSoiree extends DataClass implements Insertable<StoredSoiree> {
+class StoredSession extends DataClass implements Insertable<StoredSession> {
   final int id;
   final DateTime createdAt;
-  const StoredSoiree({required this.id, required this.createdAt});
+  const StoredSession({required this.id, required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -95,16 +95,16 @@ class StoredSoiree extends DataClass implements Insertable<StoredSoiree> {
     return map;
   }
 
-  SoireesCompanion toCompanion(bool nullToAbsent) {
-    return SoireesCompanion(id: Value(id), createdAt: Value(createdAt));
+  SessionsCompanion toCompanion(bool nullToAbsent) {
+    return SessionsCompanion(id: Value(id), createdAt: Value(createdAt));
   }
 
-  factory StoredSoiree.fromJson(
+  factory StoredSession.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return StoredSoiree(
+    return StoredSession(
       id: serializer.fromJson<int>(json['id']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -118,10 +118,10 @@ class StoredSoiree extends DataClass implements Insertable<StoredSoiree> {
     };
   }
 
-  StoredSoiree copyWith({int? id, DateTime? createdAt}) =>
-      StoredSoiree(id: id ?? this.id, createdAt: createdAt ?? this.createdAt);
-  StoredSoiree copyWithCompanion(SoireesCompanion data) {
-    return StoredSoiree(
+  StoredSession copyWith({int? id, DateTime? createdAt}) =>
+      StoredSession(id: id ?? this.id, createdAt: createdAt ?? this.createdAt);
+  StoredSession copyWithCompanion(SessionsCompanion data) {
+    return StoredSession(
       id: data.id.present ? data.id.value : this.id,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -129,7 +129,7 @@ class StoredSoiree extends DataClass implements Insertable<StoredSoiree> {
 
   @override
   String toString() {
-    return (StringBuffer('StoredSoiree(')
+    return (StringBuffer('StoredSession(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -141,23 +141,23 @@ class StoredSoiree extends DataClass implements Insertable<StoredSoiree> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is StoredSoiree &&
+      (other is StoredSession &&
           other.id == this.id &&
           other.createdAt == this.createdAt);
 }
 
-class SoireesCompanion extends UpdateCompanion<StoredSoiree> {
+class SessionsCompanion extends UpdateCompanion<StoredSession> {
   final Value<int> id;
   final Value<DateTime> createdAt;
-  const SoireesCompanion({
+  const SessionsCompanion({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-  SoireesCompanion.insert({
+  SessionsCompanion.insert({
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
-  static Insertable<StoredSoiree> custom({
+  static Insertable<StoredSession> custom({
     Expression<int>? id,
     Expression<DateTime>? createdAt,
   }) {
@@ -167,8 +167,8 @@ class SoireesCompanion extends UpdateCompanion<StoredSoiree> {
     });
   }
 
-  SoireesCompanion copyWith({Value<int>? id, Value<DateTime>? createdAt}) {
-    return SoireesCompanion(
+  SessionsCompanion copyWith({Value<int>? id, Value<DateTime>? createdAt}) {
+    return SessionsCompanion(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -188,7 +188,7 @@ class SoireesCompanion extends UpdateCompanion<StoredSoiree> {
 
   @override
   String toString() {
-    return (StringBuffer('SoireesCompanion(')
+    return (StringBuffer('SessionsCompanion(')
           ..write('id: $id, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -196,24 +196,24 @@ class SoireesCompanion extends UpdateCompanion<StoredSoiree> {
   }
 }
 
-class $SoireeEventsTable extends SoireeEvents
-    with TableInfo<$SoireeEventsTable, StoredEvent> {
+class $SessionEventsTable extends SessionEvents
+    with TableInfo<$SessionEventsTable, StoredEvent> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $SoireeEventsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _soireeIdMeta = const VerificationMeta(
-    'soireeId',
+  $SessionEventsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
   );
   @override
-  late final GeneratedColumn<int> soireeId = GeneratedColumn<int>(
-    'soiree_id',
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
     aliasedName,
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES soirees (id)',
+      'REFERENCES sessions (id)',
     ),
   );
   static const VerificationMeta _seqMeta = const VerificationMeta('seq');
@@ -259,7 +259,7 @@ class $SoireeEventsTable extends SoireeEvents
   );
   @override
   List<GeneratedColumn> get $columns => [
-    soireeId,
+    sessionId,
     seq,
     type,
     payload,
@@ -269,7 +269,7 @@ class $SoireeEventsTable extends SoireeEvents
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'soiree_events';
+  static const String $name = 'session_events';
   @override
   VerificationContext validateIntegrity(
     Insertable<StoredEvent> instance, {
@@ -277,13 +277,13 @@ class $SoireeEventsTable extends SoireeEvents
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('soiree_id')) {
+    if (data.containsKey('session_id')) {
       context.handle(
-        _soireeIdMeta,
-        soireeId.isAcceptableOrUnknown(data['soiree_id']!, _soireeIdMeta),
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
       );
     } else if (isInserting) {
-      context.missing(_soireeIdMeta);
+      context.missing(_sessionIdMeta);
     }
     if (data.containsKey('seq')) {
       context.handle(
@@ -319,14 +319,14 @@ class $SoireeEventsTable extends SoireeEvents
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {soireeId, seq};
+  Set<GeneratedColumn> get $primaryKey => {sessionId, seq};
   @override
   StoredEvent map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return StoredEvent(
-      soireeId: attachedDatabase.typeMapping.read(
+      sessionId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
-        data['${effectivePrefix}soiree_id'],
+        data['${effectivePrefix}session_id'],
       )!,
       seq: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -348,15 +348,15 @@ class $SoireeEventsTable extends SoireeEvents
   }
 
   @override
-  $SoireeEventsTable createAlias(String alias) {
-    return $SoireeEventsTable(attachedDatabase, alias);
+  $SessionEventsTable createAlias(String alias) {
+    return $SessionEventsTable(attachedDatabase, alias);
   }
 }
 
 class StoredEvent extends DataClass implements Insertable<StoredEvent> {
-  final int soireeId;
+  final int sessionId;
 
-  /// Position of the event in its soirée's journal, from 0.
+  /// Position of the event in its session's journal, from 0.
   final int seq;
   final String type;
 
@@ -364,7 +364,7 @@ class StoredEvent extends DataClass implements Insertable<StoredEvent> {
   final String payload;
   final DateTime recordedAt;
   const StoredEvent({
-    required this.soireeId,
+    required this.sessionId,
     required this.seq,
     required this.type,
     required this.payload,
@@ -373,7 +373,7 @@ class StoredEvent extends DataClass implements Insertable<StoredEvent> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['soiree_id'] = Variable<int>(soireeId);
+    map['session_id'] = Variable<int>(sessionId);
     map['seq'] = Variable<int>(seq);
     map['type'] = Variable<String>(type);
     map['payload'] = Variable<String>(payload);
@@ -381,9 +381,9 @@ class StoredEvent extends DataClass implements Insertable<StoredEvent> {
     return map;
   }
 
-  SoireeEventsCompanion toCompanion(bool nullToAbsent) {
-    return SoireeEventsCompanion(
-      soireeId: Value(soireeId),
+  SessionEventsCompanion toCompanion(bool nullToAbsent) {
+    return SessionEventsCompanion(
+      sessionId: Value(sessionId),
       seq: Value(seq),
       type: Value(type),
       payload: Value(payload),
@@ -397,7 +397,7 @@ class StoredEvent extends DataClass implements Insertable<StoredEvent> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return StoredEvent(
-      soireeId: serializer.fromJson<int>(json['soireeId']),
+      sessionId: serializer.fromJson<int>(json['sessionId']),
       seq: serializer.fromJson<int>(json['seq']),
       type: serializer.fromJson<String>(json['type']),
       payload: serializer.fromJson<String>(json['payload']),
@@ -408,7 +408,7 @@ class StoredEvent extends DataClass implements Insertable<StoredEvent> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'soireeId': serializer.toJson<int>(soireeId),
+      'sessionId': serializer.toJson<int>(sessionId),
       'seq': serializer.toJson<int>(seq),
       'type': serializer.toJson<String>(type),
       'payload': serializer.toJson<String>(payload),
@@ -417,21 +417,21 @@ class StoredEvent extends DataClass implements Insertable<StoredEvent> {
   }
 
   StoredEvent copyWith({
-    int? soireeId,
+    int? sessionId,
     int? seq,
     String? type,
     String? payload,
     DateTime? recordedAt,
   }) => StoredEvent(
-    soireeId: soireeId ?? this.soireeId,
+    sessionId: sessionId ?? this.sessionId,
     seq: seq ?? this.seq,
     type: type ?? this.type,
     payload: payload ?? this.payload,
     recordedAt: recordedAt ?? this.recordedAt,
   );
-  StoredEvent copyWithCompanion(SoireeEventsCompanion data) {
+  StoredEvent copyWithCompanion(SessionEventsCompanion data) {
     return StoredEvent(
-      soireeId: data.soireeId.present ? data.soireeId.value : this.soireeId,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
       seq: data.seq.present ? data.seq.value : this.seq,
       type: data.type.present ? data.type.value : this.type,
       payload: data.payload.present ? data.payload.value : this.payload,
@@ -444,7 +444,7 @@ class StoredEvent extends DataClass implements Insertable<StoredEvent> {
   @override
   String toString() {
     return (StringBuffer('StoredEvent(')
-          ..write('soireeId: $soireeId, ')
+          ..write('sessionId: $sessionId, ')
           ..write('seq: $seq, ')
           ..write('type: $type, ')
           ..write('payload: $payload, ')
@@ -454,46 +454,46 @@ class StoredEvent extends DataClass implements Insertable<StoredEvent> {
   }
 
   @override
-  int get hashCode => Object.hash(soireeId, seq, type, payload, recordedAt);
+  int get hashCode => Object.hash(sessionId, seq, type, payload, recordedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is StoredEvent &&
-          other.soireeId == this.soireeId &&
+          other.sessionId == this.sessionId &&
           other.seq == this.seq &&
           other.type == this.type &&
           other.payload == this.payload &&
           other.recordedAt == this.recordedAt);
 }
 
-class SoireeEventsCompanion extends UpdateCompanion<StoredEvent> {
-  final Value<int> soireeId;
+class SessionEventsCompanion extends UpdateCompanion<StoredEvent> {
+  final Value<int> sessionId;
   final Value<int> seq;
   final Value<String> type;
   final Value<String> payload;
   final Value<DateTime> recordedAt;
   final Value<int> rowid;
-  const SoireeEventsCompanion({
-    this.soireeId = const Value.absent(),
+  const SessionEventsCompanion({
+    this.sessionId = const Value.absent(),
     this.seq = const Value.absent(),
     this.type = const Value.absent(),
     this.payload = const Value.absent(),
     this.recordedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  SoireeEventsCompanion.insert({
-    required int soireeId,
+  SessionEventsCompanion.insert({
+    required int sessionId,
     required int seq,
     required String type,
     required String payload,
     this.recordedAt = const Value.absent(),
     this.rowid = const Value.absent(),
-  }) : soireeId = Value(soireeId),
+  }) : sessionId = Value(sessionId),
        seq = Value(seq),
        type = Value(type),
        payload = Value(payload);
   static Insertable<StoredEvent> custom({
-    Expression<int>? soireeId,
+    Expression<int>? sessionId,
     Expression<int>? seq,
     Expression<String>? type,
     Expression<String>? payload,
@@ -501,7 +501,7 @@ class SoireeEventsCompanion extends UpdateCompanion<StoredEvent> {
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (soireeId != null) 'soiree_id': soireeId,
+      if (sessionId != null) 'session_id': sessionId,
       if (seq != null) 'seq': seq,
       if (type != null) 'type': type,
       if (payload != null) 'payload': payload,
@@ -510,16 +510,16 @@ class SoireeEventsCompanion extends UpdateCompanion<StoredEvent> {
     });
   }
 
-  SoireeEventsCompanion copyWith({
-    Value<int>? soireeId,
+  SessionEventsCompanion copyWith({
+    Value<int>? sessionId,
     Value<int>? seq,
     Value<String>? type,
     Value<String>? payload,
     Value<DateTime>? recordedAt,
     Value<int>? rowid,
   }) {
-    return SoireeEventsCompanion(
-      soireeId: soireeId ?? this.soireeId,
+    return SessionEventsCompanion(
+      sessionId: sessionId ?? this.sessionId,
       seq: seq ?? this.seq,
       type: type ?? this.type,
       payload: payload ?? this.payload,
@@ -531,8 +531,8 @@ class SoireeEventsCompanion extends UpdateCompanion<StoredEvent> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (soireeId.present) {
-      map['soiree_id'] = Variable<int>(soireeId.value);
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
     }
     if (seq.present) {
       map['seq'] = Variable<int>(seq.value);
@@ -554,8 +554,8 @@ class SoireeEventsCompanion extends UpdateCompanion<StoredEvent> {
 
   @override
   String toString() {
-    return (StringBuffer('SoireeEventsCompanion(')
-          ..write('soireeId: $soireeId, ')
+    return (StringBuffer('SessionEventsCompanion(')
+          ..write('sessionId: $sessionId, ')
           ..write('seq: $seq, ')
           ..write('type: $type, ')
           ..write('payload: $payload, ')
@@ -869,55 +869,55 @@ class PlayersCompanion extends UpdateCompanion<StoredPlayer> {
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
-  late final $SoireesTable soirees = $SoireesTable(this);
-  late final $SoireeEventsTable soireeEvents = $SoireeEventsTable(this);
+  late final $SessionsTable sessions = $SessionsTable(this);
+  late final $SessionEventsTable sessionEvents = $SessionEventsTable(this);
   late final $PlayersTable players = $PlayersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
-    soirees,
-    soireeEvents,
+    sessions,
+    sessionEvents,
     players,
   ];
 }
 
-typedef $$SoireesTableCreateCompanionBuilder = SoireesCompanion Function({
+typedef $$SessionsTableCreateCompanionBuilder = SessionsCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
 });
-typedef $$SoireesTableUpdateCompanionBuilder = SoireesCompanion Function({
+typedef $$SessionsTableUpdateCompanionBuilder = SessionsCompanion Function({
   Value<int> id,
   Value<DateTime> createdAt,
 });
 
-final class $$SoireesTableReferences
-    extends BaseReferences<_$AppDatabase, $SoireesTable, StoredSoiree> {
-  $$SoireesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+final class $$SessionsTableReferences
+    extends BaseReferences<_$AppDatabase, $SessionsTable, StoredSession> {
+  $$SessionsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static MultiTypedResultKey<$SoireeEventsTable, List<StoredEvent>>
-  _soireeEventsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.soireeEvents,
-    aliasName: 'soirees__id__soiree_events__soiree_id',
+  static MultiTypedResultKey<$SessionEventsTable, List<StoredEvent>>
+  _sessionEventsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.sessionEvents,
+    aliasName: 'sessions__id__session_events__session_id',
   );
 
-  $$SoireeEventsTableProcessedTableManager get soireeEventsRefs {
-    final manager = $$SoireeEventsTableTableManager(
+  $$SessionEventsTableProcessedTableManager get sessionEventsRefs {
+    final manager = $$SessionEventsTableTableManager(
       $_db,
-      $_db.soireeEvents,
-    ).filter((f) => f.soireeId.id.sqlEquals($_itemColumn<int>('id')!));
+      $_db.sessionEvents,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
 
-    final cache = $_typedResult.readTableOrNull(_soireeEventsRefsTable($_db));
+    final cache = $_typedResult.readTableOrNull(_sessionEventsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
 }
 
-class $$SoireesTableFilterComposer
-    extends Composer<_$AppDatabase, $SoireesTable> {
-  $$SoireesTableFilterComposer({
+class $$SessionsTableFilterComposer
+    extends Composer<_$AppDatabase, $SessionsTable> {
+  $$SessionsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -934,22 +934,22 @@ class $$SoireesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  Expression<bool> soireeEventsRefs(
-    Expression<bool> Function($$SoireeEventsTableFilterComposer f) f,
+  Expression<bool> sessionEventsRefs(
+    Expression<bool> Function($$SessionEventsTableFilterComposer f) f,
   ) {
-    final $$SoireeEventsTableFilterComposer composer = $composerBuilder(
+    final $$SessionEventsTableFilterComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.soireeEvents,
-      getReferencedColumn: (t) => t.soireeId,
+      referencedTable: $db.sessionEvents,
+      getReferencedColumn: (t) => t.sessionId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$SoireeEventsTableFilterComposer(
+          }) => $$SessionEventsTableFilterComposer(
             $db: $db,
-            $table: $db.soireeEvents,
+            $table: $db.sessionEvents,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -960,9 +960,9 @@ class $$SoireesTableFilterComposer
   }
 }
 
-class $$SoireesTableOrderingComposer
-    extends Composer<_$AppDatabase, $SoireesTable> {
-  $$SoireesTableOrderingComposer({
+class $$SessionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SessionsTable> {
+  $$SessionsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -980,9 +980,9 @@ class $$SoireesTableOrderingComposer
   );
 }
 
-class $$SoireesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $SoireesTable> {
-  $$SoireesTableAnnotationComposer({
+class $$SessionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SessionsTable> {
+  $$SessionsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -995,22 +995,22 @@ class $$SoireesTableAnnotationComposer
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
-  Expression<T> soireeEventsRefs<T extends Object>(
-    Expression<T> Function($$SoireeEventsTableAnnotationComposer a) f,
+  Expression<T> sessionEventsRefs<T extends Object>(
+    Expression<T> Function($$SessionEventsTableAnnotationComposer a) f,
   ) {
-    final $$SoireeEventsTableAnnotationComposer composer = $composerBuilder(
+    final $$SessionEventsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
       getCurrentColumn: (t) => t.id,
-      referencedTable: $db.soireeEvents,
-      getReferencedColumn: (t) => t.soireeId,
+      referencedTable: $db.sessionEvents,
+      getReferencedColumn: (t) => t.sessionId,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$SoireeEventsTableAnnotationComposer(
+          }) => $$SessionEventsTableAnnotationComposer(
             $db: $db,
-            $table: $db.soireeEvents,
+            $table: $db.sessionEvents,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1021,71 +1021,73 @@ class $$SoireesTableAnnotationComposer
   }
 }
 
-class $$SoireesTableTableManager
+class $$SessionsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $SoireesTable,
-          StoredSoiree,
-          $$SoireesTableFilterComposer,
-          $$SoireesTableOrderingComposer,
-          $$SoireesTableAnnotationComposer,
-          $$SoireesTableCreateCompanionBuilder,
-          $$SoireesTableUpdateCompanionBuilder,
-          (StoredSoiree, $$SoireesTableReferences),
-          StoredSoiree,
-          PrefetchHooks Function({bool soireeEventsRefs})
+          $SessionsTable,
+          StoredSession,
+          $$SessionsTableFilterComposer,
+          $$SessionsTableOrderingComposer,
+          $$SessionsTableAnnotationComposer,
+          $$SessionsTableCreateCompanionBuilder,
+          $$SessionsTableUpdateCompanionBuilder,
+          (StoredSession, $$SessionsTableReferences),
+          StoredSession,
+          PrefetchHooks Function({bool sessionEventsRefs})
         > {
-  $$SoireesTableTableManager(_$AppDatabase db, $SoireesTable table)
+  $$SessionsTableTableManager(_$AppDatabase db, $SessionsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$SoireesTableFilterComposer($db: db, $table: table),
+              $$SessionsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$SoireesTableOrderingComposer($db: db, $table: table),
+              $$SessionsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$SoireesTableAnnotationComposer($db: db, $table: table),
+              $$SessionsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
-          }) => SoireesCompanion(id: id, createdAt: createdAt),
+          }) => SessionsCompanion(id: id, createdAt: createdAt),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
-          }) => SoireesCompanion.insert(id: id, createdAt: createdAt),
+          }) => SessionsCompanion.insert(id: id, createdAt: createdAt),
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$SoireesTable, StoredSoiree>(table),
-                  $$SoireesTableReferences(db, table, e),
+                  e.readTable<$SessionsTable, StoredSession>(table),
+                  $$SessionsTableReferences(db, table, e),
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({soireeEventsRefs = false}) {
+          prefetchHooksCallback: ({sessionEventsRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (soireeEventsRefs) db.soireeEvents],
+              explicitlyWatchedTables: [
+                if (sessionEventsRefs) db.sessionEvents,
+              ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
                 return [
-                  if (soireeEventsRefs)
+                  if (sessionEventsRefs)
                     await $_getPrefetchedData<
-                      StoredSoiree,
-                      $SoireesTable,
+                      StoredSession,
+                      $SessionsTable,
                       StoredEvent
                     >(
                       currentTable: table,
-                      referencedTable: $$SoireesTableReferences
-                          ._soireeEventsRefsTable(db),
-                      managerFromTypedResult: (p0) => $$SoireesTableReferences(
+                      referencedTable: $$SessionsTableReferences
+                          ._sessionEventsRefsTable(db),
+                      managerFromTypedResult: (p0) => $$SessionsTableReferences(
                         db,
                         table,
                         p0,
-                      ).soireeEventsRefs,
+                      ).sessionEventsRefs,
                       referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.soireeId == item.id),
+                          referencedItems.where((e) => e.sessionId == item.id),
                       typedResults: items,
                     ),
                 ];
@@ -1096,32 +1098,32 @@ class $$SoireesTableTableManager
       );
 }
 
-typedef $$SoireesTableProcessedTableManager =
+typedef $$SessionsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $SoireesTable,
-      StoredSoiree,
-      $$SoireesTableFilterComposer,
-      $$SoireesTableOrderingComposer,
-      $$SoireesTableAnnotationComposer,
-      $$SoireesTableCreateCompanionBuilder,
-      $$SoireesTableUpdateCompanionBuilder,
-      (StoredSoiree, $$SoireesTableReferences),
-      StoredSoiree,
-      PrefetchHooks Function({bool soireeEventsRefs})
+      $SessionsTable,
+      StoredSession,
+      $$SessionsTableFilterComposer,
+      $$SessionsTableOrderingComposer,
+      $$SessionsTableAnnotationComposer,
+      $$SessionsTableCreateCompanionBuilder,
+      $$SessionsTableUpdateCompanionBuilder,
+      (StoredSession, $$SessionsTableReferences),
+      StoredSession,
+      PrefetchHooks Function({bool sessionEventsRefs})
     >;
-typedef $$SoireeEventsTableCreateCompanionBuilder =
-    SoireeEventsCompanion Function({
-      required int soireeId,
+typedef $$SessionEventsTableCreateCompanionBuilder =
+    SessionEventsCompanion Function({
+      required int sessionId,
       required int seq,
       required String type,
       required String payload,
       Value<DateTime> recordedAt,
       Value<int> rowid,
     });
-typedef $$SoireeEventsTableUpdateCompanionBuilder =
-    SoireeEventsCompanion Function({
-      Value<int> soireeId,
+typedef $$SessionEventsTableUpdateCompanionBuilder =
+    SessionEventsCompanion Function({
+      Value<int> sessionId,
       Value<int> seq,
       Value<String> type,
       Value<String> payload,
@@ -1129,21 +1131,25 @@ typedef $$SoireeEventsTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
-final class $$SoireeEventsTableReferences
-    extends BaseReferences<_$AppDatabase, $SoireeEventsTable, StoredEvent> {
-  $$SoireeEventsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+final class $$SessionEventsTableReferences
+    extends BaseReferences<_$AppDatabase, $SessionEventsTable, StoredEvent> {
+  $$SessionEventsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
 
-  static $SoireesTable _soireeIdTable(_$AppDatabase db) =>
-      db.soirees.createAlias('soiree_events__soiree_id__soirees__id');
+  static $SessionsTable _sessionIdTable(_$AppDatabase db) =>
+      db.sessions.createAlias('session_events__session_id__sessions__id');
 
-  $$SoireesTableProcessedTableManager get soireeId {
-    final $_column = $_itemColumn<int>('soiree_id')!;
+  $$SessionsTableProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<int>('session_id')!;
 
-    final manager = $$SoireesTableTableManager(
+    final manager = $$SessionsTableTableManager(
       $_db,
-      $_db.soirees,
+      $_db.sessions,
     ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_soireeIdTable($_db));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -1151,9 +1157,9 @@ final class $$SoireeEventsTableReferences
   }
 }
 
-class $$SoireeEventsTableFilterComposer
-    extends Composer<_$AppDatabase, $SoireeEventsTable> {
-  $$SoireeEventsTableFilterComposer({
+class $$SessionEventsTableFilterComposer
+    extends Composer<_$AppDatabase, $SessionEventsTable> {
+  $$SessionEventsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1180,20 +1186,20 @@ class $$SoireeEventsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  $$SoireesTableFilterComposer get soireeId {
-    final $$SoireesTableFilterComposer composer = $composerBuilder(
+  $$SessionsTableFilterComposer get sessionId {
+    final $$SessionsTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.soireeId,
-      referencedTable: $db.soirees,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessions,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$SoireesTableFilterComposer(
+          }) => $$SessionsTableFilterComposer(
             $db: $db,
-            $table: $db.soirees,
+            $table: $db.sessions,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1204,9 +1210,9 @@ class $$SoireeEventsTableFilterComposer
   }
 }
 
-class $$SoireeEventsTableOrderingComposer
-    extends Composer<_$AppDatabase, $SoireeEventsTable> {
-  $$SoireeEventsTableOrderingComposer({
+class $$SessionEventsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SessionEventsTable> {
+  $$SessionEventsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1233,20 +1239,20 @@ class $$SoireeEventsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$SoireesTableOrderingComposer get soireeId {
-    final $$SoireesTableOrderingComposer composer = $composerBuilder(
+  $$SessionsTableOrderingComposer get sessionId {
+    final $$SessionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.soireeId,
-      referencedTable: $db.soirees,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessions,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$SoireesTableOrderingComposer(
+          }) => $$SessionsTableOrderingComposer(
             $db: $db,
-            $table: $db.soirees,
+            $table: $db.sessions,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1257,9 +1263,9 @@ class $$SoireeEventsTableOrderingComposer
   }
 }
 
-class $$SoireeEventsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $SoireeEventsTable> {
-  $$SoireeEventsTableAnnotationComposer({
+class $$SessionEventsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SessionEventsTable> {
+  $$SessionEventsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -1280,20 +1286,20 @@ class $$SoireeEventsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  $$SoireesTableAnnotationComposer get soireeId {
-    final $$SoireesTableAnnotationComposer composer = $composerBuilder(
+  $$SessionsTableAnnotationComposer get sessionId {
+    final $$SessionsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.soireeId,
-      referencedTable: $db.soirees,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessions,
       getReferencedColumn: (t) => t.id,
       builder:
           (
             joinBuilder, {
             $addJoinBuilderToRootComposer,
             $removeJoinBuilderFromRootComposer,
-          }) => $$SoireesTableAnnotationComposer(
+          }) => $$SessionsTableAnnotationComposer(
             $db: $db,
-            $table: $db.soirees,
+            $table: $db.sessions,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -1304,42 +1310,42 @@ class $$SoireeEventsTableAnnotationComposer
   }
 }
 
-class $$SoireeEventsTableTableManager
+class $$SessionEventsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $SoireeEventsTable,
+          $SessionEventsTable,
           StoredEvent,
-          $$SoireeEventsTableFilterComposer,
-          $$SoireeEventsTableOrderingComposer,
-          $$SoireeEventsTableAnnotationComposer,
-          $$SoireeEventsTableCreateCompanionBuilder,
-          $$SoireeEventsTableUpdateCompanionBuilder,
-          (StoredEvent, $$SoireeEventsTableReferences),
+          $$SessionEventsTableFilterComposer,
+          $$SessionEventsTableOrderingComposer,
+          $$SessionEventsTableAnnotationComposer,
+          $$SessionEventsTableCreateCompanionBuilder,
+          $$SessionEventsTableUpdateCompanionBuilder,
+          (StoredEvent, $$SessionEventsTableReferences),
           StoredEvent,
-          PrefetchHooks Function({bool soireeId})
+          PrefetchHooks Function({bool sessionId})
         > {
-  $$SoireeEventsTableTableManager(_$AppDatabase db, $SoireeEventsTable table)
+  $$SessionEventsTableTableManager(_$AppDatabase db, $SessionEventsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$SoireeEventsTableFilterComposer($db: db, $table: table),
+              $$SessionEventsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$SoireeEventsTableOrderingComposer($db: db, $table: table),
+              $$SessionEventsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$SoireeEventsTableAnnotationComposer($db: db, $table: table),
+              $$SessionEventsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                Value<int> soireeId = const Value.absent(),
+                Value<int> sessionId = const Value.absent(),
                 Value<int> seq = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<String> payload = const Value.absent(),
                 Value<DateTime> recordedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => SoireeEventsCompanion(
-                soireeId: soireeId,
+              }) => SessionEventsCompanion(
+                sessionId: sessionId,
                 seq: seq,
                 type: type,
                 payload: payload,
@@ -1348,14 +1354,14 @@ class $$SoireeEventsTableTableManager
               ),
           createCompanionCallback:
               ({
-                required int soireeId,
+                required int sessionId,
                 required int seq,
                 required String type,
                 required String payload,
                 Value<DateTime> recordedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
-              }) => SoireeEventsCompanion.insert(
-                soireeId: soireeId,
+              }) => SessionEventsCompanion.insert(
+                sessionId: sessionId,
                 seq: seq,
                 type: type,
                 payload: payload,
@@ -1365,12 +1371,12 @@ class $$SoireeEventsTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable<$SoireeEventsTable, StoredEvent>(table),
-                  $$SoireeEventsTableReferences(db, table, e),
+                  e.readTable<$SessionEventsTable, StoredEvent>(table),
+                  $$SessionEventsTableReferences(db, table, e),
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({soireeId = false}) {
+          prefetchHooksCallback: ({sessionId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -1390,14 +1396,14 @@ class $$SoireeEventsTableTableManager
                       dynamic
                     >
                   >(state) {
-                    if (soireeId) {
+                    if (sessionId) {
                       state = state.withJoin(
                         currentTable: table,
-                        currentColumn: table.soireeId,
-                        referencedTable: $$SoireeEventsTableReferences
-                            ._soireeIdTable(db),
-                        referencedColumn: $$SoireeEventsTableReferences
-                            ._soireeIdTable(db)
+                        currentColumn: table.sessionId,
+                        referencedTable: $$SessionEventsTableReferences
+                            ._sessionIdTable(db),
+                        referencedColumn: $$SessionEventsTableReferences
+                            ._sessionIdTable(db)
                             .id,
                       ) as T;
                     }
@@ -1413,19 +1419,19 @@ class $$SoireeEventsTableTableManager
       );
 }
 
-typedef $$SoireeEventsTableProcessedTableManager =
+typedef $$SessionEventsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $SoireeEventsTable,
+      $SessionEventsTable,
       StoredEvent,
-      $$SoireeEventsTableFilterComposer,
-      $$SoireeEventsTableOrderingComposer,
-      $$SoireeEventsTableAnnotationComposer,
-      $$SoireeEventsTableCreateCompanionBuilder,
-      $$SoireeEventsTableUpdateCompanionBuilder,
-      (StoredEvent, $$SoireeEventsTableReferences),
+      $$SessionEventsTableFilterComposer,
+      $$SessionEventsTableOrderingComposer,
+      $$SessionEventsTableAnnotationComposer,
+      $$SessionEventsTableCreateCompanionBuilder,
+      $$SessionEventsTableUpdateCompanionBuilder,
+      (StoredEvent, $$SessionEventsTableReferences),
       StoredEvent,
-      PrefetchHooks Function({bool soireeId})
+      PrefetchHooks Function({bool sessionId})
     >;
 typedef $$PlayersTableCreateCompanionBuilder = PlayersCompanion Function({
   Value<int> id,
@@ -1613,10 +1619,10 @@ typedef $$PlayersTableProcessedTableManager =
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
-  $$SoireesTableTableManager get soirees =>
-      $$SoireesTableTableManager(_db, _db.soirees);
-  $$SoireeEventsTableTableManager get soireeEvents =>
-      $$SoireeEventsTableTableManager(_db, _db.soireeEvents);
+  $$SessionsTableTableManager get sessions =>
+      $$SessionsTableTableManager(_db, _db.sessions);
+  $$SessionEventsTableTableManager get sessionEvents =>
+      $$SessionEventsTableTableManager(_db, _db.sessionEvents);
   $$PlayersTableTableManager get players =>
       $$PlayersTableTableManager(_db, _db.players);
 }

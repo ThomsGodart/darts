@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'home/home_screen.dart';
-import 'soiree/soiree.dart';
-import 'soiree_launcher.dart';
+import 'session/session.dart';
+import 'session_launcher.dart';
 import 'theme/app_themes.dart';
 
 class DartsApp extends StatelessWidget {
@@ -13,8 +13,8 @@ class DartsApp extends StatelessWidget {
     this.themeId = defaultThemeId,
   });
 
-  /// Where soirées are kept: the device database, or memory in tests.
-  final SoireeRepository repository;
+  /// Where sessions are kept: the device database, or memory in tests.
+  final SessionRepository repository;
 
   /// The players known to the app.
   final PlayerCatalog catalog;
@@ -26,7 +26,7 @@ class DartsApp extends StatelessWidget {
       title: 'Darts',
       debugShowCheckedModeBanner: false,
       theme: themeById(themeId),
-      home: HomeScreen(launcher: SoireeLauncher(repository, catalog)),
+      home: HomeScreen(launcher: SessionLauncher(repository, catalog)),
     );
   }
 }

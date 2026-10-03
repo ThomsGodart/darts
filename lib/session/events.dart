@@ -2,12 +2,12 @@ import 'dart.dart';
 import 'player.dart';
 import 'x01_config.dart';
 
-/// A fact recorded in a soirée's journal. The state is a fold of these.
-sealed class SoireeEvent {
-  const SoireeEvent();
+/// A fact recorded in a session's journal. The state is a fold of these.
+sealed class SessionEvent {
+  const SessionEvent();
 }
 
-class GameStarted extends SoireeEvent {
+class GameStarted extends SessionEvent {
   const GameStarted({required this.players, required this.config});
 
   /// Players in throwing order.
@@ -16,7 +16,7 @@ class GameStarted extends SoireeEvent {
 }
 
 /// A visit entered as its total (0–180).
-class VisitTotalSubmitted extends SoireeEvent {
+class VisitTotalSubmitted extends SessionEvent {
   const VisitTotalSubmitted(this.score, {this.darts = dartsPerVisit});
 
   final int score;
@@ -25,13 +25,13 @@ class VisitTotalSubmitted extends SoireeEvent {
   final int darts;
 }
 
-/// The soirée is over: it goes to the history.
-class SoireeEnded extends SoireeEvent {
-  const SoireeEnded();
+/// The session is over: it goes to the history.
+class SessionEnded extends SessionEvent {
+  const SessionEnded();
 }
 
 /// One dart of a visit entered dart by dart.
-class DartThrown extends SoireeEvent {
+class DartThrown extends SessionEvent {
   const DartThrown(this.dart);
 
   final Dart dart;

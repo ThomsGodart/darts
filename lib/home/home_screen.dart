@@ -4,20 +4,20 @@ import '../game/game_screen.dart';
 import '../history/history_screen.dart';
 import '../setup/setup_controller.dart';
 import '../setup/setup_screen.dart';
-import '../soiree_controller.dart';
-import '../soiree_launcher.dart';
+import '../session_controller.dart';
+import '../session_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.launcher});
 
-  final SoireeLauncher launcher;
+  final SessionLauncher launcher;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  /// Whether a soirée was left open: mid-game, or between two games.
+  /// Whether a session was left open: mid-game, or between two games.
   late Future<bool> _canResume;
 
   /// Set while the setup of a next game is open: blocks a second one.
@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Une soirée est en cours'),
+        title: const Text('Une session est en cours'),
         content: const Text(
           'La terminer pour en commencer une nouvelle ? '
           'Elle passera dans l’historique.',
@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   /// Between games: the setup screen, starting from the last game.
-  Future<void> _changeSetup(SoireeController controller) async {
+  Future<void> _changeSetup(SessionController controller) async {
     if (_changingSetup) return;
     _changingSetup = true;
     try {
@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _open(SoireeController controller) async {
+  Future<void> _open(SessionController controller) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => GameScreen(
@@ -168,14 +168,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: FilledButton.icon(
                       onPressed: _resume,
                       icon: const Icon(Icons.play_arrow),
-                      label: const Text('Reprendre la soirée'),
+                      label: const Text('Reprendre la session'),
                     ),
                   );
                 },
               ),
               FilledButton.tonal(
                 onPressed: _newGame,
-                child: const Text('Nouvelle soirée'),
+                child: const Text('Nouvelle session'),
               ),
               const SizedBox(height: 12),
               TextButton.icon(

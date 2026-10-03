@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
 
-import '../soiree/soiree.dart';
-import '../soiree_launcher.dart';
+import '../session/session.dart';
+import '../session_launcher.dart';
 import 'formatting.dart';
-import 'soiree_detail_screen.dart';
+import 'session_detail_screen.dart';
 
-/// Ended soirées, newest first.
+/// Ended sessions, newest first.
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key, required this.launcher});
 
-  final SoireeLauncher launcher;
+  final SessionLauncher launcher;
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  late Future<List<SoireeRecord>> _history = widget.launcher.history();
+  late Future<List<SessionRecord>> _history = widget.launcher.history();
 
-  Future<void> _open(SoireeRecord record) async {
+  Future<void> _open(SessionRecord record) async {
     final deleted = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => SoireeDetailScreen(
+        builder: (_) => SessionDetailScreen(
           record: record,
-          onDelete: () => widget.launcher.deleteSoiree(record),
+          onDelete: () => widget.launcher.deleteSession(record),
         ),
       ),
     );
@@ -51,13 +51,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (history.isEmpty) {
-            return const Center(child: Text('Aucune soirée pour l’instant'));
+            return const Center(child: Text('Aucune session pour l’instant'));
           }
           return ListView(
             children: [
               for (final record in history)
                 ListTile(
-                  title: Text(soireeDate(record.createdAt)),
+                  title: Text(sessionDate(record.createdAt)),
                   subtitle: Text(
                     [
                       record.state.players.map((p) => p.name).join(', '),

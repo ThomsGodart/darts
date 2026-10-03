@@ -8,25 +8,25 @@ import 'state.dart';
 import 'x01_config.dart';
 import 'x01_rules.dart';
 
-/// Single entry point to the soirée domain.
+/// Single entry point to the session domain.
 ///
 /// Commands are validated against the current state; accepted ones are
-/// appended to the [SoireeJournal] and folded into a new [state].
-class Soiree {
-  Soiree(this._journal) : _state = foldEvents(_journal.events);
+/// appended to the [SessionJournal] and folded into a new [state].
+class Session {
+  Session(this._journal) : _state = foldEvents(_journal.events);
 
-  final SoireeJournal _journal;
-  SoireeState _state;
+  final SessionJournal _journal;
+  SessionState _state;
 
-  SoireeState get state => _state;
+  SessionState get state => _state;
 
   /// Starts a game with [players] in throwing order: the first game of the
-  /// soirée, or the next one with players added, removed or reordered.
+  /// session, or the next one with players added, removed or reordered.
   CommandResult startGame(
     List<Player> players, {
     X01Config config = const X01Config(),
   }) {
-    if (_state.isEnded) return const Rejected('The soirée is over');
+    if (_state.isEnded) return const Rejected('The session is over');
     if (players.isEmpty) return const Rejected('A game needs players');
     if (players.length > maxPlayers) {
       return const Rejected('At most $maxPlayers players');
@@ -55,11 +55,11 @@ class Soiree {
     return startGame(game.rematchOrder, config: config ?? game.config);
   }
 
-  /// Ends the soirée: normally between two games; a game in progress, if
-  /// the soirée is abandoned, stays unfinished.
-  CommandResult endSoiree() {
-    if (_state.isEnded) return const Rejected('The soirée is already over');
-    return _record(const SoireeEnded());
+  /// Ends the session: normally between two games; a game in progress, if
+  /// the session is abandoned, stays unfinished.
+  CommandResult endSession() {
+    if (_state.isEnded) return const Rejected('The session is already over');
+    return _record(const SessionEnded());
   }
 
   /// Submits a visit by its total. When it brings the remaining score to
@@ -108,7 +108,7 @@ class Soiree {
   /// Whether there is an input of the current game to take back.
   bool get canUndo => switch (_journal.events.lastOrNull) {
     VisitTotalSubmitted() || DartThrown() => true,
-    GameStarted() || SoireeEnded() || null => false,
+    GameStarted() || SessionEnded() || null => false,
   };
 
   /// Takes back the latest input, even after the game was won.
@@ -120,14 +120,14 @@ class Soiree {
   }
 
   /// Why no input can be entered into [game]: missing, finished, or left
-  /// unfinished by an abandoned soirée.
+  /// unfinished by an abandoned session.
   Rejected _notInProgress(GameState? game) => switch (game) {
     null => const Rejected('No game in progress'),
-    _ when _state.isEnded => const Rejected('The soirée is over'),
+    _ when _state.isEnded => const Rejected('The session is over'),
     _ => const Rejected('The game is over'),
   };
 
-  CommandResult _record(SoireeEvent event) {
+  CommandResult _record(SessionEvent event) {
     _journal.append(event);
     _state = applyEvent(_state, event);
     return const Accepted();

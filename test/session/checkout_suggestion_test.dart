@@ -1,16 +1,16 @@
-import 'package:darts_points_counter/soiree/soiree.dart';
+import 'package:darts_points_counter/session/session.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'helpers.dart';
 
 /// A 1-player game where Alice has [remaining] left.
-Soiree aliceOn(int remaining, {OutRule outRule = OutRule.double}) => newSoiree()
-  ..startGame([
-    alice,
-  ], config: X01Config(startScore: remaining, outRule: outRule));
+Session aliceOn(int remaining, {OutRule outRule = OutRule.double}) =>
+    newSession()..startGame([
+      alice,
+    ], config: X01Config(startScore: remaining, outRule: outRule));
 
-List<Dart>? suggestionFor(Soiree soiree) =>
-    soiree.state.game!.checkoutSuggestion;
+List<Dart>? suggestionFor(Session session) =>
+    session.state.game!.checkoutSuggestion;
 
 int total(List<Dart> darts) => darts.fold(0, (sum, d) => sum + d.score);
 
@@ -61,9 +61,9 @@ void main() {
           expect(route.last.isDouble, isTrue, reason: '$remaining');
           expect(route.every((d) => d.isValid && d != Dart.miss), isTrue);
           // Fewest darts: a 1-dart finish is never suggested in 2.
-          final soiree = aliceOn(remaining);
+          final session = aliceOn(remaining);
           expect(
-            soiree.state.game!.checkoutDartOptions(remaining).first,
+            session.state.game!.checkoutDartOptions(remaining).first,
             route.length,
             reason: '$remaining',
           );
@@ -74,21 +74,21 @@ void main() {
 
   group('during a visit entered dart by dart', () {
     test('the route follows the darts left', () {
-      final soiree = aliceOn(100)..throwDart(Dart.treble(20));
-      expect(suggestionFor(soiree), [Dart.double(20)]);
+      final session = aliceOn(100)..throwDart(Dart.treble(20));
+      expect(suggestionFor(session), [Dart.double(20)]);
     });
 
     test('nothing when the darts left cannot finish', () {
       // 150 with two darts left: two darts make at most 110 on a double.
-      final soiree = aliceOn(170)..throwDart(Dart.single(20));
-      expect(suggestionFor(soiree), isNull);
+      final session = aliceOn(170)..throwDart(Dart.single(20));
+      expect(suggestionFor(session), isNull);
     });
 
     test('a route for the last dart only', () {
-      final soiree = aliceOn(100)
+      final session = aliceOn(100)
         ..throwDart(Dart.treble(20))
         ..throwDart(Dart.miss);
-      expect(suggestionFor(soiree), [Dart.double(20)]);
+      expect(suggestionFor(session), [Dart.double(20)]);
     });
   });
 
@@ -120,7 +120,7 @@ void main() {
   });
 
   test('no suggestion once the game is won', () {
-    final soiree = aliceOn(40)..throwDart(Dart.double(20));
-    expect(suggestionFor(soiree), isNull);
+    final session = aliceOn(40)..throwDart(Dart.double(20));
+    expect(suggestionFor(session), isNull);
   });
 }

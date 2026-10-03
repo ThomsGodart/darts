@@ -2,7 +2,7 @@ import 'player.dart';
 import 'player_catalog.dart';
 
 // Rules shared by the [PlayerCatalog] implementations. Not exported by the
-// soirée library: only catalogs use them.
+// session library: only catalogs use them.
 
 /// One player as a catalog stores it.
 class CatalogEntry {

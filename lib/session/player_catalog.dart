@@ -4,7 +4,7 @@ import 'player_catalog_rules.dart';
 /// Why a name cannot be given to a player.
 enum PlayerNameProblem { empty, taken }
 
-/// The players known to the app, kept between soirées.
+/// The players known to the app, kept between sessions.
 abstract interface class PlayerCatalog {
   /// Players that can be picked, by name.
   Future<List<Player>> active();

@@ -47,20 +47,20 @@ void main() {
     expect(activeRemaining(tester), '501');
   });
 
-  testWidgets('ending the soirée goes home with nothing to resume', (
+  testWidgets('ending the session goes home with nothing to resume', (
     tester,
   ) async {
     await pumpApp(tester, await AppStorage.withTwoPlayers());
     await launchGame(tester);
     await joueur1Wins(tester);
 
-    await tester.tap(find.text('Terminer la soirée'));
+    await tester.tap(find.text('Terminer la session'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Terminer'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Nouvelle soirée'), findsOneWidget);
-    expect(find.text('Reprendre la soirée'), findsNothing);
+    expect(find.text('Nouvelle session'), findsOneWidget);
+    expect(find.text('Reprendre la session'), findsNothing);
   });
 
   testWidgets('a finished game can be resumed to play again', (tester) async {
@@ -71,13 +71,13 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
     await pumpApp(tester, storage);
-    await tester.tap(find.text('Reprendre la soirée'));
+    await tester.tap(find.text('Reprendre la session'));
     await tester.pumpAndSettle();
 
     expect(find.text('Rejouer'), findsOneWidget);
   });
 
-  testWidgets('a new soirée over an open one asks first, then ends it', (
+  testWidgets('a new session over an open one asks first, then ends it', (
     tester,
   ) async {
     final storage = await AppStorage.withTwoPlayers();
@@ -89,12 +89,12 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Nouvelle soirée'));
+    await tester.tap(find.text('Nouvelle session'));
     await tester.pumpAndSettle();
-    expect(find.text('Une soirée est en cours'), findsOneWidget);
+    expect(find.text('Une session est en cours'), findsOneWidget);
     await tester.tap(find.text('Annuler'));
     await tester.pumpAndSettle();
-    expect(find.text('Reprendre la soirée'), findsOneWidget);
+    expect(find.text('Reprendre la session'), findsOneWidget);
 
     await launchGameAfterConfirm(tester);
     expect(activeRemaining(tester), '501');
@@ -102,7 +102,7 @@ void main() {
 }
 
 Future<void> launchGameAfterConfirm(WidgetTester tester) async {
-  await tester.tap(find.text('Nouvelle soirée'));
+  await tester.tap(find.text('Nouvelle session'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Terminer et commencer'));
   await tester.pumpAndSettle();

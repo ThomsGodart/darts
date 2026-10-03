@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../soiree/soiree.dart';
+import '../session/session.dart';
 import 'dart_picker.dart';
 
 /// Visit totals players hit most often, entered in a single tap.

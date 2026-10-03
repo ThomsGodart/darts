@@ -11,7 +11,7 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester, AppStorage());
-    await tester.tap(find.text('Nouvelle soirée'));
+    await tester.tap(find.text('Nouvelle session'));
     await tester.pumpAndSettle();
     expect(
       tester
@@ -39,7 +39,7 @@ void main() {
 
   testWidgets('a taken name is refused inline', (tester) async {
     await pumpApp(tester, await AppStorage.withTwoPlayers());
-    await tester.tap(find.text('Nouvelle soirée'));
+    await tester.tap(find.text('Nouvelle session'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'joueur 1');
@@ -49,10 +49,10 @@ void main() {
     expect(find.text('Ce nom est déjà pris'), findsOneWidget);
   });
 
-  testWidgets('players are known again on the next soirée', (tester) async {
+  testWidgets('players are known again on the next session', (tester) async {
     final storage = AppStorage();
     await pumpApp(tester, storage);
-    await tester.tap(find.text('Nouvelle soirée'));
+    await tester.tap(find.text('Nouvelle session'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Ana');
     await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -60,14 +60,14 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Nouvelle soirée'));
+    await tester.tap(find.text('Nouvelle session'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(CheckboxListTile, 'Ana'), findsOneWidget);
   });
 
   testWidgets('deleting a player asks first', (tester) async {
     await pumpApp(tester, await AppStorage.withTwoPlayers());
-    await tester.tap(find.text('Nouvelle soirée'));
+    await tester.tap(find.text('Nouvelle session'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Options de Joueur 1'));
