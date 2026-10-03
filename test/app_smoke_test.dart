@@ -17,4 +17,9 @@ void main() {
       completes,
     );
   });
+
+  test('initBackend without dart-defines is a quiet no-op', () async {
+    // No SUPABASE_* --dart-define in the test process; must not throw.
+    await expectLater(initBackend(), completes);
+  });
 }

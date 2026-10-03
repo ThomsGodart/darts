@@ -34,6 +34,12 @@ abstract interface class SessionRepository {
   /// Completes once every change made so far is stored; throws if some
   /// could not be.
   Future<void> flush();
+
+  /// First storage error that stopped further writes, if any.
+  Object? get persistFailure;
+
+  /// Registers [onFailure], called once when [persistFailure] becomes set.
+  void watchPersistFailure(void Function() onFailure);
 }
 
 extension Resumable on SessionRepository {
@@ -72,6 +78,8 @@ class InMemorySessionRepository implements SessionRepository {
     : _storage = storage ?? InMemorySessionStorage();
 
   final InMemorySessionStorage _storage;
+  Object? _failure;
+  void Function()? _onFailure;
 
   @override
   Future<Session> create() async {
@@ -103,5 +111,20 @@ class InMemorySessionRepository implements SessionRepository {
   }
 
   @override
-  Future<void> flush() async {}
+  Future<void> flush() async {
+    if (_failure case final failure?) throw failure;
+  }
+
+  @override
+  Object? get persistFailure => _failure;
+
+  @override
+  void watchPersistFailure(void Function() onFailure) => _onFailure = onFailure;
+
+  /// Test helper: stop "writes" and notify watchers, like a disk error.
+  void simulatePersistFailure([Object error = 'disk full']) {
+    if (_failure != null) return;
+    _failure = error;
+    _onFailure?.call();
+  }
 }

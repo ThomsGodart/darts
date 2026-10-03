@@ -20,6 +20,14 @@ class DriftSessionRepository implements SessionRepository {
   /// journal with a hole would replay into a different game.
   Object? _failure;
 
+  void Function()? _onFailure;
+
+  @override
+  Object? get persistFailure => _failure;
+
+  @override
+  void watchPersistFailure(void Function() onFailure) => _onFailure = onFailure;
+
   @override
   Future<Session> create() async {
     await _writes;
@@ -115,9 +123,10 @@ class DriftSessionRepository implements SessionRepository {
         await write();
       } catch (error) {
         // The game goes on from memory; what is stored stays a consistent
-        // prefix of it.
+        // prefix of it. The UI must warn: resume will miss later visits.
         _failure = error;
         debugPrint('Stopped storing session events: $error');
+        _onFailure?.call();
       }
     });
   }

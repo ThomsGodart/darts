@@ -30,6 +30,8 @@ void main() {
       play(session, [60, 45]);
 
       await expectLater(repository.flush(), throwsA(anything));
+      expect(repository.persistFailure, isNotNull);
+
       await (database.delete(
         database.sessionEvents,
       )..where((e) => e.type.equals('blocker'))).go();
@@ -41,4 +43,31 @@ void main() {
       expect(reloaded.state.game!.scoreOf(bob).remaining, 501);
     },
   );
+
+  test('watchPersistFailure is notified when writes stop', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DriftSessionRepository(database);
+    var notified = 0;
+    repository.watchPersistFailure(() => notified++);
+
+    final session = await repository.create();
+    session.startGame([alice, bob]);
+    await repository.flush();
+
+    await database
+        .into(database.sessionEvents)
+        .insert(
+          SessionEventsCompanion.insert(
+            sessionId: 1,
+            seq: 1,
+            type: 'blocker',
+            payload: '{}',
+          ),
+        );
+    play(session, [60]);
+    await expectLater(repository.flush(), throwsA(anything));
+
+    expect(notified, 1);
+  });
 }

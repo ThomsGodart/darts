@@ -1,13 +1,20 @@
+import 'package:flutter/foundation.dart';
+
 import 'setup/setup_controller.dart';
 import 'session/session.dart';
 import 'session_controller.dart';
 
 /// Opens sessions for the home screen, so widgets never touch storage.
-class SessionLauncher {
-  SessionLauncher(this._repository, this._catalog);
+class SessionLauncher extends ChangeNotifier {
+  SessionLauncher(this._repository, this._catalog) {
+    _repository.watchPersistFailure(notifyListeners);
+  }
 
   final SessionRepository _repository;
   final PlayerCatalog _catalog;
+
+  /// Set when disk writes have stopped; resume may miss later visits.
+  Object? get persistFailure => _repository.persistFailure;
 
   /// Whether a session was left open: mid-game, or between two games.
   Future<bool> canResume() async => await _repository.resumable() != null;

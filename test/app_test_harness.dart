@@ -19,13 +19,17 @@ class AppStorage {
 }
 
 /// Pumps the app at phone size on [storage].
-Future<void> pumpApp(WidgetTester tester, AppStorage storage) async {
+Future<void> pumpApp(
+  WidgetTester tester,
+  AppStorage storage, {
+  SessionRepository? repository,
+}) async {
   tester.view.physicalSize = const Size(1080, 2340);
   tester.view.devicePixelRatio = 2.75;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     DartsApp(
-      repository: InMemorySessionRepository(storage.sessions),
+      repository: repository ?? InMemorySessionRepository(storage.sessions),
       catalog: InMemoryPlayerCatalog(storage.players),
     ),
   );

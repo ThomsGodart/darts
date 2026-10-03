@@ -6,6 +6,7 @@ import '../setup/setup_controller.dart';
 import '../setup/setup_screen.dart';
 import '../session_controller.dart';
 import '../session_launcher.dart';
+import '../ui/persist_failure_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.launcher});
@@ -43,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await widget.launcher.flush();
     } catch (_) {
-      // Already logged by the repository; the game goes on from memory.
+      // [SessionLauncher] already notified watchers; the banner shows.
     }
   }
 
@@ -136,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute<void>(
         builder: (_) => GameScreen(
           controller: controller,
+          launcher: widget.launcher,
           onChangeSetup: () => _changeSetup(controller),
         ),
       ),
@@ -151,37 +153,51 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final launcher = widget.launcher;
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        child: ListenableBuilder(
+          listenable: launcher,
+          builder: (context, _) => Column(
             children: [
-              Text('Darts', style: textTheme.displayMedium),
-              const SizedBox(height: 32),
-              FutureBuilder(
-                future: _canResume,
-                builder: (context, snapshot) {
-                  if (snapshot.data != true) return const SizedBox.shrink();
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: FilledButton.icon(
-                      onPressed: _resume,
-                      icon: const Icon(Icons.play_arrow),
-                      label: const Text('Reprendre la session'),
-                    ),
-                  );
-                },
-              ),
-              FilledButton.tonal(
-                onPressed: _newGame,
-                child: const Text('Nouvelle session'),
-              ),
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: _openHistory,
-                icon: const Icon(Icons.history),
-                label: const Text('Historique'),
+              if (launcher.persistFailure != null)
+                const PersistFailureBanner(),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Darts', style: textTheme.displayMedium),
+                      const SizedBox(height: 32),
+                      FutureBuilder(
+                        future: _canResume,
+                        builder: (context, snapshot) {
+                          if (snapshot.data != true) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: FilledButton.icon(
+                              onPressed: _resume,
+                              icon: const Icon(Icons.play_arrow),
+                              label: const Text('Reprendre la session'),
+                            ),
+                          );
+                        },
+                      ),
+                      FilledButton.tonal(
+                        onPressed: _newGame,
+                        child: const Text('Nouvelle session'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextButton.icon(
+                        onPressed: _openHistory,
+                        icon: const Icon(Icons.history),
+                        label: const Text('Historique'),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

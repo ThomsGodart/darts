@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 
 import '../session/session.dart';
 import '../session_controller.dart';
+import '../session_launcher.dart';
 import '../ui/average_label.dart';
+import '../ui/persist_failure_banner.dart';
 import 'scoreboard.dart';
 import 'screen_awake.dart';
 import 'turn_banner.dart';
@@ -15,11 +17,15 @@ class GameScreen extends StatefulWidget {
   const GameScreen({
     super.key,
     required this.controller,
+    this.launcher,
     this.onChangeSetup,
     this.screenAwake = const WakelockScreenAwake(),
   });
 
   final SessionController controller;
+
+  /// When set, a storage failure banner is shown if writes stop.
+  final SessionLauncher? launcher;
 
   /// Between games: lets players join, leave or reorder, or the rules
   /// change, then starts the next game. Null hides the option.
@@ -100,57 +106,71 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: controller,
-          builder: (context, _) {
-            final game = controller.state.game!;
-            final bannerPlayerName = _bannerPlayerName;
-            return Stack(
+    final launcher = widget.launcher;
+    final gameBody = ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final game = controller.state.game!;
+        final bannerPlayerName = _bannerPlayerName;
+        return Stack(
+          children: [
+            Column(
               children: [
-                Column(
-                  children: [
-                    Expanded(child: Scoreboard(game: game)),
-                    if (game.isFinished)
-                      _GameOverPanel(
-                        session: controller.state,
-                        onRematch: controller.rematch,
-                        onUndo: controller.undo,
-                        onChangeSetup: widget.onChangeSetup,
-                        onEnd: () => _endSession(context),
-                      )
-                    else
-                      VisitInput(
-                        key: ValueKey(game.visitsPlayed),
-                        onSubmit: (score) => _submit(context, game, score),
-                        onDart: controller.throwDart,
-                        dartsInVisit: game.dartsInVisit,
-                        onUndo: controller.canUndo ? controller.undo : null,
-                      ),
-                  ],
-                ),
-                if (bannerPlayerName != null)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: TurnBanner(
-                      key: ValueKey(game.visitsPlayed),
-                      playerName: bannerPlayerName,
-                      onDone: () => setState(() => _bannerPlayerName = null),
-                    ),
-                  ),
-                if (kDebugMode)
-                  Positioned(
-                    top: 4,
-                    right: 8,
-                    child: _TapCounter(taps: _taps, visits: _visitsCounted),
+                Expanded(child: Scoreboard(game: game)),
+                if (game.isFinished)
+                  _GameOverPanel(
+                    session: controller.state,
+                    onRematch: controller.rematch,
+                    onUndo: controller.undo,
+                    onChangeSetup: widget.onChangeSetup,
+                    onEnd: () => _endSession(context),
+                  )
+                else
+                  VisitInput(
+                    key: ValueKey(game.visitsPlayed),
+                    onSubmit: (score) => _submit(context, game, score),
+                    onDart: controller.throwDart,
+                    dartsInVisit: game.dartsInVisit,
+                    onUndo: controller.canUndo ? controller.undo : null,
                   ),
               ],
-            );
-          },
-        ),
+            ),
+            if (bannerPlayerName != null)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: TurnBanner(
+                  key: ValueKey(game.visitsPlayed),
+                  playerName: bannerPlayerName,
+                  onDone: () => setState(() => _bannerPlayerName = null),
+                ),
+              ),
+            if (kDebugMode)
+              Positioned(
+                top: 4,
+                right: 8,
+                child: _TapCounter(taps: _taps, visits: _visitsCounted),
+              ),
+          ],
+        );
+      },
+    );
+
+    return Scaffold(
+      body: SafeArea(
+        child: launcher == null
+            ? gameBody
+            : ListenableBuilder(
+                listenable: launcher,
+                builder: (context, _) => Column(
+                  children: [
+                    if (launcher.persistFailure != null)
+                      const PersistFailureBanner(),
+                    Expanded(child: gameBody),
+                  ],
+                ),
+              ),
       ),
     );
   }
