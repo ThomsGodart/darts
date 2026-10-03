@@ -9,6 +9,7 @@ export 'dart.dart';
 export 'events.dart' show SoireeEvent;
 export 'journal.dart';
 export 'player.dart';
+export 'player_catalog.dart';
 export 'repository.dart';
 export 'soiree_facade.dart';
 export 'state.dart';

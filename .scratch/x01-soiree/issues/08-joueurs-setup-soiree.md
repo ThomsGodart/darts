@@ -6,8 +6,23 @@
 
 **Status:** ready-for-agent
 
-- [ ] Joueurs persistés (table joueurs drift : id, nom, archivé)
-- [ ] Un joueur référencé par une partie est archivé, jamais supprimé physiquement
-- [ ] Tests de façade : créer une soirée avec joueurs, ordre et config → la première partie respecte l’ordre et la config
-- [ ] Écran de setup : sélection des joueurs (1–8), création inline, 501/301, Double-out on/off, réordonnancement
-- [ ] Parcours accueil → partie lancée en moins de 30 s, chronométré à la main
+- [x] Joueurs persistés (table joueurs drift : id, nom, archivé)
+- [x] Un joueur référencé par une partie est archivé, jamais supprimé physiquement
+- [x] Tests de façade : créer une soirée avec joueurs, ordre et config → la première partie respecte l’ordre et la config
+- [x] Écran de setup : sélection des joueurs (1–8), création inline, 501/301, Double-out on/off, réordonnancement
+- [ ] Parcours accueil → partie lancée en moins de 30 s, chronométré à la main (à faire sur appareil)
+
+## Comments
+
+- 2026-10-03 — Implémenté :
+  - Port `PlayerCatalog` (active / archived / nameProblem / add / rename / remove / markPlayed) en mémoire et en drift, avec un contrat de tests commun.
+  - Table `players` (id, name, archived, hasPlayed), schéma v2 avec migration testée depuis une base v1.
+  - Un joueur est marqué « a joué » quand une partie démarre avec lui. `remove` l’archive s’il a joué, et le supprime sinon.
+  - Noms : non vides, uniques parmi les actifs sans tenir compte de la casse ; un nom archivé est réutilisable.
+  - Façade : au plus 8 joueurs, pas de doublon.
+  - Écran « Nouvelle soirée » :
+    - joueurs existants cochables, l’ordre de jeu suit l’ordre des coches ;
+    - ajout inline (le joueur ajouté est coché), renommer / supprimer via menu ;
+    - liste « Ordre de jeu » réordonnable ;
+    - 501/301 et Double-out.
+  - « Nouvelle partie 501 » et les joueurs fixes ont disparu.

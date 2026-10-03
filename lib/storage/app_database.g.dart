@@ -566,16 +566,321 @@ class SoireeEventsCompanion extends UpdateCompanion<StoredEvent> {
   }
 }
 
+class $PlayersTable extends Players
+    with TableInfo<$PlayersTable, StoredPlayer> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PlayersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _archivedMeta = const VerificationMeta(
+    'archived',
+  );
+  @override
+  late final GeneratedColumn<bool> archived = GeneratedColumn<bool>(
+    'archived',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("archived" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _hasPlayedMeta = const VerificationMeta(
+    'hasPlayed',
+  );
+  @override
+  late final GeneratedColumn<bool> hasPlayed = GeneratedColumn<bool>(
+    'has_played',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("has_played" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, archived, hasPlayed];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'players';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<StoredPlayer> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('archived')) {
+      context.handle(
+        _archivedMeta,
+        archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta),
+      );
+    }
+    if (data.containsKey('has_played')) {
+      context.handle(
+        _hasPlayedMeta,
+        hasPlayed.isAcceptableOrUnknown(data['has_played']!, _hasPlayedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  StoredPlayer map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return StoredPlayer(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      archived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}archived'],
+      )!,
+      hasPlayed: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}has_played'],
+      )!,
+    );
+  }
+
+  @override
+  $PlayersTable createAlias(String alias) {
+    return $PlayersTable(attachedDatabase, alias);
+  }
+}
+
+class StoredPlayer extends DataClass implements Insertable<StoredPlayer> {
+  final int id;
+  final String name;
+  final bool archived;
+  final bool hasPlayed;
+  const StoredPlayer({
+    required this.id,
+    required this.name,
+    required this.archived,
+    required this.hasPlayed,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['archived'] = Variable<bool>(archived);
+    map['has_played'] = Variable<bool>(hasPlayed);
+    return map;
+  }
+
+  PlayersCompanion toCompanion(bool nullToAbsent) {
+    return PlayersCompanion(
+      id: Value(id),
+      name: Value(name),
+      archived: Value(archived),
+      hasPlayed: Value(hasPlayed),
+    );
+  }
+
+  factory StoredPlayer.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return StoredPlayer(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      archived: serializer.fromJson<bool>(json['archived']),
+      hasPlayed: serializer.fromJson<bool>(json['hasPlayed']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'archived': serializer.toJson<bool>(archived),
+      'hasPlayed': serializer.toJson<bool>(hasPlayed),
+    };
+  }
+
+  StoredPlayer copyWith({
+    int? id,
+    String? name,
+    bool? archived,
+    bool? hasPlayed,
+  }) => StoredPlayer(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    archived: archived ?? this.archived,
+    hasPlayed: hasPlayed ?? this.hasPlayed,
+  );
+  StoredPlayer copyWithCompanion(PlayersCompanion data) {
+    return StoredPlayer(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      archived: data.archived.present ? data.archived.value : this.archived,
+      hasPlayed: data.hasPlayed.present ? data.hasPlayed.value : this.hasPlayed,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('StoredPlayer(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('archived: $archived, ')
+          ..write('hasPlayed: $hasPlayed')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, archived, hasPlayed);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is StoredPlayer &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.archived == this.archived &&
+          other.hasPlayed == this.hasPlayed);
+}
+
+class PlayersCompanion extends UpdateCompanion<StoredPlayer> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<bool> archived;
+  final Value<bool> hasPlayed;
+  const PlayersCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.archived = const Value.absent(),
+    this.hasPlayed = const Value.absent(),
+  });
+  PlayersCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.archived = const Value.absent(),
+    this.hasPlayed = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<StoredPlayer> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<bool>? archived,
+    Expression<bool>? hasPlayed,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (archived != null) 'archived': archived,
+      if (hasPlayed != null) 'has_played': hasPlayed,
+    });
+  }
+
+  PlayersCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<bool>? archived,
+    Value<bool>? hasPlayed,
+  }) {
+    return PlayersCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      archived: archived ?? this.archived,
+      hasPlayed: hasPlayed ?? this.hasPlayed,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (archived.present) {
+      map['archived'] = Variable<bool>(archived.value);
+    }
+    if (hasPlayed.present) {
+      map['has_played'] = Variable<bool>(hasPlayed.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlayersCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('archived: $archived, ')
+          ..write('hasPlayed: $hasPlayed')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $SoireesTable soirees = $SoireesTable(this);
   late final $SoireeEventsTable soireeEvents = $SoireeEventsTable(this);
+  late final $PlayersTable players = $PlayersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [soirees, soireeEvents];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    soirees,
+    soireeEvents,
+    players,
+  ];
 }
 
 typedef $$SoireesTableCreateCompanionBuilder = SoireesCompanion Function({
@@ -1122,6 +1427,188 @@ typedef $$SoireeEventsTableProcessedTableManager =
       StoredEvent,
       PrefetchHooks Function({bool soireeId})
     >;
+typedef $$PlayersTableCreateCompanionBuilder = PlayersCompanion Function({
+  Value<int> id,
+  required String name,
+  Value<bool> archived,
+  Value<bool> hasPlayed,
+});
+typedef $$PlayersTableUpdateCompanionBuilder = PlayersCompanion Function({
+  Value<int> id,
+  Value<String> name,
+  Value<bool> archived,
+  Value<bool> hasPlayed,
+});
+
+class $$PlayersTableFilterComposer
+    extends Composer<_$AppDatabase, $PlayersTable> {
+  $$PlayersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get hasPlayed => $composableBuilder(
+    column: $table.hasPlayed,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PlayersTableOrderingComposer
+    extends Composer<_$AppDatabase, $PlayersTable> {
+  $$PlayersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get archived => $composableBuilder(
+    column: $table.archived,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get hasPlayed => $composableBuilder(
+    column: $table.hasPlayed,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PlayersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PlayersTable> {
+  $$PlayersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<bool> get archived =>
+      $composableBuilder(column: $table.archived, builder: (column) => column);
+
+  GeneratedColumn<bool> get hasPlayed =>
+      $composableBuilder(column: $table.hasPlayed, builder: (column) => column);
+}
+
+class $$PlayersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PlayersTable,
+          StoredPlayer,
+          $$PlayersTableFilterComposer,
+          $$PlayersTableOrderingComposer,
+          $$PlayersTableAnnotationComposer,
+          $$PlayersTableCreateCompanionBuilder,
+          $$PlayersTableUpdateCompanionBuilder,
+          (
+            StoredPlayer,
+            BaseReferences<_$AppDatabase, $PlayersTable, StoredPlayer>,
+          ),
+          StoredPlayer,
+          PrefetchHooks Function()
+        > {
+  $$PlayersTableTableManager(_$AppDatabase db, $PlayersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PlayersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PlayersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PlayersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<bool> archived = const Value.absent(),
+                Value<bool> hasPlayed = const Value.absent(),
+              }) => PlayersCompanion(
+                id: id,
+                name: name,
+                archived: archived,
+                hasPlayed: hasPlayed,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<bool> archived = const Value.absent(),
+                Value<bool> hasPlayed = const Value.absent(),
+              }) => PlayersCompanion.insert(
+                id: id,
+                name: name,
+                archived: archived,
+                hasPlayed: hasPlayed,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PlayersTable, StoredPlayer>(table),
+                  BaseReferences<_$AppDatabase, $PlayersTable, StoredPlayer>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PlayersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PlayersTable,
+      StoredPlayer,
+      $$PlayersTableFilterComposer,
+      $$PlayersTableOrderingComposer,
+      $$PlayersTableAnnotationComposer,
+      $$PlayersTableCreateCompanionBuilder,
+      $$PlayersTableUpdateCompanionBuilder,
+      (
+        StoredPlayer,
+        BaseReferences<_$AppDatabase, $PlayersTable, StoredPlayer>,
+      ),
+      StoredPlayer,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1130,4 +1617,6 @@ class $AppDatabaseManager {
       $$SoireesTableTableManager(_db, _db.soirees);
   $$SoireeEventsTableTableManager get soireeEvents =>
       $$SoireeEventsTableTableManager(_db, _db.soireeEvents);
+  $$PlayersTableTableManager get players =>
+      $$PlayersTableTableManager(_db, _db.players);
 }

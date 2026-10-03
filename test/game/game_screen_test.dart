@@ -1,19 +1,15 @@
-import 'package:darts_points_counter/app.dart';
-import 'package:darts_points_counter/soiree/soiree.dart';
 import 'package:darts_points_counter/game/visit_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../app_test_harness.dart';
 
 String activeRemaining(WidgetTester tester) =>
     tester.widget<Text>(find.byKey(const Key('active-remaining'))).data!;
 
 Future<void> startGame(WidgetTester tester) async {
-  tester.view.physicalSize = const Size(1080, 2340);
-  tester.view.devicePixelRatio = 2.75;
-  addTearDown(tester.view.reset);
-  await tester.pumpWidget(DartsApp(repository: InMemorySoireeRepository()));
-  await tester.tap(find.text('Nouvelle partie 501'));
-  await tester.pumpAndSettle();
+  await pumpApp(tester, await AppStorage.withTwoPlayers());
+  await launchGame(tester);
 }
 
 Future<void> quickScore(WidgetTester tester, int score) async {

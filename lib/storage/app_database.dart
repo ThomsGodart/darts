@@ -26,7 +26,16 @@ class SoireeEvents extends Table {
   Set<Column<Object>> get primaryKey => {soireeId, seq};
 }
 
-@DriftDatabase(tables: [Soirees, SoireeEvents])
+/// The player catalog.
+@DataClassName('StoredPlayer')
+class Players extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+  BoolColumn get hasPlayed => boolean().withDefault(const Constant(false))();
+}
+
+@DriftDatabase(tables: [Soirees, SoireeEvents, Players])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
@@ -34,5 +43,12 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.onDevice() => AppDatabase(driftDatabase(name: 'darts'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from < 2) await m.createTable(players);
+    },
+  );
 }

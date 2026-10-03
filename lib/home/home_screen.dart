@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../game/game_screen.dart';
-import '../soiree/soiree.dart';
+import '../setup/setup_controller.dart';
+import '../setup/setup_screen.dart';
 import '../soiree_controller.dart';
 import '../soiree_launcher.dart';
-
-/// Placeholder players until the soirée setup exists (ticket 08).
-const _fixedPlayers = [
-  Player(id: 'player-1', name: 'Joueur 1'),
-  Player(id: 'player-2', name: 'Joueur 2'),
-];
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.launcher});
@@ -49,7 +44,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _newGame() async {
-    final controller = await widget.launcher.newGame(_fixedPlayers);
+    final setup = await Navigator.of(context).push<GameSetup>(
+      MaterialPageRoute(
+        builder: (_) => SetupScreen(controller: widget.launcher.newSetup()),
+      ),
+    );
+    if (setup == null) return;
+    final controller = await widget.launcher.newGame(setup);
     if (!mounted) return controller.dispose();
     await _open(controller);
   }
@@ -99,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               FilledButton.tonal(
                 onPressed: _newGame,
-                child: const Text('Nouvelle partie 501'),
+                child: const Text('Nouvelle soirée'),
               ),
             ],
           ),

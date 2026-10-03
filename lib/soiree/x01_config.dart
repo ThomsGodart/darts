@@ -1,5 +1,8 @@
 import 'dart.dart';
 
+/// Most players a game can have.
+const maxPlayers = 8;
+
 /// Darts thrown in a full visit.
 const dartsPerVisit = 3;
 

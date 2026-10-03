@@ -130,4 +130,41 @@ void main() {
     expect(soiree.state.game!.activePlayer, bob);
     expect(soiree.state.game!.isFinished, isFalse);
   });
+
+  group('starting a soirée from the setup', () {
+    const players = [
+      Player(id: 'c', name: 'Chloé'),
+      Player(id: 'a', name: 'Alice'),
+      Player(id: 'b', name: 'Bob'),
+    ];
+
+    test('the first game follows the chosen order and config', () {
+      final soiree = newSoiree();
+      soiree.startGame(
+        players,
+        config: const X01Config(startScore: 301, outRule: OutRule.straight),
+      );
+
+      final game = soiree.state.game!;
+      expect(game.scores.map((s) => s.player), players);
+      expect(game.activePlayer.name, 'Chloé');
+      expect(game.config.startScore, 301);
+      expect(game.config.outRule, OutRule.straight);
+    });
+
+    test('at most $maxPlayers players', () {
+      final nine = [
+        for (var i = 0; i < maxPlayers + 1; i++) Player(id: '$i', name: 'P$i'),
+      ];
+      expect(newSoiree().startGame(nine), isA<Rejected>());
+      expect(
+        newSoiree().startGame(nine.take(maxPlayers).toList()),
+        isA<Accepted>(),
+      );
+    });
+
+    test('a player cannot play twice in the same game', () {
+      expect(newSoiree().startGame([alice, bob, alice]), isA<Rejected>());
+    });
+  });
 }

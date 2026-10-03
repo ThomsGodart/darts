@@ -9,11 +9,15 @@ class DartsApp extends StatelessWidget {
   const DartsApp({
     super.key,
     required this.repository,
+    required this.catalog,
     this.themeId = defaultThemeId,
   });
 
   /// Where soirées are kept: the device database, or memory in tests.
   final SoireeRepository repository;
+
+  /// The players known to the app.
+  final PlayerCatalog catalog;
   final String themeId;
 
   @override
@@ -22,7 +26,7 @@ class DartsApp extends StatelessWidget {
       title: 'Darts',
       debugShowCheckedModeBanner: false,
       theme: themeById(themeId),
-      home: HomeScreen(launcher: SoireeLauncher(repository)),
+      home: HomeScreen(launcher: SoireeLauncher(repository, catalog)),
     );
   }
 }

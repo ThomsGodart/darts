@@ -25,6 +25,12 @@ class Soiree {
     X01Config config = const X01Config(),
   }) {
     if (players.isEmpty) return const Rejected('A game needs players');
+    if (players.length > maxPlayers) {
+      return const Rejected('At most $maxPlayers players');
+    }
+    if (players.map((p) => p.id).toSet().length != players.length) {
+      return const Rejected('A player cannot play twice in a game');
+    }
     if (!config.isValid) {
       return Rejected('Invalid start score ${config.startScore}');
     }

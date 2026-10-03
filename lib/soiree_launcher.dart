@@ -1,11 +1,13 @@
+import 'setup/setup_controller.dart';
 import 'soiree/soiree.dart';
 import 'soiree_controller.dart';
 
 /// Opens soirées for the home screen, so widgets never touch storage.
 class SoireeLauncher {
-  SoireeLauncher(this._repository);
+  SoireeLauncher(this._repository, this._catalog);
 
   final SoireeRepository _repository;
+  final PlayerCatalog _catalog;
 
   /// Whether a soirée was left with a game in progress.
   Future<bool> canResume() async => await _repository.resumable() != null;
@@ -16,10 +18,14 @@ class SoireeLauncher {
     return soiree == null ? null : SoireeController(soiree);
   }
 
-  /// A new soirée with its first game already started.
-  Future<SoireeController> newGame(List<Player> players) async {
+  /// State for the setup screen of a new soirée.
+  SetupController newSetup() => SetupController(_catalog);
+
+  /// A new soirée with its first game started as [setup] says.
+  Future<SoireeController> newGame(GameSetup setup) async {
+    await _catalog.markPlayed(setup.players);
     final controller = SoireeController(await _repository.create());
-    controller.startGame(players);
+    controller.startGame(setup.players, config: setup.config);
     return controller;
   }
 

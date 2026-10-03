@@ -1,0 +1,105 @@
+import 'package:flutter/foundation.dart';
+
+import '../soiree/soiree.dart';
+
+/// What the setup screen hands back: who plays, in order, and the rules.
+typedef GameSetup = ({List<Player> players, X01Config config});
+
+/// State of the soirée setup screen, over the player catalog.
+class SetupController extends ChangeNotifier {
+  SetupController(this._catalog);
+
+  final PlayerCatalog _catalog;
+
+  List<Player> _players = const [];
+  final List<Player> _picked = [];
+  int _startScore = 501;
+  bool _doubleOut = true;
+
+  /// Players of the catalog, by name.
+  List<Player> get players => _players;
+
+  /// Players picked for the game, in throwing order.
+  List<Player> get picked => List.unmodifiable(_picked);
+
+  X01Config get config => X01Config(
+    startScore: _startScore,
+    outRule: _doubleOut ? OutRule.double : OutRule.straight,
+  );
+
+  bool get canStart => _picked.isNotEmpty;
+
+  GameSetup get result => (players: picked, config: config);
+
+  Future<void> load() async {
+    _players = await _catalog.active();
+    notifyListeners();
+  }
+
+  bool isPicked(Player player) => _picked.any((p) => p.id == player.id);
+
+  bool canPick(Player player) =>
+      isPicked(player) || _picked.length < maxPlayers;
+
+  /// Picks [player] last in the throwing order, or unpicks them.
+  void toggle(Player player) {
+    if (isPicked(player)) {
+      _picked.removeWhere((p) => p.id == player.id);
+    } else if (canPick(player)) {
+      _picked.add(player);
+    } else {
+      return;
+    }
+    notifyListeners();
+  }
+
+  /// Moves the picked player at [from] to [to] (indices before the move).
+  void reorder(int from, int to) {
+    _picked.insert(to, _picked.removeAt(from));
+    notifyListeners();
+  }
+
+  set startScore(int value) {
+    _startScore = value;
+    notifyListeners();
+  }
+
+  int get startScore => _startScore;
+
+  set doubleOut(bool value) {
+    _doubleOut = value;
+    notifyListeners();
+  }
+
+  bool get doubleOut => _doubleOut;
+
+  /// Adds a player to the catalog and picks them; returns why not, if not.
+  Future<PlayerNameProblem?> addPlayer(String name) async {
+    final problem = await _catalog.nameProblem(name);
+    if (problem != null) return problem;
+    final player = await _catalog.add(name);
+    _players = await _catalog.active();
+    if (canPick(player)) _picked.add(player);
+    notifyListeners();
+    return null;
+  }
+
+  Future<PlayerNameProblem?> renamePlayer(Player player, String name) async {
+    final problem = await _catalog.nameProblem(name, renaming: player);
+    if (problem != null) return problem;
+    await _catalog.rename(player, name);
+    _players = await _catalog.active();
+    final renamed = _players.firstWhere((p) => p.id == player.id);
+    final index = _picked.indexWhere((p) => p.id == player.id);
+    if (index != -1) _picked[index] = renamed;
+    notifyListeners();
+    return null;
+  }
+
+  Future<void> removePlayer(Player player) async {
+    await _catalog.remove(player);
+    _picked.removeWhere((p) => p.id == player.id);
+    _players = await _catalog.active();
+    notifyListeners();
+  }
+}
