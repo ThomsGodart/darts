@@ -139,10 +139,27 @@ void main() {
       expect(soiree.canUndo, isFalse);
     });
 
-    test('cannot end in the middle of a game', () {
+    test('can be abandoned mid-game; the game stays unfinished', () {
       final soiree = newSoiree()..startGame([alice, bob]);
-      expect(soiree.endSoiree(), isA<Rejected>());
-      expect(soiree.state.isEnded, isFalse);
+      play(soiree, [60]);
+
+      expect(soiree.endSoiree(), isA<Accepted>());
+      expect(soiree.state.isEnded, isTrue);
+      expect(soiree.state.game!.isFinished, isFalse);
+      expect(soiree.submitVisitTotal(60), isA<Rejected>());
+      expect(soiree.canUndo, isFalse);
+    });
+
+    test('a renamed player keeps one soirée average', () {
+      final soiree = afterAliceWins();
+      const alicia = Player(id: 'alice', name: 'Alicia');
+      soiree.startGame([bob, alicia], config: forty);
+      play(soiree, [0]);
+      checkOut(soiree, 40, darts: 3);
+
+      // 40 in 1 dart, then 40 in 3: one player, one average over 4 darts.
+      expect(soiree.state.averageOf(alicia), 80 / 4 * 3);
+      expect(soiree.state.averageOf(alice), 80 / 4 * 3);
     });
 
     test('ending twice is refused', () {

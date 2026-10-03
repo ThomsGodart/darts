@@ -4,6 +4,10 @@ import 'player.dart';
 import 'x01_config.dart';
 import 'x01_rules.dart';
 
+/// Points per three darts; null before the first dart.
+double? averagePerVisit(int points, int darts) =>
+    darts == 0 ? null : points / darts * dartsPerVisit;
+
 class SoireeState {
   const SoireeState({this.games = const [], this.isEnded = false});
 
@@ -18,24 +22,25 @@ class SoireeState {
 
   /// Three-dart average of [player] over all their games of the soirée;
   /// null if they have not thrown yet.
+  /// Matched by id: a player renamed between games stays one player.
   double? averageOf(Player player) {
     var points = 0;
     var darts = 0;
     for (final game in games) {
       for (final score in game.scores) {
-        if (score.player != player) continue;
+        if (score.player.id != player.id) continue;
         points += score.pointsScored;
         darts += score.dartsThrown;
       }
     }
-    return darts == 0 ? null : points / darts * dartsPerVisit;
+    return averagePerVisit(points, darts);
   }
 
-  SoireeState withGame(GameState game, {bool isNew = false}) => SoireeState(
-    games: List.unmodifiable([
-      ...isNew ? games : games.take(games.length - 1),
-      game,
-    ]),
+  SoireeState addGame(GameState game) =>
+      SoireeState(games: List.unmodifiable([...games, game]), isEnded: isEnded);
+
+  SoireeState replaceCurrentGame(GameState game) => SoireeState(
+    games: List.unmodifiable([...games.take(games.length - 1), game]),
     isEnded: isEnded,
   );
 }
@@ -83,8 +88,7 @@ class PlayerScore {
   final int visitsPlayed;
 
   /// Points per three darts, null before the first dart.
-  double? get threeDartAverage =>
-      dartsThrown == 0 ? null : pointsScored / dartsThrown * dartsPerVisit;
+  double? get threeDartAverage => averagePerVisit(pointsScored, dartsThrown);
 
   PlayerScore after(Visit visit) => PlayerScore(
     player: player,

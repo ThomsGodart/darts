@@ -38,6 +38,11 @@ class SetupController extends ChangeNotifier {
 
   Future<void> load() async {
     _players = await _catalog.active();
+    // A prefilled setup may carry names changed since: take the catalog's.
+    for (final (i, picked) in _picked.indexed) {
+      final current = _players.where((p) => p.id == picked.id).firstOrNull;
+      if (current != null) _picked[i] = current;
+    }
     _notify();
   }
 

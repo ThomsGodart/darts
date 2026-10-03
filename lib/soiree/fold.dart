@@ -9,7 +9,7 @@ SoireeState foldEvents(Iterable<SoireeEvent> events) =>
 
 SoireeState applyEvent(SoireeState state, SoireeEvent event) {
   return switch (event) {
-    GameStarted(:final players, :final config) => state.withGame(
+    GameStarted(:final players, :final config) => state.addGame(
       GameState(
         config: config,
         scores: [
@@ -18,12 +18,13 @@ SoireeState applyEvent(SoireeState state, SoireeEvent event) {
         ],
         activeIndex: 0,
       ),
-      isNew: true,
     ),
-    VisitTotalSubmitted(:final score, :final darts) => state.withGame(
+    VisitTotalSubmitted(:final score, :final darts) => state.replaceCurrentGame(
       _visitTotal(state.game!, score, darts),
     ),
-    DartThrown(:final dart) => state.withGame(_dartThrown(state.game!, dart)),
+    DartThrown(:final dart) => state.replaceCurrentGame(
+      _dartThrown(state.game!, dart),
+    ),
     SoireeEnded() => SoireeState(games: state.games, isEnded: true),
   };
 }

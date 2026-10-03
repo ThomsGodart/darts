@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'setup/setup_controller.dart' show GameSetup;
 import 'soiree/soiree.dart';
 
 /// Exposes the [Soiree] facade to widgets; widgets never touch the domain
@@ -28,6 +29,14 @@ class SoireeController extends ChangeNotifier {
       _notifyIfAccepted(_soiree.rematch(config: config));
 
   CommandResult endSoiree() => _notifyIfAccepted(_soiree.endSoiree());
+
+  /// Setup of the next game: same rules, the rotated throwing order.
+  GameSetup? get nextSetup {
+    final game = state.game;
+    return game == null
+        ? null
+        : (players: game.rematchOrder, config: game.config);
+  }
 
   bool get canUndo => _soiree.canUndo;
 

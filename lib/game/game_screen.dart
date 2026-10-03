@@ -73,9 +73,9 @@ class _GameScreenState extends State<GameScreen> {
   void _onGameChanged() {
     final state = controller.state;
     final game = state.game!;
-    if (state.games.length != _gamesSeen) {
+    final isNewGame = state.games.length != _gamesSeen;
+    if (isNewGame) {
       // A new game: nothing to announce yet.
-      _gamesSeen = state.games.length;
       setState(() => _bannerPlayerName = null);
     } else if (game.visitsPlayed > _visitsSeen && !game.isFinished) {
       // Only a completed visit passes the phone on; an undo does not.
@@ -84,9 +84,8 @@ class _GameScreenState extends State<GameScreen> {
     } else if (game.visitsPlayed < _visitsSeen) {
       setState(() => _bannerPlayerName = null);
     }
-    if (state.games.length == _gamesSeen) {
-      _visitsCounted += game.visitsPlayed - _visitsSeen;
-    }
+    if (!isNewGame) _visitsCounted += game.visitsPlayed - _visitsSeen;
+    _gamesSeen = state.games.length;
     _visitsSeen = game.visitsPlayed;
     _syncScreenAwake();
   }

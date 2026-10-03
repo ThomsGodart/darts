@@ -9,10 +9,10 @@ class SoireeLauncher {
   final SoireeRepository _repository;
   final PlayerCatalog _catalog;
 
-  /// Whether a soirée was left with a game in progress.
+  /// Whether a soirée was left open: mid-game, or between two games.
   Future<bool> canResume() async => await _repository.resumable() != null;
 
-  /// The soirée whose game was left in progress, if any.
+  /// The soirée left open, if any.
   Future<SoireeController?> resume() async {
     final soiree = await _repository.resumable();
     return soiree == null ? null : SoireeController(soiree);
@@ -23,26 +23,31 @@ class SoireeLauncher {
   SetupController newSetup({GameSetup? from}) =>
       SetupController(_catalog, from: from);
 
-  /// A new soirée with its first game started as [setup] says.
+  /// A new soirée with its first game started as [setup] says. A soirée
+  /// left open is ended first, so it reaches the history.
   Future<SoireeController> newGame(GameSetup setup) async {
+    (await _repository.resumable())?.endSoiree();
     final controller = SoireeController(await _repository.create());
-    final started = controller.startGame(setup.players, config: setup.config);
-    if (started is Rejected) {
+    try {
+      await _start(controller, setup);
+    } catch (_) {
       controller.dispose();
-      throw StateError('The setup was refused: ${started.reason}');
+      rethrow;
     }
-    // Only now do these players have a game to their name.
-    await _catalog.markPlayed(setup.players);
     return controller;
   }
 
   /// Starts the next game of [soiree] as [setup] says: players may have
   /// joined, left or changed order, or the rules changed.
-  Future<void> nextGame(SoireeController soiree, GameSetup setup) async {
+  Future<void> nextGame(SoireeController soiree, GameSetup setup) =>
+      _start(soiree, setup);
+
+  Future<void> _start(SoireeController soiree, GameSetup setup) async {
     final started = soiree.startGame(setup.players, config: setup.config);
     if (started is Rejected) {
       throw StateError('The setup was refused: ${started.reason}');
     }
+    // Only now do these players have a game to their name.
     await _catalog.markPlayed(setup.players);
   }
 

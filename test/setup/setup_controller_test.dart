@@ -122,4 +122,33 @@ void main() {
     await catalog.remove(ana);
     expect(await catalog.archived(), isEmpty, reason: 'deleted, not archived');
   });
+
+  test('a new soirée ends the one left open', () async {
+    final catalog = InMemoryPlayerCatalog();
+    final ana = await catalog.add('Ana');
+    final storage = InMemorySoireeStorage();
+    final launcher = SoireeLauncher(InMemorySoireeRepository(storage), catalog);
+    final first = await launcher.newGame((
+      players: [ana],
+      config: const X01Config(),
+    ));
+    first.submitVisitTotal(60);
+
+    await launcher.newGame((players: [ana], config: const X01Config()));
+
+    final firstAgain = Soiree(storage.journals.first);
+    expect(firstAgain.state.isEnded, isTrue);
+  });
+
+  test('a prefilled setup takes renamed players from the catalog', () async {
+    final catalog = InMemoryPlayerCatalog();
+    final ana = await catalog.add('Anna');
+    await catalog.rename(ana, 'Ana');
+    final setup = SetupController(
+      catalog,
+      from: (players: [ana], config: const X01Config()),
+    );
+    await setup.load();
+    expect(setup.picked.single.name, 'Ana');
+  });
 }

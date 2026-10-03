@@ -16,8 +16,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  /// Whether a soirée was left with a game in progress.
+  /// Whether a soirée was left open: mid-game, or between two games.
   late Future<bool> _canResume;
+
+  /// Set while the setup of a next game is open: blocks a second one.
+  bool _changingSetup = false;
 
   /// Stores what was played before the OS may kill the backgrounded app.
   late final AppLifecycleListener _lifecycle;
@@ -48,10 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final setupController = widget.launcher.newSetup(from: from);
     final setup = await Navigator.of(context).push<GameSetup>(
       MaterialPageRoute(
-        builder: (_) => SetupScreen(
-          controller: setupController,
-          title: title ?? 'Nouvelle soirée',
-        ),
+        builder: (_) => title == null
+            ? SetupScreen(controller: setupController)
+            : SetupScreen(controller: setupController, title: title),
       ),
     );
     setupController.dispose();
@@ -59,6 +61,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _newGame() async {
+    if (await widget.launcher.canResume()) {
+      if (!mounted || !await _confirmAbandon()) return;
+    }
+    if (!mounted) return;
     final setup = await _askSetup();
     if (setup == null || !mounted) return;
     final controller = await widget.launcher.newGame(setup);
@@ -73,15 +79,49 @@ class _HomeScreenState extends State<HomeScreen> {
     await _open(controller);
   }
 
+  Future<bool> _confirmAbandon() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Une soirée est en cours'),
+        content: const Text(
+          'La terminer pour en commencer une nouvelle ? '
+          'Elle passera dans l’historique.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Terminer et commencer'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
   /// Between games: the setup screen, starting from the last game.
   Future<void> _changeSetup(SoireeController controller) async {
-    final game = controller.state.game!;
-    final setup = await _askSetup(
-      from: (players: game.rematchOrder, config: game.config),
-      title: 'Partie suivante',
-    );
-    if (setup == null || !mounted) return;
-    await widget.launcher.nextGame(controller, setup);
+    if (_changingSetup) return;
+    _changingSetup = true;
+    try {
+      final setup = await _askSetup(
+        from: controller.nextSetup,
+        title: 'Partie suivante',
+      );
+      if (setup == null || !mounted) return;
+      await widget.launcher.nextGame(controller, setup);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible de lancer la partie : $error')),
+      );
+    } finally {
+      _changingSetup = false;
+    }
   }
 
   Future<void> _open(SoireeController controller) async {

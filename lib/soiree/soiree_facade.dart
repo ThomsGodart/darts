@@ -55,13 +55,10 @@ class Soiree {
     return startGame(game.rematchOrder, config: config ?? game.config);
   }
 
-  /// Ends the soirée between two games.
+  /// Ends the soirée: normally between two games; a game in progress, if
+  /// the soirée is abandoned, stays unfinished.
   CommandResult endSoiree() {
     if (_state.isEnded) return const Rejected('The soirée is already over');
-    final game = _state.game;
-    if (game != null && !game.isFinished) {
-      return const Rejected('A game is in progress');
-    }
     return _record(const SoireeEnded());
   }
 
@@ -70,7 +67,9 @@ class Soiree {
   /// [GameState.checkoutDartOptions]); otherwise it must be omitted.
   CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) {
     final game = _state.game;
-    if (game == null || game.isFinished) return _notInProgress(game);
+    if (game == null || game.isFinished || _state.isEnded) {
+      return _notInProgress(game);
+    }
     if (game.dartsInVisit.isNotEmpty) {
       return const Rejected('This visit is being entered dart by dart');
     }
@@ -99,7 +98,9 @@ class Soiree {
   /// itself on the third dart, a bust or a checkout.
   CommandResult throwDart(Dart dart) {
     final game = _state.game;
-    if (game == null || game.isFinished) return _notInProgress(game);
+    if (game == null || game.isFinished || _state.isEnded) {
+      return _notInProgress(game);
+    }
     if (!dart.isValid) return Rejected('No such dart: $dart');
     return _record(DartThrown(dart));
   }
@@ -118,10 +119,13 @@ class Soiree {
     return const Accepted();
   }
 
-  /// Why no input can be entered into [game] (missing or finished).
-  Rejected _notInProgress(GameState? game) => game == null
-      ? const Rejected('No game in progress')
-      : const Rejected('The game is over');
+  /// Why no input can be entered into [game]: missing, finished, or left
+  /// unfinished by an abandoned soirée.
+  Rejected _notInProgress(GameState? game) => switch (game) {
+    null => const Rejected('No game in progress'),
+    _ when _state.isEnded => const Rejected('The soirée is over'),
+    _ => const Rejected('The game is over'),
+  };
 
   CommandResult _record(SoireeEvent event) {
     _journal.append(event);

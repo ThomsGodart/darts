@@ -12,29 +12,19 @@ Future<void> joueur1Wins(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('the game-over panel shows averages; Rejouer rotates', (
+  testWidgets('the game-over panel; Rejouer starts a fresh game', (
     tester,
   ) async {
     await pumpApp(tester, await AppStorage.withTwoPlayers());
     await launchGame(tester);
     await joueur1Wins(tester);
-
-    final averages = find.byKey(const Key('game-averages'));
-    expect(
-      find.descendant(of: averages, matching: find.text('167.0')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('game-averages')), findsOneWidget);
 
     await tester.tap(find.text('Rejouer'));
     await tester.pumpAndSettle();
 
     expect(find.text('Joueur 1 gagne !'), findsNothing);
     expect(activeRemaining(tester), '501');
-    // Joueur 2 starts the second game.
-    expect(
-      tester.widget<Text>(find.byKey(const Key('active-name'))).data,
-      'Joueur 2',
-    );
   });
 
   testWidgets('Changer… lets a late player join the next game', (tester) async {
@@ -86,4 +76,40 @@ void main() {
 
     expect(find.text('Rejouer'), findsOneWidget);
   });
+
+  testWidgets('a new soirée over an open one asks first, then ends it', (
+    tester,
+  ) async {
+    final storage = await AppStorage.withTwoPlayers();
+    await pumpApp(tester, storage);
+    await launchGame(tester);
+    await tester.tap(find.widgetWithText(ActionChip, '60'));
+    await tester.pump();
+    // Leave the game mid-way with the system back gesture.
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Nouvelle soirée'));
+    await tester.pumpAndSettle();
+    expect(find.text('Une soirée est en cours'), findsOneWidget);
+    await tester.tap(find.text('Annuler'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reprendre la soirée'), findsOneWidget);
+
+    await launchGameAfterConfirm(tester);
+    expect(activeRemaining(tester), '501');
+  });
+}
+
+Future<void> launchGameAfterConfirm(WidgetTester tester) async {
+  await tester.tap(find.text('Nouvelle soirée'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Terminer et commencer'));
+  await tester.pumpAndSettle();
+  for (final name in ['Joueur 1', 'Joueur 2']) {
+    await tester.tap(find.widgetWithText(CheckboxListTile, name));
+    await tester.pump();
+  }
+  await tester.tap(find.text('Lancer la partie'));
+  await tester.pumpAndSettle();
 }

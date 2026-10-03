@@ -22,3 +22,10 @@
   - Fin de partie : gagnant, tableau des moyennes (partie + soirée dès la 2e partie), « Rejouer » en un tap, « Changer… », « Annuler le checkout », « Terminer la soirée ».
   - « Reprendre la soirée » = dernière soirée non terminée, même entre deux parties.
 - Corrigé au passage : `setState` de l’accueil renvoyait un Future (bug latent depuis le ticket 07, visible au retour à l’accueil).
+- 2026-10-03 — Suite à la code review :
+  - « Nouvelle soirée » alors qu’une soirée est ouverte demande confirmation, puis termine l’ancienne (même en pleine partie, la partie reste inachevée) : plus de soirée orpheline jamais terminée.
+  - Une soirée terminée refuse toute saisie.
+  - Moyenne de soirée par id de joueur : un renommage entre deux parties ne coupe plus la moyenne en deux. Le setup prérempli reprend les noms à jour du catalogue.
+  - « Changer… » est protégé contre le double tap et affiche une erreur au lieu de la laisser remonter.
+  - Le test widget ne vérifie plus les règles (moyenne, rotation), qui sont couvertes par la façade.
+  - Spec amendée : événements réellement utilisés, commandes « démarrer une partie suivante » et « terminer / abandonner ».
