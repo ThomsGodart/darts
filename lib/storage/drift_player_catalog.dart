@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../soiree/player_catalog_rules.dart';
 import '../soiree/soiree.dart';
 import 'app_database.dart';
 
@@ -18,9 +19,13 @@ class DriftPlayerCatalog implements PlayerCatalog {
       ),
   ];
 
-  /// Rows of [player], by its database id.
+  /// The database id of [player]; only players of this catalog have one.
+  int _dbId(Player player) =>
+      int.tryParse(player.id) ??
+      (throw ArgumentError.value(player.id, 'player', 'not in this catalog'));
+
   UpdateStatement<$PlayersTable, StoredPlayer> _update(Player player) =>
-      _db.update(_db.players)..where((p) => p.id.equals(int.parse(player.id)));
+      _db.update(_db.players)..where((p) => p.id.equals(_dbId(player)));
 
   @override
   Future<List<Player>> active() async =>
@@ -36,28 +41,31 @@ class DriftPlayerCatalog implements PlayerCatalog {
     Player? renaming,
   }) async => nameProblemAmong(await _entries(), name, renaming: renaming);
 
+  // Check and write in one transaction: drift runs transactions one at a
+  // time, so two quick taps cannot both pass the name check.
   @override
-  Future<Player> add(String name) async {
+  Future<Player> add(String name) => _db.transaction(() async {
     final checked = checkedPlayerName(await _entries(), name);
     final id = await _db
         .into(_db.players)
         .insert(PlayersCompanion.insert(name: checked));
     return Player(id: '$id', name: checked);
-  }
+  });
 
   @override
-  Future<void> rename(Player player, String name) async {
+  Future<void> rename(Player player, String name) => _db.transaction(() async {
     final checked = checkedPlayerName(await _entries(), name, renaming: player);
     await _update(player).write(PlayersCompanion(name: Value(checked)));
-  }
+  });
 
   @override
   Future<void> remove(Player player) async {
-    final id = int.parse(player.id);
+    final id = _dbId(player);
     await _db.transaction(() async {
       final row = await (_db.select(
         _db.players,
-      )..where((p) => p.id.equals(id))).getSingle();
+      )..where((p) => p.id.equals(id))).getSingleOrNull();
+      if (row == null) return;
       if (row.hasPlayed) {
         await _update(player)
             .write(const PlayersCompanion(archived: Value(true)));
@@ -69,7 +77,7 @@ class DriftPlayerCatalog implements PlayerCatalog {
 
   @override
   Future<void> markPlayed(Iterable<Player> players) async {
-    final ids = [for (final p in players) int.parse(p.id)];
+    final ids = [for (final p in players) _dbId(p)];
     await (_db.update(_db.players)..where((p) => p.id.isIn(ids))).write(
       const PlayersCompanion(hasPlayed: Value(true)),
     );

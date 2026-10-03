@@ -4,6 +4,7 @@ import '../soiree/soiree.dart';
 import 'setup_controller.dart';
 
 /// Picks who plays, in which order, and the rules; pops a [GameSetup].
+/// Whoever creates [controller] disposes it.
 class SetupScreen extends StatefulWidget {
   const SetupScreen({super.key, required this.controller});
 
@@ -28,12 +29,12 @@ class _SetupScreenState extends State<SetupScreen> {
   @override
   void dispose() {
     _newName.dispose();
-    setup.dispose();
     super.dispose();
   }
 
   Future<void> _addPlayer() async {
     final problem = await setup.addPlayer(_newName.text);
+    if (!mounted) return;
     setState(() => _newNameError = _describe(problem));
     if (problem == null) _newName.clear();
   }
@@ -49,6 +50,29 @@ class _SetupScreenState extends State<SetupScreen> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(_describe(problem)!)));
     }
+  }
+
+  Future<void> _remove(Player player) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Supprimer ${player.name} ?'),
+        content: const Text(
+          'S’il a déjà joué, il est archivé : ses parties restent lisibles.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) await setup.removePlayer(player);
   }
 
   @override
@@ -79,7 +103,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       child: const Text('Renommer'),
                     ),
                     PopupMenuItem(
-                      value: () => setup.removePlayer(player),
+                      value: () => _remove(player),
                       child: const Text('Supprimer'),
                     ),
                   ],

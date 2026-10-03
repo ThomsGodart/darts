@@ -26,3 +26,10 @@
     - liste « Ordre de jeu » réordonnable ;
     - 501/301 et Double-out.
   - « Nouvelle partie 501 » et les joueurs fixes ont disparu.
+- 2026-10-03 — Suite à la code review :
+  - « A joué » est posé seulement après un démarrage de partie accepté.
+  - Vérification du nom et écriture dans une même transaction drift : deux taps rapides ne créent pas de doublon.
+  - Ids lus sans crash, suppression idempotente.
+  - Le contrôleur de setup est créé et libéré par l’accueil, et ne notifie plus après fermeture.
+  - Confirmation avant « Supprimer » (avec mention de l’archivage).
+  - Les helpers du catalogue ne sont plus exportés par la librairie `soiree`.

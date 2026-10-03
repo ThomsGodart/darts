@@ -101,15 +101,15 @@ void main() {
         suggestionFor(aliceOn(3, outRule: OutRule.straight)),
         hasLength(1),
       );
-      expect(suggestionFor(aliceOn(180, outRule: OutRule.straight)), [
+      expect(suggestionFor(aliceOn(170, outRule: OutRule.straight)), [
         Dart.treble(20),
         Dart.treble(20),
-        Dart.treble(20),
+        Dart.bull,
       ]);
     });
 
-    test('nothing above 180 or for impossible totals', () {
-      for (final remaining in [181, 179, 163]) {
+    test('nothing above 170, as in double-out', () {
+      for (final remaining in [171, 180, 181]) {
         expect(
           suggestionFor(aliceOn(remaining, outRule: OutRule.straight)),
           isNull,

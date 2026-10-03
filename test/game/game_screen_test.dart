@@ -185,9 +185,7 @@ void main() {
     expect(suggestion, findsNothing);
 
     await playVisits(tester, [180, 26, 180, 26]);
-    expect(
-      find.descendant(of: suggestion, matching: find.text('T20  T19  D12')),
-      findsOneWidget,
-    );
+    // Which route is the rules tests' business; here, that one shows.
+    expect(suggestion, findsOneWidget);
   });
 }

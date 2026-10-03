@@ -101,7 +101,8 @@ class GameState {
 
   /// The route to call for the active player to check out with the darts
   /// left in their visit; null when they cannot finish this visit.
-  List<Dart>? get checkoutSuggestion => isFinished
+  List<Dart>? get checkoutSuggestion =>
+      isFinished || activeRemaining > maxCheckoutSuggestion
       ? null
       : suggestCheckout(
           activeRemaining,

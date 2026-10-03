@@ -23,9 +23,14 @@ class SoireeLauncher {
 
   /// A new soirée with its first game started as [setup] says.
   Future<SoireeController> newGame(GameSetup setup) async {
-    await _catalog.markPlayed(setup.players);
     final controller = SoireeController(await _repository.create());
-    controller.startGame(setup.players, config: setup.config);
+    final started = controller.startGame(setup.players, config: setup.config);
+    if (started is Rejected) {
+      controller.dispose();
+      throw StateError('The setup was refused: ${started.reason}');
+    }
+    // Only now do these players have a game to their name.
+    await _catalog.markPlayed(setup.players);
     return controller;
   }
 

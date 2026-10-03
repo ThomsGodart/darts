@@ -4,6 +4,7 @@
 /// everything else exported here is its vocabulary.
 library;
 
+export 'checkout.dart' show maxCheckoutSuggestion;
 export 'commands.dart';
 export 'dart.dart';
 export 'events.dart' show SoireeEvent;

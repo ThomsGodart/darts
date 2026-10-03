@@ -64,4 +64,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(CheckboxListTile, 'Ana'), findsOneWidget);
   });
+
+  testWidgets('deleting a player asks first', (tester) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await tester.tap(find.text('Nouvelle soirée'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Options de Joueur 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Supprimer'));
+    await tester.pumpAndSettle();
+    expect(find.text('Supprimer Joueur 1 ?'), findsOneWidget);
+
+    await tester.tap(find.text('Annuler'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(CheckboxListTile, 'Joueur 1'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Options de Joueur 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Supprimer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Supprimer'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(CheckboxListTile, 'Joueur 1'), findsNothing);
+  });
 }

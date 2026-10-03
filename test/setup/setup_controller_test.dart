@@ -1,5 +1,6 @@
 import 'package:darts_points_counter/setup/setup_controller.dart';
 import 'package:darts_points_counter/soiree/soiree.dart';
+import 'package:darts_points_counter/soiree_launcher.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Future<SetupController> setupWith(List<String> names) async {
@@ -107,4 +108,18 @@ void main() {
       expect(result.config.startScore, 301);
     },
   );
+
+  test('a player whose game was refused is not marked as played', () async {
+    final catalog = InMemoryPlayerCatalog();
+    final ana = await catalog.add('Ana');
+    final launcher = SoireeLauncher(InMemorySoireeRepository(), catalog);
+
+    await expectLater(
+      launcher.newGame((players: [ana, ana], config: const X01Config())),
+      throwsStateError,
+    );
+
+    await catalog.remove(ana);
+    expect(await catalog.archived(), isEmpty, reason: 'deleted, not archived');
+  });
 }

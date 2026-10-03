@@ -44,12 +44,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _newGame() async {
+    final setupController = widget.launcher.newSetup();
     final setup = await Navigator.of(context).push<GameSetup>(
       MaterialPageRoute(
-        builder: (_) => SetupScreen(controller: widget.launcher.newSetup()),
+        builder: (_) => SetupScreen(controller: setupController),
       ),
     );
-    if (setup == null) return;
+    setupController.dispose();
+    if (setup == null || !mounted) return;
     final controller = await widget.launcher.newGame(setup);
     if (!mounted) return controller.dispose();
     await _open(controller);

@@ -107,5 +107,25 @@ void playerCatalogContract(
       final newAna = await catalog.add('Ana');
       expect(newAna.id, isNot(ana.id));
     });
+
+    test('removing a player twice is harmless', () async {
+      final catalog = open();
+      final ana = await catalog.add('Ana');
+      await catalog.remove(ana);
+      await catalog.remove(ana);
+      expect(await catalog.active(), isEmpty);
+    });
+
+    test('two quick adds of one name keep a single player', () async {
+      final catalog = open();
+      final results = await Future.wait([
+        catalog.add('Ana').then<Object>((p) => p, onError: (Object e) => e),
+        catalog.add('ana').then<Object>((p) => p, onError: (Object e) => e),
+      ]);
+
+      expect(results.whereType<Player>(), hasLength(1));
+      expect(results.whereType<ArgumentError>(), hasLength(1));
+      expect(await catalog.active(), hasLength(1));
+    });
   });
 }

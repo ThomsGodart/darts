@@ -18,3 +18,8 @@
   - Le résultat se comporte comme une table statique. Un test vérifie que les 2–170 finissables ont une route valide et la plus courte, et que 159/162/163/165/166/168/169 n’en ont pas.
   - Routes proches des charts usuels (170 T20 T20 Bull, 141 T20 T19 D12, 81 T19 D12, 61 25 D18…), sans les recopier exactement (ex. 99 → T19 2 D20).
   - UI : pastille en couleur `checkout` sous le reste du joueur actif.
+- 2026-10-03 — Suite à la code review :
+  - Plus aucune suggestion au-dessus de 170, Straight-out compris (US 33).
+  - En Straight-out, la route est appelée de la plus grosse fléchette à la plus petite.
+  - Table Double-out 2–170 figée dans `test/soiree/checkout_table.txt` (régénérer avec `UPDATE_CHECKOUT_TABLE=1 flutter test test/soiree/checkout_table_test.dart`).
+  - Le test widget vérifie seulement que la suggestion s’affiche.

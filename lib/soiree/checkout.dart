@@ -36,17 +36,23 @@ int _finishCost(Dart dart, OutRule rule) {
   return _doubleCost[dart.sector] ?? 3;
 }
 
+/// Above this, no route is suggested, whatever the out rule (a 3-dart
+/// finish on a double tops out at 170).
+const maxCheckoutSuggestion = 170;
+
 final Map<(int, int, OutRule), List<Dart>?> _routes = {};
 
 /// The route a scorer would call to check out [remaining] with at most
 /// [dartsLeft] darts under [rule]: fewest darts first, then the easiest
 /// darts to hit. Null when it cannot be done.
 List<Dart>? suggestCheckout(int remaining, int dartsLeft, OutRule rule) =>
-    _routes.putIfAbsent((
-      remaining,
-      dartsLeft,
-      rule,
-    ), () => _search(remaining, dartsLeft, rule));
+    remaining < 1 || remaining > maxCheckoutSuggestion || dartsLeft < 1
+    ? null
+    : _routes.putIfAbsent((
+        remaining,
+        dartsLeft,
+        rule,
+      ), () => _search(remaining, dartsLeft, rule));
 
 List<Dart>? _search(int remaining, int dartsLeft, OutRule rule) {
   final finishing = [
@@ -85,7 +91,13 @@ List<Dart>? _search(int remaining, int dartsLeft, OutRule rule) {
           }
       }
     }
-    if (best != null) return List.unmodifiable(best!);
+    if (best case final route?) {
+      // Any dart may finish straight-out: call the biggest first.
+      if (rule == OutRule.straight) {
+        route.sort((a, b) => b.score.compareTo(a.score));
+      }
+      return List.unmodifiable(route);
+    }
   }
   return null;
 }
