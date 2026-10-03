@@ -17,6 +17,10 @@ class SetupController extends ChangeNotifier {
         CricketConfig() => GameKind.cricket,
         _ => GameKind.x01,
       },
+      _variant = switch (from?.config) {
+        CricketConfig(:final variant) => variant,
+        _ => CricketVariant.standard,
+      },
       _startScore = _x01Of(from)?.startScore ?? 501,
       _doubleOut = (_x01Of(from)?.outRule ?? OutRule.double) == OutRule.double;
 
@@ -31,6 +35,7 @@ class SetupController extends ChangeNotifier {
   bool _disposed = false;
   final List<Player> _picked;
   GameKind _kind;
+  CricketVariant _variant;
   int _startScore;
   bool _doubleOut;
 
@@ -45,10 +50,17 @@ class SetupController extends ChangeNotifier {
       startScore: _startScore,
       outRule: _doubleOut ? OutRule.double : OutRule.straight,
     ),
-    GameKind.cricket => const CricketConfig(),
+    GameKind.cricket => CricketConfig(variant: _variant),
   };
 
   GameKind get kind => _kind;
+
+  CricketVariant get variant => _variant;
+
+  set variant(CricketVariant value) {
+    _variant = value;
+    notifyListeners();
+  }
 
   set kind(GameKind value) {
     _kind = value;

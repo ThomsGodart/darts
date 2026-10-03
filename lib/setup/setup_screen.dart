@@ -173,7 +173,22 @@ class _SetupScreenState extends State<SetupScreen> {
                 value: setup.doubleOut,
                 onChanged: (value) => setup.doubleOut = value,
               ),
-            ],
+            ] else
+              SegmentedButton<CricketVariant>(
+                segments: const [
+                  ButtonSegment(
+                    value: CricketVariant.standard,
+                    label: Text('Standard'),
+                  ),
+                  ButtonSegment(
+                    value: CricketVariant.cutThroat,
+                    label: Text('Cut-Throat'),
+                  ),
+                ],
+                selected: {setup.variant},
+                showSelectedIcon: false,
+                onSelectionChanged: (s) => setup.variant = s.single,
+              ),
           ],
         ),
       ),

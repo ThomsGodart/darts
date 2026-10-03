@@ -12,7 +12,16 @@ Voir spec : US 2, 3, 13, 16.
 
 **Status:** ready-for-agent
 
-- [ ] Tests de façade : points attribués aux adversaires non fermés, pas à ceux qui ont fermé
-- [ ] Tests de façade : victoire Cut-Throat (égalité comprise) ; tout fermer avec plus de points qu’un adversaire ne gagne pas
-- [ ] Tests de façade : « Rejouer » garde Cut-Throat ; la variante survit à une relance
-- [ ] Setup : choix Standard / Cut-Throat ; variante visible pendant la partie
+- [x] Tests de façade : points attribués aux adversaires non fermés, pas à ceux qui ont fermé
+- [x] Tests de façade : victoire Cut-Throat (égalité comprise) ; tout fermer avec plus de points qu’un adversaire ne gagne pas
+- [x] Tests de façade : « Rejouer » garde Cut-Throat ; la variante survit à une relance
+- [x] Setup : choix Standard / Cut-Throat ; variante visible pendant la partie
+
+## Comments
+
+- 2026-10-03 — Implémenté :
+  - `CricketVariant.cutThroat` : les marques en trop donnent les points à chaque adversaire encore ouvert, et le moins de points gagne (égalité comprise).
+  - Le setup propose Standard / Cut-Throat.
+  - La grille rappelle la variante et la règle de victoire.
+  - L’historique affiche « Cut-Throat ».
+  - « Rejouer » et la reprise après relance gardent la variante.

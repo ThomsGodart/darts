@@ -33,4 +33,30 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('cut-throat is chosen in the setup and shown in game', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await tester.tap(find.text('Nouvelle session'));
+    await tester.pumpAndSettle();
+    for (final name in ['Joueur 1', 'Joueur 2']) {
+      await tester.tap(find.widgetWithText(CheckboxListTile, name));
+      await tester.pump();
+    }
+    await tester.ensureVisible(find.text('Cricket'));
+    await tester.tap(find.text('Cricket'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Cut-Throat'));
+    await tester.tap(find.text('Cut-Throat'));
+    await tester.pump();
+    await tester.tap(find.text('Lancer la partie'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('cricket-variant'))).data,
+      startsWith('Cut-Throat'),
+    );
+  });
 }
+

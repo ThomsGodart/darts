@@ -79,6 +79,9 @@ const marksToClose = 3;
 enum CricketVariant {
   /// They score for the thrower; the most points wins.
   standard,
+
+  /// They score for every opponent still open; the fewest points wins.
+  cutThroat,
 }
 
 /// Rules of a cricket game.

@@ -109,12 +109,31 @@ CricketGame _cricketDart(CricketGame game, Dart dart) {
     ];
     scores[game.activeIndex] = thrower.copyWith(
       marks: {...thrower.marks, number: before + closing},
-      points: othersOpen.isEmpty ? null : thrower.points + extra * number,
     );
+    final points = extra * number;
+    if (points > 0 && othersOpen.isNotEmpty) {
+      switch (game.config.variant) {
+        case CricketVariant.standard:
+          final t = scores[game.activeIndex];
+          scores[game.activeIndex] = t.copyWith(points: t.points + points);
+        case CricketVariant.cutThroat:
+          for (final i in othersOpen) {
+            scores[i] = scores[i].copyWith(points: scores[i].points + points);
+          }
+      }
+    }
   }
   final active = scores[game.activeIndex];
   final won =
-      active.hasClosedAll && scores.every((s) => s.points <= active.points);
+      active.hasClosedAll &&
+      switch (game.config.variant) {
+        CricketVariant.standard => scores.every(
+          (s) => s.points <= active.points,
+        ),
+        CricketVariant.cutThroat => scores.every(
+          (s) => s.points >= active.points,
+        ),
+      };
   if (!won && darts.length < dartsPerVisit) {
     return CricketGame(
       config: game.config,

@@ -18,5 +18,6 @@ String gamesCount(int count) => count == 1 ? '1 partie' : '$count parties';
 String configLabel(GameConfig config) => switch (config) {
   X01Config(:final startScore, :final outRule) =>
     '$startScore ${outRule == OutRule.double ? 'DO' : 'SO'}',
-  CricketConfig() => 'Cricket',
+  CricketConfig(variant: CricketVariant.standard) => 'Cricket',
+  CricketConfig(variant: CricketVariant.cutThroat) => 'Cut-Throat',
 };

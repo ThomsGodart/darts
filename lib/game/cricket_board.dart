@@ -39,68 +39,91 @@ class CricketBoard extends StatelessWidget {
     return SingleChildScrollView(
       key: const Key('cricket-board'),
       padding: const EdgeInsets.all(8),
-      child: Table(
-        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-        columnWidths: const {0: IntrinsicColumnWidth()},
+      child: Column(
         children: [
-          TableRow(
-            children: [
-              const SizedBox.shrink(),
-              for (final (i, score) in game.scores.indexed)
-                cell(
-                  i,
-                  Text(
-                    score.player.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: onColumn(i, textTheme.titleMedium),
-                  ),
-                ),
-            ],
+          Text(
+            switch (game.config.variant) {
+              CricketVariant.standard => 'Cricket · le plus de points gagne',
+              CricketVariant.cutThroat =>
+                'Cut-Throat · le moins de points gagne',
+            },
+            key: const Key('cricket-variant'),
+            style: textTheme.labelLarge,
           ),
-          for (final number in cricketNumbers)
-            TableRow(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    number == Dart.bullSector ? 'Bull' : '$number',
-                    style: textTheme.titleLarge?.copyWith(
-                      decoration: game.isDead(number)
-                          ? TextDecoration.lineThrough
-                          : null,
-                    ),
-                  ),
-                ),
-                for (final (i, score) in game.scores.indexed)
-                  cell(
-                    i,
-                    Text(
-                      markSymbol(score.marksOn(number)),
-                      style: onColumn(i, textTheme.headlineSmall),
-                    ),
-                  ),
-              ],
-            ),
-          TableRow(
-            children: [
-              const SizedBox.shrink(),
-              for (final (i, score) in game.scores.indexed)
-                cell(
-                  i,
-                  Text(
-                    '${score.points}',
-                    style: onColumn(
-                      i,
-                      textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          const SizedBox(height: 4),
+          _table(game, cell, onColumn, textTheme),
         ],
       ),
+    );
+  }
+
+  Widget _table(
+    CricketGame game,
+    Widget Function(int, Widget) cell,
+    TextStyle Function(int, TextStyle?) onColumn,
+    TextTheme textTheme,
+  ) {
+    return Table(
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      columnWidths: const {0: IntrinsicColumnWidth()},
+      children: [
+        TableRow(
+          children: [
+            const SizedBox.shrink(),
+            for (final (i, score) in game.scores.indexed)
+              cell(
+                i,
+                Text(
+                  score.player.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: onColumn(i, textTheme.titleMedium),
+                ),
+              ),
+          ],
+        ),
+        for (final number in cricketNumbers)
+          TableRow(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  number == Dart.bullSector ? 'Bull' : '$number',
+                  style: textTheme.titleLarge?.copyWith(
+                    decoration: game.isDead(number)
+                        ? TextDecoration.lineThrough
+                        : null,
+                  ),
+                ),
+              ),
+              for (final (i, score) in game.scores.indexed)
+                cell(
+                  i,
+                  Text(
+                    markSymbol(score.marksOn(number)),
+                    style: onColumn(i, textTheme.headlineSmall),
+                  ),
+                ),
+            ],
+          ),
+        TableRow(
+          children: [
+            const SizedBox.shrink(),
+            for (final (i, score) in game.scores.indexed)
+              cell(
+                i,
+                Text(
+                  '${score.points}',
+                  style: onColumn(
+                    i,
+                    textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
