@@ -41,8 +41,8 @@ void main() {
   testWidgets('eight players fit a phone without overflow', (tester) async {
     await pumpBoard(tester, gameWith(maxPlayers));
     // A RenderFlex overflow would have failed the test already.
-    expect(find.text('Ⓧ'), findsOneWidget);
-    expect(find.text('X'), findsNWidgets(2)); // D19 and the bull
+    expect(find.byKey(const Key('mark-closed')), findsOneWidget); // T20
+    expect(find.text('X'), findsNWidgets(3)); // T20, D19 and the bull
     expect(tester.takeException(), isNull);
   });
 

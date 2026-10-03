@@ -55,6 +55,7 @@ class SessionDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final state = record.state;
+    final overall = sessionStats(state);
     return Scaffold(
       appBar: AppBar(
         title: Text(sessionDate(record.createdAt)),
@@ -69,14 +70,15 @@ class SessionDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(DartsSpace.lg),
         children: [
-          Text('Stats de la session', style: textTheme.titleLarge),
-          const SizedBox(height: DartsSpace.sm),
-          StatsTableView(
-            key: const Key('session-stats'),
-            stats: sessionStats(state),
-          ),
-          for (final (i, game) in state.games.indexed) ...[
+          // Only X01 and cricket have a stat that spans games.
+          if (overall.headings.isNotEmpty) ...[
+            Text('Stats de la session', style: textTheme.titleLarge),
+            const SizedBox(height: DartsSpace.sm),
+            StatsTableView(key: const Key('session-stats'), stats: overall),
             const SizedBox(height: DartsSpace.xl),
+          ],
+          for (final (i, game) in state.games.indexed) ...[
+            if (i > 0) const SizedBox(height: DartsSpace.xl),
             Text(
               'Partie ${i + 1} · ${configLabel(game.config)}',
               style: textTheme.titleMedium,

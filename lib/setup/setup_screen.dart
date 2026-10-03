@@ -323,7 +323,8 @@ class _SetupScreenState extends State<SetupScreen> {
                 ),
               ],
             },
-            if (setup.picked.length < setup.config.minPlayers)
+            if (setup.config.minPlayers > 1 &&
+                setup.picked.length < setup.config.minPlayers)
               Padding(
                 padding: const EdgeInsets.only(top: DartsSpace.sm),
                 child: Text(

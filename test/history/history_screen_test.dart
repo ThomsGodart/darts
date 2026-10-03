@@ -85,4 +85,27 @@ void main() {
 
     expect(find.text('Aucune session pour l’instant'), findsOneWidget);
   });
+
+  testWidgets('a session without X01 or cricket shows no empty stats table', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await launchGame(tester, const ['Joueur 1', 'Joueur 2'], 'Shanghai');
+    for (final key in ['S1', 'D1', 'T1']) {
+      await tester.tap(find.text(key));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Terminer la session'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Terminer'));
+    await tester.pumpAndSettle();
+    await openHistory(tester);
+    await tester.tap(find.byType(ListTile).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Partie 1 · Shanghai 1–7'), findsOneWidget);
+    expect(find.text('Stats de la session'), findsNothing);
+    expect(find.text('pts'), findsOneWidget);
+  });
 }

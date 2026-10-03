@@ -7,7 +7,8 @@ import '../ui/average_label.dart';
 import '../ui/game_labels.dart';
 import 'input_pane.dart';
 
-/// "/", "X" or "Ⓧ" for 1, 2 or 3 marks; empty for none.
+/// "/", "X" or "Ⓧ" for 1, 2 or 3 marks; empty for none. The board draws
+/// the last one itself.
 String markSymbol(int marks) => switch (marks) {
   0 => '',
   1 => '/',
@@ -65,11 +66,45 @@ class CricketBoard extends StatelessWidget {
                 cellOf: (score) => Text(
                   score.player.name,
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleSmall,
+                  softWrap: false,
+                  // In a narrow column, "Tho" reads better than "T…".
+                  overflow: TextOverflow.fade,
+                  // Whose turn it is must not rest on the column tint alone.
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: score.player.id == game.activePlayer.id
+                        ? FontWeight.w900
+                        : null,
+                    decoration: score.player.id == game.activePlayer.id
+                        ? TextDecoration.underline
+                        : null,
+                  ),
                 ),
                 tokens: tokens,
               ),
+              // Scores sit right under the names: they stay in view when a
+              // short screen scrolls the numbers.
+              _row(
+                label: const SizedBox.shrink(),
+                cellOf: (score) => FittedBox(
+                  child: Text(
+                    '${score.points}',
+                    style: TextStyle(
+                      fontSize: tokens.cricketPointsFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                tokens: tokens,
+              ),
+              _row(
+                label: Text('MPR', style: textTheme.labelLarge),
+                cellOf: (score) => Text(
+                  averageLabel(game.marksPerRound(score.player)),
+                  style: textTheme.labelLarge,
+                ),
+                tokens: tokens,
+              ),
+
               for (final number in cricketNumbers)
                 _row(
                   label: switch (onDart) {
@@ -99,27 +134,6 @@ class CricketBoard extends StatelessWidget {
                   ),
                   tokens: tokens,
                 ),
-              _row(
-                label: const SizedBox.shrink(),
-                cellOf: (score) => FittedBox(
-                  child: Text(
-                    '${score.points}',
-                    style: TextStyle(
-                      fontSize: tokens.cricketPointsFontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                tokens: tokens,
-              ),
-              _row(
-                label: Text('MPR', style: textTheme.labelLarge),
-                cellOf: (score) => Text(
-                  averageLabel(game.marksPerRound(score.player)),
-                  style: textTheme.labelLarge,
-                ),
-                tokens: tokens,
-              ),
             ],
           ),
         ],
@@ -150,7 +164,12 @@ class CricketBoard extends StatelessWidget {
       _labelColumn,
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: DartsSpace.sm),
-        child: label,
+        child: Align(
+          alignment: onDart == null
+              ? AlignmentDirectional.centerStart
+              : Alignment.center,
+          child: label,
+        ),
       ),
     );
     return TableRow(children: cells);
@@ -168,17 +187,21 @@ class _NumberKeys extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onDart = this.onDart;
+    // Label on the key, then how a screen reader says it.
     final keys = number == Dart.bullSector
-        ? [('Bull', Dart.outerBull), ('D', Dart.bull)]
+        ? [
+            ('Bull', 'Bull simple', Dart.outerBull),
+            ('D', 'Bull double', Dart.bull),
+          ]
         : [
-            ('$number', Dart.single(number)),
-            ('D', Dart.double(number)),
-            ('T', Dart.treble(number)),
+            ('$number', 'Simple $number', Dart.single(number)),
+            ('D', 'Double $number', Dart.double(number)),
+            ('T', 'Triple $number', Dart.treble(number)),
           ];
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final (label, dart) in keys)
+        for (final (label, spoken, dart) in keys)
           Padding(
             padding: const EdgeInsets.all(DartsSpace.xxs),
             child: SizedBox(
@@ -188,9 +211,13 @@ class _NumberKeys extends StatelessWidget {
                 key: ValueKey('board-key-${dart.notation}'),
                 onPressed: onDart == null ? null : () => onDart(dart),
                 style: FilledButton.styleFrom(padding: EdgeInsets.zero),
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleMedium,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    semanticsLabel: spoken,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
               ),
             ),
@@ -246,18 +273,38 @@ class _Mark extends StatelessWidget {
   final double fontSize;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: fontSize * 1.2,
-    child: FittedBox(
-      child: Text(
-        markSymbol(marks),
-        style: TextStyle(
-          fontSize: fontSize,
-          color: color,
-          fontWeight: FontWeight.bold,
-          height: 1,
+  Widget build(BuildContext context) {
+    final closed = marks >= marksToClose;
+    return SizedBox(
+      height: fontSize * 1.2,
+      child: FittedBox(
+        // The closed mark is an X in a drawn ring: fonts often lack "Ⓧ".
+        child: Container(
+          key: closed ? const Key('mark-closed') : null,
+          padding: closed ? const EdgeInsets.all(DartsSpace.xs) : null,
+          decoration: closed
+              ? BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: color, width: 3),
+                )
+              : null,
+          child: Text(
+            closed ? 'X' : markSymbol(marks),
+            semanticsLabel: switch (marks) {
+              0 => 'aucune marque',
+              1 => '1 marque',
+              _ when closed => 'fermé',
+              _ => '$marks marques',
+            },
+            style: TextStyle(
+              fontSize: fontSize,
+              color: color,
+              fontWeight: FontWeight.bold,
+              height: 1,
+            ),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

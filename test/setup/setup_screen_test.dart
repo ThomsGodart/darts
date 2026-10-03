@@ -88,4 +88,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.widgetWithText(CheckboxListTile, 'Joueur 1'), findsNothing);
   });
+
+  testWidgets('only a game needing several players says so', (tester) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await tester.tap(find.text('Nouvelle session'));
+    await tester.pumpAndSettle();
+
+    for (final game in ['X01', 'Cricket', 'Shanghai']) {
+      await tester.tap(find.text(game));
+      await tester.pump();
+      expect(find.textContaining('au moins'), findsNothing, reason: game);
+    }
+    await tester.tap(find.text('Killer'));
+    await tester.pump();
+    expect(find.text('Killer : au moins 3 joueurs'), findsOneWidget);
+  });
 }

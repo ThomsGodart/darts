@@ -116,9 +116,13 @@ class PadKey extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final style = FilledButton.styleFrom(padding: EdgeInsets.zero);
-    final child = Text(
-      label,
-      style: large ? textTheme.titleLarge : textTheme.titleMedium,
+    // Shrinks rather than clips when the system text size is large.
+    final child = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        label,
+        style: large ? textTheme.titleLarge : textTheme.titleMedium,
+      ),
     );
     return Expanded(
       child: Padding(
