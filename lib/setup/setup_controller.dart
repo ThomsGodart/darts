@@ -5,11 +5,18 @@ import '../session/session.dart';
 /// What the setup screen hands back: who plays, in order, and the rules.
 typedef GameSetup = ({List<Player> players, GameConfig config});
 
+/// The games the setup offers.
+enum GameKind { x01, cricket }
+
 /// State of the session setup screen, over the player catalog.
 class SetupController extends ChangeNotifier {
   /// A blank setup, or one starting from the players and rules of [from].
   SetupController(this._catalog, {GameSetup? from})
     : _picked = [...?from?.players],
+      _kind = switch (from?.config) {
+        CricketConfig() => GameKind.cricket,
+        _ => GameKind.x01,
+      },
       _startScore = _x01Of(from)?.startScore ?? 501,
       _doubleOut = (_x01Of(from)?.outRule ?? OutRule.double) == OutRule.double;
 
@@ -23,6 +30,7 @@ class SetupController extends ChangeNotifier {
   List<Player> _players = const [];
   bool _disposed = false;
   final List<Player> _picked;
+  GameKind _kind;
   int _startScore;
   bool _doubleOut;
 
@@ -32,10 +40,20 @@ class SetupController extends ChangeNotifier {
   /// Players picked for the game, in throwing order.
   List<Player> get picked => List.unmodifiable(_picked);
 
-  X01Config get config => X01Config(
-    startScore: _startScore,
-    outRule: _doubleOut ? OutRule.double : OutRule.straight,
-  );
+  GameConfig get config => switch (_kind) {
+    GameKind.x01 => X01Config(
+      startScore: _startScore,
+      outRule: _doubleOut ? OutRule.double : OutRule.straight,
+    ),
+    GameKind.cricket => const CricketConfig(),
+  };
+
+  GameKind get kind => _kind;
+
+  set kind(GameKind value) {
+    _kind = value;
+    notifyListeners();
+  }
 
   bool get canStart => _picked.isNotEmpty;
 

@@ -18,6 +18,7 @@ SessionState applyEvent(SessionState state, SessionEvent event) {
     ),
     DartThrown(:final dart) => state.replaceCurrentGame(switch (state.game!) {
       final X01Game game => _dartThrown(game, dart),
+      final CricketGame game => _cricketDart(game, dart),
     }),
     SessionEnded() => SessionState(games: state.games, isEnded: true),
   };
@@ -30,6 +31,11 @@ Game _newGame(List<Player> players, GameConfig config) => switch (config) {
       for (final player in players)
         PlayerScore(player: player, remaining: config.startScore),
     ],
+    activeIndex: 0,
+  ),
+  CricketConfig() => CricketGame(
+    config: config,
+    scores: [for (final player in players) CricketScore(player: player)],
     activeIndex: 0,
   ),
 };
@@ -84,5 +90,48 @@ X01Game _completeVisit(X01Game game, Visit visit) {
         ? game.activeIndex
         : (game.activeIndex + 1) % scores.length,
     winner: won ? current.player : null,
+  );
+}
+
+/// Adds [dart] to the cricket visit, which ends on its third dart or as
+/// soon as the thrower wins.
+CricketGame _cricketDart(CricketGame game, Dart dart) {
+  final darts = [...game.dartsInVisit, dart];
+  final scores = [...game.scores];
+  if (dart.cricketMarks case (:final number, :final marks)) {
+    final thrower = scores[game.activeIndex];
+    final before = thrower.marksOn(number);
+    final closing = (marksToClose - before).clamp(0, marks);
+    final extra = marks - closing;
+    final othersOpen = [
+      for (final (i, s) in scores.indexed)
+        if (i != game.activeIndex && !s.isClosed(number)) i,
+    ];
+    scores[game.activeIndex] = thrower.copyWith(
+      marks: {...thrower.marks, number: before + closing},
+      points: othersOpen.isEmpty ? null : thrower.points + extra * number,
+    );
+  }
+  final active = scores[game.activeIndex];
+  final won =
+      active.hasClosedAll && scores.every((s) => s.points <= active.points);
+  if (!won && darts.length < dartsPerVisit) {
+    return CricketGame(
+      config: game.config,
+      scores: List.unmodifiable(scores),
+      activeIndex: game.activeIndex,
+      dartsInVisit: List.unmodifiable(darts),
+    );
+  }
+  scores[game.activeIndex] = active.copyWith(
+    visitsPlayed: active.visitsPlayed + 1,
+  );
+  return CricketGame(
+    config: game.config,
+    scores: List.unmodifiable(scores),
+    activeIndex: won
+        ? game.activeIndex
+        : (game.activeIndex + 1) % scores.length,
+    winner: won ? active.player : null,
   );
 }

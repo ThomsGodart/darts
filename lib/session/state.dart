@@ -204,3 +204,75 @@ final class X01Game extends Game {
     return [for (var darts = fewest; darts <= dartsPerVisit; darts++) darts];
   }
 }
+
+/// One player's side of a cricket board.
+class CricketScore {
+  const CricketScore({
+    required this.player,
+    this.marks = const {},
+    this.points = 0,
+    this.visitsPlayed = 0,
+  });
+
+  final Player player;
+
+  /// Marks per cricket number, up to [marksToClose]; absent means none.
+  final Map<int, int> marks;
+  final int points;
+  final int visitsPlayed;
+
+  int marksOn(int number) => marks[number] ?? 0;
+
+  bool isClosed(int number) => marksOn(number) >= marksToClose;
+
+  bool get hasClosedAll => cricketNumbers.every(isClosed);
+
+  CricketScore copyWith({
+    Map<int, int>? marks,
+    int? points,
+    int? visitsPlayed,
+  }) => CricketScore(
+    player: player,
+    marks: marks ?? this.marks,
+    points: points ?? this.points,
+    visitsPlayed: visitsPlayed ?? this.visitsPlayed,
+  );
+}
+
+/// A cricket game: close 15–20 and the bull, scoring on what others have
+/// left open.
+final class CricketGame extends Game {
+  const CricketGame({
+    required this.config,
+    required this.scores,
+    required this.activeIndex,
+    this.dartsInVisit = const [],
+    this.winner,
+  });
+
+  @override
+  final CricketConfig config;
+
+  /// One entry per player, in throwing order.
+  final List<CricketScore> scores;
+  @override
+  final int activeIndex;
+  @override
+  final List<Dart> dartsInVisit;
+  @override
+  final Player? winner;
+
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
+
+  CricketScore get activeScore => scores[activeIndex];
+
+  @override
+  int get visitsPlayed => scores.fold(0, (sum, s) => sum + s.visitsPlayed);
+
+  CricketScore scoreOf(Player player) =>
+      scores.firstWhere((s) => s.player == player);
+
+  /// Closed by every player: no one scores on it any more.
+  bool isDead(int number) => scores.every((s) => s.isClosed(number));
+}

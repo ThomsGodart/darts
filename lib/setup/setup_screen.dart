@@ -148,20 +148,32 @@ class _SetupScreenState extends State<SetupScreen> {
             const SizedBox(height: 24),
             Text('Partie', style: textTheme.titleLarge),
             const SizedBox(height: 8),
-            SegmentedButton<int>(
+            SegmentedButton<GameKind>(
               segments: const [
-                ButtonSegment(value: 501, label: Text('501')),
-                ButtonSegment(value: 301, label: Text('301')),
+                ButtonSegment(value: GameKind.x01, label: Text('X01')),
+                ButtonSegment(value: GameKind.cricket, label: Text('Cricket')),
               ],
-              selected: {setup.startScore},
+              selected: {setup.kind},
               showSelectedIcon: false,
-              onSelectionChanged: (s) => setup.startScore = s.single,
+              onSelectionChanged: (s) => setup.kind = s.single,
             ),
-            SwitchListTile(
-              title: const Text('Double-out'),
-              value: setup.doubleOut,
-              onChanged: (value) => setup.doubleOut = value,
-            ),
+            const SizedBox(height: 8),
+            if (setup.kind == GameKind.x01) ...[
+              SegmentedButton<int>(
+                segments: const [
+                  ButtonSegment(value: 501, label: Text('501')),
+                  ButtonSegment(value: 301, label: Text('301')),
+                ],
+                selected: {setup.startScore},
+                showSelectedIcon: false,
+                onSelectionChanged: (s) => setup.startScore = s.single,
+              ),
+              SwitchListTile(
+                title: const Text('Double-out'),
+                value: setup.doubleOut,
+                onChanged: (value) => setup.doubleOut = value,
+              ),
+            ],
           ],
         ),
       ),

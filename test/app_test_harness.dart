@@ -40,11 +40,17 @@ Future<void> pumpApp(
 Future<void> launchGame(
   WidgetTester tester, [
   List<String> players = const ['Joueur 1', 'Joueur 2'],
+  String? game,
 ]) async {
   await tester.tap(find.text('Nouvelle session'));
   await tester.pumpAndSettle();
   for (final name in players) {
     await tester.tap(find.widgetWithText(CheckboxListTile, name));
+    await tester.pump();
+  }
+  if (game != null) {
+    await tester.ensureVisible(find.text(game));
+    await tester.tap(find.text(game));
     await tester.pump();
   }
   await tester.tap(find.text('Lancer la partie'));

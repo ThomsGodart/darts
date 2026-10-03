@@ -8,17 +8,19 @@ const quickScores = [26, 41, 45, 60, 81, 85, 100, 140, 180];
 
 /// Bottom drawer to enter a visit: quick-scores or a typed total, or dart
 /// by dart for this visit only. Give it a new key on each visit so the
-/// next one starts back in total mode.
+/// next one starts back in total mode. Without [onSubmit] (cricket), only
+/// darts can be entered.
 class VisitInput extends StatefulWidget {
   const VisitInput({
     super.key,
-    required this.onSubmit,
+    this.onSubmit,
     required this.onDart,
     required this.onUndo,
     this.dartsInVisit = const [],
   });
 
-  final ValueChanged<int> onSubmit;
+  /// Takes a visit total; null when the game only takes darts.
+  final ValueChanged<int>? onSubmit;
   final ValueChanged<Dart> onDart;
 
   /// Darts already entered in this visit; the visit stays in dart mode
@@ -36,7 +38,10 @@ class _VisitInputState extends State<VisitInput> {
   String _typed = '';
   bool _dartByDart = false;
 
-  bool get _inDartMode => _dartByDart || widget.dartsInVisit.isNotEmpty;
+  bool get _takesTotals => widget.onSubmit != null;
+
+  bool get _inDartMode =>
+      !_takesTotals || _dartByDart || widget.dartsInVisit.isNotEmpty;
 
   void _appendDigit(int digit) {
     if (_typed.length >= 3) return;
@@ -47,7 +52,7 @@ class _VisitInputState extends State<VisitInput> {
 
   void _submit(int score) {
     setState(() => _typed = '');
-    widget.onSubmit(score);
+    widget.onSubmit?.call(score);
   }
 
   @override
@@ -61,14 +66,16 @@ class _VisitInputState extends State<VisitInput> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _ModeSwitch(
-              dartByDart: _inDartMode,
-              // Once a dart is in, the visit is finished dart by dart.
-              onChanged: widget.dartsInVisit.isNotEmpty
-                  ? null
-                  : (value) => setState(() => _dartByDart = value),
-            ),
-            const SizedBox(height: 8),
+            if (_takesTotals) ...[
+              _ModeSwitch(
+                dartByDart: _inDartMode,
+                // Once a dart is in, the visit is finished dart by dart.
+                onChanged: widget.dartsInVisit.isNotEmpty
+                    ? null
+                    : (value) => setState(() => _dartByDart = value),
+              ),
+              const SizedBox(height: 8),
+            ],
             if (_inDartMode) ...[
               Text(
                 [

@@ -123,6 +123,27 @@ void repositoryContract(
       expect((await reopened.latest())!.state.isEnded, isTrue);
     });
 
+    test('a mixed X01 and cricket session survives a relaunch', () async {
+      final repository = open();
+      final session = await repository.create();
+      session.startGame([alice, bob], config: const X01Config(startScore: 40));
+      checkOut(session, 40, darts: 1);
+      session
+        ..startGame([bob, alice], config: const CricketConfig())
+        ..throwDart(const Dart.treble(20))
+        ..throwDart(const Dart.single(20))
+        ..throwDart(Dart.bull);
+      session.throwDart(const Dart.double(19));
+      final before = scoreboardOf(session);
+
+      final resumed = await (await relaunch(repository)).resumable();
+
+      expect(resumed!.state.games.first, isA<X01Game>());
+      expect(resumed.state.game, isA<CricketGame>());
+      expect(scoreboardOf(resumed), before);
+      expect(resumed.state.game!.dartsInVisit, [const Dart.double(19)]);
+    });
+
     test('rematches survive a relaunch', () async {
       final repository = open();
       final session = await repository.create();

@@ -31,6 +31,10 @@ List<Object?> scoreboardOf(Session session) {
         for (final s in scores)
           (s.player, s.remaining, s.lastVisit, s.threeDartAverage),
       ],
+      CricketGame(:final scores) => [
+        for (final s in scores)
+          (s.player, {...s.marks}.toString(), s.points, s.visitsPlayed),
+      ],
     },
     game.activePlayer,
     game.dartsInVisit,

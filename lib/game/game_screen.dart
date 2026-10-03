@@ -8,6 +8,7 @@ import '../session_controller.dart';
 import '../session_launcher.dart';
 import '../ui/average_label.dart';
 import '../ui/persist_failure_banner.dart';
+import 'cricket_board.dart';
 import 'scoreboard.dart';
 import 'screen_awake.dart';
 import 'turn_banner.dart';
@@ -110,14 +111,18 @@ class _GameScreenState extends State<GameScreen> {
     final gameBody = ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        // Only X01 is played so far; Cricket gets its own board (ticket 02).
-        final game = controller.state.game! as X01Game;
+        final game = controller.state.game!;
         final bannerPlayerName = _bannerPlayerName;
         return Stack(
           children: [
             Column(
               children: [
-                Expanded(child: Scoreboard(game: game)),
+                Expanded(
+                  child: switch (game) {
+                    final X01Game game => Scoreboard(game: game),
+                    final CricketGame game => CricketBoard(game: game),
+                  },
+                ),
                 if (game.isFinished)
                   _GameOverPanel(
                     session: controller.state,
@@ -129,7 +134,14 @@ class _GameScreenState extends State<GameScreen> {
                 else
                   VisitInput(
                     key: ValueKey(game.visitsPlayed),
-                    onSubmit: (score) => _submit(context, game, score),
+                    onSubmit: switch (game) {
+                      final X01Game game => (score) => _submit(
+                        context,
+                        game,
+                        score,
+                      ),
+                      CricketGame() => null,
+                    },
                     onDart: controller.throwDart,
                     dartsInVisit: game.dartsInVisit,
                     onUndo: controller.canUndo ? controller.undo : null,
@@ -258,8 +270,8 @@ class _GameOverPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final game = session.game! as X01Game;
-    final showSession = session.games.length > 1;
+    final game = session.game!;
+    final stats = _statsOf(session, game);
     final onChangeSetup = this.onChangeSetup;
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -281,18 +293,15 @@ class _GameOverPanel extends StatelessWidget {
                 TableRow(
                   children: [
                     const SizedBox.shrink(),
-                    _Cell('moy.', style: textTheme.labelMedium),
-                    if (showSession)
-                      _Cell('session', style: textTheme.labelMedium),
+                    for (final heading in stats.headings)
+                      _Cell(heading, style: textTheme.labelMedium),
                   ],
                 ),
-                for (final score in game.scores)
+                for (final (player, values) in stats.rows)
                   TableRow(
                     children: [
-                      Text(score.player.name, style: textTheme.titleMedium),
-                      _Cell(averageLabel(score.threeDartAverage)),
-                      if (showSession)
-                        _Cell(averageLabel(session.averageOf(score.player))),
+                      Text(player.name, style: textTheme.titleMedium),
+                      for (final value in values) _Cell(value),
                     ],
                   ),
               ],
@@ -321,7 +330,10 @@ class _GameOverPanel extends StatelessWidget {
                 TextButton.icon(
                   onPressed: onUndo,
                   icon: const Icon(Icons.undo),
-                  label: const Text('Annuler le checkout'),
+                  label: Text(switch (game) {
+                    X01Game() => 'Annuler le checkout',
+                    CricketGame() => 'Annuler la dernière fléchette',
+                  }),
                 ),
                 TextButton.icon(
                   onPressed: onEnd,
@@ -335,6 +347,34 @@ class _GameOverPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The end-of-game table: column headings, then each player's values.
+typedef _Stats = ({List<String> headings, List<(Player, List<String>)> rows});
+
+_Stats _statsOf(SessionState session, Game game) {
+  final showSession = session.games.length > 1;
+  return switch (game) {
+    X01Game(:final scores) => (
+      headings: ['moy.', if (showSession) 'session'],
+      rows: [
+        for (final score in scores)
+          (
+            score.player,
+            [
+              averageLabel(score.threeDartAverage),
+              if (showSession) averageLabel(session.averageOf(score.player)),
+            ],
+          ),
+      ],
+    ),
+    CricketGame(:final scores) => (
+      headings: ['pts'],
+      rows: [
+        for (final score in scores) (score.player, ['${score.points}']),
+      ],
+    ),
+  };
 }
 
 class _Cell extends StatelessWidget {

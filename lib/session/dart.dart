@@ -24,6 +24,13 @@ class Dart {
 
   int get score => sector * multiplier;
 
+  /// The cricket number this dart marks and how many marks, or null when
+  /// it lands outside 15–20 and the bull.
+  ({int number, int marks})? get cricketMarks =>
+      sector == Dart.bullSector || (sector >= 15 && sector <= 20)
+      ? (number: sector, marks: multiplier)
+      : null;
+
   bool get isDouble => multiplier == 2;
 
   /// Whether a real board has this spot (there is no treble bull).

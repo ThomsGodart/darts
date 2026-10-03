@@ -16,6 +16,7 @@ abstract final class EventTypes {
 /// Game kinds stored in `game_started`. Never rename one.
 abstract final class GameKinds {
   static const x01 = 'x01';
+  static const cricket = 'cricket';
 }
 
 Map<String, Object?> _encodeConfig(GameConfig config) => switch (config) {
@@ -23,6 +24,10 @@ Map<String, Object?> _encodeConfig(GameConfig config) => switch (config) {
     'kind': GameKinds.x01,
     'startScore': startScore,
     'outRule': outRule.name,
+  },
+  CricketConfig(:final variant) => {
+    'kind': GameKinds.cricket,
+    'variant': variant.name,
   },
 };
 
@@ -32,6 +37,9 @@ GameConfig _decodeConfig(Map<String, Object?> payload) =>
       GameKinds.x01 => X01Config(
         startScore: payload['startScore']! as int,
         outRule: OutRule.values.byName(payload['outRule']! as String),
+      ),
+      GameKinds.cricket => CricketConfig(
+        variant: CricketVariant.values.byName(payload['variant']! as String),
       ),
       final kind => throw FormatException('Unknown game kind "$kind"'),
     };

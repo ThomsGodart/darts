@@ -68,11 +68,11 @@ class SessionDetailScreen extends StatelessWidget {
         children: [
           Text('Moyennes de la session', style: textTheme.titleLarge),
           const SizedBox(height: 8),
-          _AveragesTable(
+          _StatsTable(
             key: const Key('session-averages'),
             rows: [
               for (final player in state.players)
-                (player.name, state.averageOf(player)),
+                (player.name, 'moy. ${averageLabel(state.averageOf(player))}'),
             ],
           ),
           for (final (i, game) in state.games.indexed) ...[
@@ -86,11 +86,18 @@ class SessionDetailScreen extends StatelessWidget {
               null => 'Non terminée',
             }, style: textTheme.bodyMedium),
             const SizedBox(height: 4),
-            _AveragesTable(
+            _StatsTable(
               rows: switch (game) {
                 X01Game(:final scores) => [
                   for (final score in scores)
-                    (score.player.name, score.threeDartAverage),
+                    (
+                      score.player.name,
+                      'moy. ${averageLabel(score.threeDartAverage)}',
+                    ),
+                ],
+                CricketGame(:final scores) => [
+                  for (final score in scores)
+                    (score.player.name, '${score.points} pts'),
                 ],
               },
             ),
@@ -101,10 +108,11 @@ class SessionDetailScreen extends StatelessWidget {
   }
 }
 
-class _AveragesTable extends StatelessWidget {
-  const _AveragesTable({super.key, required this.rows});
+/// One row per player: their name and a stat already formatted.
+class _StatsTable extends StatelessWidget {
+  const _StatsTable({super.key, required this.rows});
 
-  final List<(String, double?)> rows;
+  final List<(String, String)> rows;
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +123,7 @@ class _AveragesTable extends StatelessWidget {
           TableRow(
             children: [
               Text(name),
-              Text('moy. ${averageLabel(value)}', textAlign: TextAlign.end),
+              Text(value, textAlign: TextAlign.end),
             ],
           ),
       ],

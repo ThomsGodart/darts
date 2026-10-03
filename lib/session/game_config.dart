@@ -68,3 +68,32 @@ final class X01Config extends GameConfig {
   @override
   int get hashCode => Object.hash(startScore, outRule);
 }
+
+/// Numbers that count in cricket, as a board lists them; 25 is the bull.
+const cricketNumbers = [20, 19, 18, 17, 16, 15, Dart.bullSector];
+
+/// Marks a number needs to be closed.
+const marksToClose = 3;
+
+/// How the marks past a closed number are scored.
+enum CricketVariant {
+  /// They score for the thrower; the most points wins.
+  standard,
+}
+
+/// Rules of a cricket game.
+final class CricketConfig extends GameConfig {
+  const CricketConfig({this.variant = CricketVariant.standard});
+
+  final CricketVariant variant;
+
+  @override
+  bool get isValid => true;
+
+  @override
+  bool operator ==(Object other) =>
+      other is CricketConfig && other.variant == variant;
+
+  @override
+  int get hashCode => variant.hashCode;
+}
