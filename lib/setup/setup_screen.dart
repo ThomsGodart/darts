@@ -235,6 +235,23 @@ class _SetupScreenState extends State<SetupScreen> {
                   showSelectedIcon: false,
                   onSelectionChanged: (s) => setup.variant = s.single,
                 ),
+                const SizedBox(height: DartsSpace.sm),
+                SegmentedButton<CricketInput>(
+                  key: const Key('cricket-input'),
+                  segments: const [
+                    ButtonSegment(
+                      value: CricketInput.board,
+                      label: Text('Saisie sur le tableau'),
+                    ),
+                    ButtonSegment(
+                      value: CricketInput.keypad,
+                      label: Text('Clavier fléchettes'),
+                    ),
+                  ],
+                  selected: {setup.cricketInput},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setup.cricketInput = s.single,
+                ),
               ],
               GameKind.shanghai => [
                 SegmentedButton<ShanghaiLength>(

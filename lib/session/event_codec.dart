@@ -28,9 +28,10 @@ Map<String, Object?> _encodeConfig(GameConfig config) => switch (config) {
     'startScore': startScore,
     'outRule': outRule.name,
   },
-  CricketConfig(:final variant) => {
+  CricketConfig(:final variant, :final input) => {
     'kind': GameKinds.cricket,
     'variant': variant.name,
+    'input': input.name,
   },
   ShanghaiConfig(:final length, :final instantShanghai) => {
     'kind': GameKinds.shanghai,
@@ -53,6 +54,11 @@ GameConfig _decodeConfig(Map<String, Object?> payload) =>
       ),
       GameKinds.cricket => CricketConfig(
         variant: CricketVariant.values.byName(payload['variant']! as String),
+        // Games recorded before the choice existed used the keypad.
+        input: switch (payload['input']) {
+          final String name => CricketInput.values.byName(name),
+          _ => CricketInput.keypad,
+        },
       ),
       GameKinds.shanghai => ShanghaiConfig(
         length: ShanghaiLength.values.byName(payload['length']! as String),

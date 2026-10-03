@@ -23,6 +23,10 @@ class SetupController extends ChangeNotifier {
         CricketConfig(:final variant) => variant,
         _ => CricketVariant.standard,
       },
+      _cricketInput = switch (from?.config) {
+        CricketConfig(:final input) => input,
+        _ => CricketInput.board,
+      },
       _shanghaiLength = switch (from?.config) {
         ShanghaiConfig(:final length) => length,
         _ => ShanghaiLength.oneToSeven,
@@ -56,6 +60,7 @@ class SetupController extends ChangeNotifier {
   final List<Player> _picked;
   GameKind _kind;
   CricketVariant _variant;
+  CricketInput _cricketInput;
   ShanghaiLength _shanghaiLength;
   bool _instantShanghai;
   int _killerLives;
@@ -80,7 +85,7 @@ class SetupController extends ChangeNotifier {
       startScore: _startScore,
       outRule: _doubleOut ? OutRule.double : OutRule.straight,
     ),
-    GameKind.cricket => CricketConfig(variant: _variant),
+    GameKind.cricket => CricketConfig(variant: _variant, input: _cricketInput),
     GameKind.shanghai => ShanghaiConfig(
       length: _shanghaiLength,
       instantShanghai: _instantShanghai,
@@ -97,6 +102,13 @@ class SetupController extends ChangeNotifier {
 
   set variant(CricketVariant value) {
     _variant = value;
+    notifyListeners();
+  }
+
+  CricketInput get cricketInput => _cricketInput;
+
+  set cricketInput(CricketInput value) {
+    _cricketInput = value;
     notifyListeners();
   }
 

@@ -18,7 +18,11 @@ CricketGame gameWith(int count) {
   return session.state.game! as CricketGame;
 }
 
-Future<void> pumpBoard(WidgetTester tester, CricketGame game) async {
+Future<void> pumpBoard(
+  WidgetTester tester,
+  CricketGame game, {
+  ValueChanged<Dart>? onDart,
+}) async {
   // A 6.1" phone in portrait: 393 × 852 logical pixels.
   tester.view.physicalSize = const Size(1179, 2556);
   tester.view.devicePixelRatio = 3;
@@ -26,7 +30,9 @@ Future<void> pumpBoard(WidgetTester tester, CricketGame game) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: themeById(defaultThemeId),
-      home: Scaffold(body: CricketBoard(game: game)),
+      home: Scaffold(
+        body: CricketBoard(game: game, onDart: onDart),
+      ),
     ),
   );
 }
@@ -43,6 +49,20 @@ void main() {
   testWidgets('a lone player fits too', (tester) async {
     await pumpBoard(tester, gameWith(1));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('with the keys in the middle, one to eight players still fit', (
+    tester,
+  ) async {
+    for (final count in [1, 2, maxPlayers]) {
+      final thrown = <Dart>[];
+      await pumpBoard(tester, gameWith(count), onDart: thrown.add);
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.byKey(const ValueKey('board-key-D19')));
+      await tester.tap(find.byKey(const ValueKey('board-key-Bull')));
+      expect(thrown, [const Dart.double(19), Dart.bull]);
+    }
   });
 
   test('mark symbols: none, /, X, Ⓧ', () {

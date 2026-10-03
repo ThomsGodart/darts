@@ -6,6 +6,7 @@ import '../session/session.dart';
 import '../session_controller.dart';
 import '../session_launcher.dart';
 import '../ui/average_label.dart';
+import '../ui/game_labels.dart';
 import '../ui/persist_failure_banner.dart';
 import 'cricket_board.dart';
 import 'game_shell.dart';
@@ -110,7 +111,12 @@ class _GameScreenState extends State<GameScreen> {
         final bannerPlayerName = _bannerPlayerName;
         final statePane = switch (game) {
           final X01Game game => Scoreboard(game: game),
-          final CricketGame game => CricketBoard(game: game),
+          final CricketGame game => CricketBoard(
+            game: game,
+            onDart: game.isFinished || game.config.input != CricketInput.board
+                ? null
+                : controller.throwDart,
+          ),
           final ShanghaiGame game => ShanghaiBoard(game: game),
           final KillerGame game => KillerBoard(game: game),
         };
@@ -151,19 +157,36 @@ class _GameScreenState extends State<GameScreen> {
                   onSubmit: (score) => _submit(context, game, score),
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
+                  onEndVisit: () => _endVisit(controller),
                   onUndo: controller.canUndo ? controller.undo : null,
                 ),
+                final CricketGame game
+                    when game.config.input == CricketInput.board =>
+                  CricketBoardInput(
+                    dartsInVisit: game.dartsInVisit,
+                    onDart: controller.throwDart,
+                    onEndVisit: () => _endVisit(controller),
+                    onUndo: controller.canUndo ? controller.undo : null,
+                  ),
                 CricketGame() => VisitInput(
                   key: ValueKey(game.visitsPlayed),
                   onSubmit: null,
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
+                  onEndVisit: () => _endVisit(controller),
                   onUndo: controller.canUndo ? controller.undo : null,
                 ),
               };
         return Stack(
           children: [
-            GameShell(statePane: statePane, inputPane: inputPane),
+            Column(
+              children: [
+                _GameBar(label: configLabel(game.config)),
+                Expanded(
+                  child: GameShell(statePane: statePane, inputPane: inputPane),
+                ),
+              ],
+            ),
             if (bannerPlayerName != null)
               Positioned(
                 top: 0,
@@ -226,7 +249,7 @@ class _GameScreenState extends State<GameScreen> {
     final startVisits = controller.state.game!.visitsPlayed;
     while (!controller.state.game!.isFinished &&
         controller.state.game!.visitsPlayed == startVisits) {
-      controller.throwDart(Dart.miss);
+      if (controller.throwDart(Dart.miss) is Rejected) return;
     }
   }
 
@@ -249,6 +272,34 @@ class _GameScreenState extends State<GameScreen> {
         ..showSnackBar(SnackBar(content: Text('Score invalide : $score')));
     }
   }
+}
+
+/// Slim bar over the game: the way back to the menu, and what is played.
+/// Leaving keeps the session open, to resume from the home screen.
+class _GameBar extends StatelessWidget {
+  const _GameBar({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      IconButton(
+        key: const Key('leave-game'),
+        tooltip: 'Retour au menu',
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => Navigator.of(context).maybePop(),
+      ),
+      Expanded(
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      ),
+    ],
+  );
 }
 
 /// Asks how many darts the checkout took; null if dismissed.

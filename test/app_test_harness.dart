@@ -36,11 +36,13 @@ Future<void> pumpApp(
   await tester.pumpAndSettle();
 }
 
-/// From the home screen: a new session with [players], in that order.
+/// From the home screen: a new session with [players], in that order,
+/// playing [game] with the setup [options] tapped.
 Future<void> launchGame(
   WidgetTester tester, [
   List<String> players = const ['Joueur 1', 'Joueur 2'],
   String? game,
+  List<String> options = const [],
 ]) async {
   await tester.tap(find.text('Nouvelle session'));
   await tester.pumpAndSettle();
@@ -51,6 +53,11 @@ Future<void> launchGame(
   if (game != null) {
     await tester.ensureVisible(find.text(game));
     await tester.tap(find.text(game));
+    await tester.pump();
+  }
+  for (final option in options) {
+    await tester.ensureVisible(find.text(option));
+    await tester.tap(find.text(option));
     await tester.pump();
   }
   await tester.tap(find.text('Lancer la partie'));

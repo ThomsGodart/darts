@@ -17,10 +17,20 @@ String markSymbol(int marks) => switch (marks) {
 /// Cricket scoreboard: a row per number (20 at the top, the bull last), a
 /// column per player, points and MPR underneath. Player columns share the
 /// width, so up to eight players fit a phone without scrolling sideways.
+///
+/// With [onDart], darts are entered on the board: the numbers sit in the
+/// middle, between the players, as single / double / treble keys.
 class CricketBoard extends StatelessWidget {
-  const CricketBoard({super.key, required this.game});
+  const CricketBoard({super.key, required this.game, this.onDart});
 
   final CricketGame game;
+
+  /// Takes a dart tapped on the board; null when darts are entered
+  /// elsewhere, the numbers then being plain labels in the first column.
+  final ValueChanged<Dart>? onDart;
+
+  /// Column of the numbers: first, or in the middle when they are keys.
+  int get _labelColumn => onDart == null ? 0 : (game.scores.length + 1) ~/ 2;
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +53,10 @@ class CricketBoard extends StatelessWidget {
           ),
           const SizedBox(height: DartsSpace.xs),
           Table(
+            // A new table when the columns change: next game, other players.
+            key: ValueKey(game.scores.length),
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            columnWidths: const {0: IntrinsicColumnWidth()},
+            columnWidths: {_labelColumn: const IntrinsicColumnWidth()},
             defaultColumnWidth: const FlexColumnWidth(),
             children: [
               _row(
@@ -59,15 +71,22 @@ class CricketBoard extends StatelessWidget {
               ),
               for (final number in cricketNumbers)
                 _row(
-                  label: Text(
-                    number == Dart.bullSector ? 'Bull' : '$number',
-                    style: textTheme.titleLarge?.copyWith(
-                      color: game.isDead(number) ? tokens.cricketDead : null,
-                      decoration: game.isDead(number)
-                          ? TextDecoration.lineThrough
-                          : null,
+                  label: switch (onDart) {
+                    final onDart? => _NumberKeys(
+                      number: number,
+                      // A dead number scores nothing: enter it as a miss.
+                      onDart: game.isDead(number) ? null : onDart,
                     ),
-                  ),
+                    null => Text(
+                      number == Dart.bullSector ? 'Bull' : '$number',
+                      style: textTheme.titleLarge?.copyWith(
+                        color: game.isDead(number) ? tokens.cricketDead : null,
+                        decoration: game.isDead(number)
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
+                    ),
+                  },
                   cellOf: (score) => _Mark(
                     marks: score.marksOn(number),
                     color: game.isDead(number)
@@ -107,30 +126,153 @@ class CricketBoard extends StatelessWidget {
     );
   }
 
-  /// A board row: a label, then one cell per player, the active player's
+  /// A board row: a label and one cell per player, the active player's
   /// column highlighted.
   TableRow _row({
     required Widget label,
     required Widget Function(CricketScore) cellOf,
     required DartsTokens tokens,
   }) {
-    return TableRow(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: DartsSpace.sm),
-          child: label,
-        ),
-        for (final (i, score) in game.scores.indexed)
-          Container(
-            color: i == game.activeIndex ? tokens.cricketActiveColumn : null,
-            padding: const EdgeInsets.symmetric(
-              vertical: DartsSpace.xs,
-              horizontal: DartsSpace.xxs,
-            ),
-            alignment: Alignment.center,
-            child: cellOf(score),
+    final cells = <Widget>[
+      for (final (i, score) in game.scores.indexed)
+        Container(
+          color: i == game.activeIndex ? tokens.cricketActiveColumn : null,
+          padding: const EdgeInsets.symmetric(
+            vertical: DartsSpace.xs,
+            horizontal: DartsSpace.xxs,
           ),
+          alignment: Alignment.center,
+          child: cellOf(score),
+        ),
+    ];
+    cells.insert(
+      _labelColumn,
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: DartsSpace.sm),
+        child: label,
+      ),
+    );
+    return TableRow(children: cells);
+  }
+}
+
+/// Single, double and treble keys of one cricket number; the bull has no
+/// treble. Disabled without [onDart].
+class _NumberKeys extends StatelessWidget {
+  const _NumberKeys({required this.number, required this.onDart});
+
+  final int number;
+  final ValueChanged<Dart>? onDart;
+
+  @override
+  Widget build(BuildContext context) {
+    final onDart = this.onDart;
+    final keys = number == Dart.bullSector
+        ? [('Bull', Dart.outerBull), ('D', Dart.bull)]
+        : [
+            ('$number', Dart.single(number)),
+            ('D', Dart.double(number)),
+            ('T', Dart.treble(number)),
+          ];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final (label, dart) in keys)
+          Padding(
+            padding: const EdgeInsets.all(DartsSpace.xxs),
+            child: SizedBox(
+              width: DartsSpace.tap,
+              height: DartsSpace.tap,
+              child: FilledButton.tonal(
+                key: ValueKey('board-key-${dart.notation}'),
+                onPressed: onDart == null ? null : () => onDart(dart),
+                style: FilledButton.styleFrom(padding: EdgeInsets.zero),
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            ),
+          ),
+        // Keeps the bull's keys under the single and double columns.
+        if (keys.length < 3)
+          const SizedBox(width: DartsSpace.tap + 2 * DartsSpace.xxs),
       ],
+    );
+  }
+}
+
+/// Input pane of a cricket game entered on the board: what the keys of
+/// the board cannot say.
+class CricketBoardInput extends StatelessWidget {
+  const CricketBoardInput({
+    super.key,
+    required this.dartsInVisit,
+    required this.onDart,
+    required this.onEndVisit,
+    required this.onUndo,
+  });
+
+  final List<Dart> dartsInVisit;
+  final ValueChanged<Dart> onDart;
+  final VoidCallback onEndVisit;
+
+  /// Takes back the latest dart; null when there is nothing to undo.
+  final VoidCallback? onUndo;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(DartsSpace.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              [
+                for (var i = 0; i < dartsPerVisit; i++)
+                  dartsInVisit.elementAtOrNull(i)?.notation ?? '–',
+              ].join('  ·  '),
+              key: const Key('darts-in-visit'),
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: DartsSpace.sm),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: DartsSpace.tap,
+                    child: FilledButton.tonal(
+                      onPressed: () => onDart(Dart.miss),
+                      child: const Text('Raté'),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: DartsSpace.sm),
+                Expanded(
+                  child: SizedBox(
+                    height: DartsSpace.tap,
+                    child: FilledButton(
+                      onPressed: onEndVisit,
+                      child: const Text('Fin de tour'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: DartsSpace.xs),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onUndo,
+                icon: const Icon(Icons.undo),
+                label: const Text('Annuler la saisie'),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

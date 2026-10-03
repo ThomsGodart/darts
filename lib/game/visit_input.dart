@@ -17,6 +17,7 @@ class VisitInput extends StatefulWidget {
     this.onSubmit,
     required this.onDart,
     required this.onUndo,
+    this.onEndVisit,
     this.dartsInVisit = const [],
   });
 
@@ -30,6 +31,10 @@ class VisitInput extends StatefulWidget {
 
   /// Takes back the latest input; null when there is nothing to undo.
   final VoidCallback? onUndo;
+
+  /// Ends a visit entered dart by dart before its third dart; null hides
+  /// the option.
+  final VoidCallback? onEndVisit;
 
   @override
   State<VisitInput> createState() => _VisitInputState();
@@ -100,7 +105,17 @@ class _VisitInputState extends State<VisitInput> {
                     label: const Text('Annuler la saisie'),
                   ),
                 ),
-                if (!_inDartMode) ...[
+                if (_inDartMode) ...[
+                  if (widget.onEndVisit case final onEndVisit?) ...[
+                    const SizedBox(width: DartsSpace.sm),
+                    Expanded(
+                      child: FilledButton.tonal(
+                        onPressed: onEndVisit,
+                        child: const Text('Fin de tour'),
+                      ),
+                    ),
+                  ],
+                ] else ...[
                   const SizedBox(width: DartsSpace.sm),
                   Expanded(
                     child: OutlinedButton(

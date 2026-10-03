@@ -94,21 +94,36 @@ enum CricketVariant {
   };
 }
 
-/// Rules of a cricket game.
+/// Where the darts of a cricket game are entered.
+enum CricketInput {
+  /// On the board itself: single, double and treble next to each number.
+  board,
+
+  /// On the dart keypad under the board.
+  keypad,
+}
+
+/// Rules of a cricket game, and how the players chose to enter it.
 final class CricketConfig extends GameConfig {
-  const CricketConfig({this.variant = CricketVariant.standard});
+  const CricketConfig({
+    this.variant = CricketVariant.standard,
+    this.input = CricketInput.board,
+  });
 
   final CricketVariant variant;
+  final CricketInput input;
 
   @override
   bool get isValid => true;
 
   @override
   bool operator ==(Object other) =>
-      other is CricketConfig && other.variant == variant;
+      other is CricketConfig &&
+      other.variant == variant &&
+      other.input == input;
 
   @override
-  int get hashCode => variant.hashCode;
+  int get hashCode => Object.hash(variant, input);
 }
 
 /// How long a Shanghai game runs.

@@ -202,4 +202,37 @@ void main() {
     // Joueur 1 is up again: their old bust must not look like a new one.
     expect(find.textContaining('BUST'), findsNothing);
   });
+
+  testWidgets('a dart-by-dart visit can end before its third dart', (
+    tester,
+  ) async {
+    await startGame(tester);
+    await tester.tap(find.text('Fléchettes'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, '20'));
+    await tester.pump();
+    await tester.tap(find.text('Fin de tour'));
+    await tester.pump();
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('active-name'))).data,
+      'Joueur 2',
+    );
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('the game bar leads back to the menu, the session kept', (
+    tester,
+  ) async {
+    await startGame(tester);
+    await quickScore(tester, 60);
+    await tester.tap(find.byKey(const Key('leave-game')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reprendre la session'), findsOneWidget);
+    await tester.tap(find.text('Reprendre la session'));
+    await tester.pumpAndSettle();
+    expect(activeRemaining(tester), '501');
+    expect(find.text('441'), findsOneWidget);
+  });
 }

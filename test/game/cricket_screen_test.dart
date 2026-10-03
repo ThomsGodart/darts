@@ -9,34 +9,77 @@ Future<void> launchCricket(WidgetTester tester) async {
   await launchGame(tester, const ['Joueur 1', 'Joueur 2'], 'Cricket');
 }
 
+Finder boardMarks() => find.descendant(
+  of: find.byKey(const Key('cricket-board')),
+  matching: find.byWidgetPredicate(
+    (w) => w is Text && ['/', 'X', 'Ⓧ'].contains(w.data),
+  ),
+);
+
 void main() {
-  testWidgets('a cricket game shows the board and darts only', (tester) async {
+  testWidgets('a cricket game is entered on the board by default', (
+    tester,
+  ) async {
     await launchCricket(tester);
 
     expect(find.byKey(const Key('cricket-board')), findsOneWidget);
-    expect(find.text('Bull'), findsWidgets);
-    // No totals in cricket: no quick-scores, no Total / Fléchettes switch.
-    expect(find.byType(ActionChip), findsNothing);
+    // Single, double and treble sit between the two players' columns.
+    final keys = tester.getCenter(find.byKey(const ValueKey('board-key-D20')));
+    expect(tester.getCenter(find.text('Joueur 1')).dx, lessThan(keys.dx));
+    expect(tester.getCenter(find.text('Joueur 2')).dx, greaterThan(keys.dx));
+    // No keypad, and no totals in cricket.
+    expect(find.text('Triple'), findsNothing);
     expect(find.text('Total'), findsNothing);
     expect(find.byKey(const Key('darts-in-visit')), findsOneWidget);
   });
 
-  testWidgets('a dart marks the board', (tester) async {
+  testWidgets('a dart tapped on the board marks it', (tester) async {
     await launchCricket(tester);
+    await tester.tap(find.byKey(const ValueKey('board-key-T20')));
+    await tester.pump();
+
+    // Which mark is the rules' business; here, one shows up on the board.
+    expect(boardMarks(), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('darts-in-visit'))).data,
+      startsWith('T20'),
+    );
+  });
+
+  testWidgets('Fin de tour passes the phone after a single dart', (
+    tester,
+  ) async {
+    await launchCricket(tester);
+    await tester.tap(find.byKey(const ValueKey('board-key-20')));
+    await tester.pump();
+    await tester.tap(find.text('Fin de tour'));
+    await tester.pump();
+
+    expect(find.text('À toi, Joueur 2 !'), findsOneWidget);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('the dart keypad is chosen in the setup', (tester) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await launchGame(
+      tester,
+      const ['Joueur 1', 'Joueur 2'],
+      'Cricket',
+      const ['Clavier fléchettes'],
+    );
+
+    expect(find.byKey(const ValueKey('board-key-T20')), findsNothing);
     await tester.tap(find.text('Triple'));
     await tester.pump();
     await tester.tap(find.text('T20'));
     await tester.pump();
+    expect(boardMarks(), findsOneWidget);
 
-    // Which mark is the rules' business; here, one shows up on the board.
-    final board = find.byKey(const Key('cricket-board'));
-    final marks = find.descendant(
-      of: board,
-      matching: find.byWidgetPredicate(
-        (w) => w is Text && ['/', 'X', 'Ⓧ'].contains(w.data),
-      ),
-    );
-    expect(marks, findsOneWidget);
+    // One dart in: the visit can still be ended.
+    await tester.tap(find.text('Fin de tour'));
+    await tester.pump();
+    expect(find.text('À toi, Joueur 2 !'), findsOneWidget);
+    await tester.pumpAndSettle();
   });
 
   testWidgets('cut-throat is chosen in the setup and shown in game', (
