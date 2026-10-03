@@ -6,7 +6,7 @@ import '../session/session.dart';
 typedef GameSetup = ({List<Player> players, GameConfig config});
 
 /// The games the setup offers.
-enum GameKind { x01, cricket }
+enum GameKind { x01, cricket, shanghai, killer }
 
 /// State of the session setup screen, over the player catalog.
 class SetupController extends ChangeNotifier {
@@ -15,11 +15,29 @@ class SetupController extends ChangeNotifier {
     : _picked = [...?from?.players],
       _kind = switch (from?.config) {
         CricketConfig() => GameKind.cricket,
+        ShanghaiConfig() => GameKind.shanghai,
+        KillerConfig() => GameKind.killer,
         _ => GameKind.x01,
       },
       _variant = switch (from?.config) {
         CricketConfig(:final variant) => variant,
         _ => CricketVariant.standard,
+      },
+      _shanghaiLength = switch (from?.config) {
+        ShanghaiConfig(:final length) => length,
+        _ => ShanghaiLength.oneToSeven,
+      },
+      _instantShanghai = switch (from?.config) {
+        ShanghaiConfig(:final instantShanghai) => instantShanghai,
+        _ => true,
+      },
+      _killerLives = switch (from?.config) {
+        KillerConfig(:final lives) => lives,
+        _ => 3,
+      },
+      _doublesToKiller = switch (from?.config) {
+        KillerConfig(:final doublesToKiller) => doublesToKiller,
+        _ => 1,
       },
       _startScore = _x01Of(from)?.startScore ?? 501,
       _doubleOut = (_x01Of(from)?.outRule ?? OutRule.double) == OutRule.double;
@@ -36,6 +54,10 @@ class SetupController extends ChangeNotifier {
   final List<Player> _picked;
   GameKind _kind;
   CricketVariant _variant;
+  ShanghaiLength _shanghaiLength;
+  bool _instantShanghai;
+  int _killerLives;
+  int _doublesToKiller;
   int _startScore;
   bool _doubleOut;
 
@@ -51,6 +73,14 @@ class SetupController extends ChangeNotifier {
       outRule: _doubleOut ? OutRule.double : OutRule.straight,
     ),
     GameKind.cricket => CricketConfig(variant: _variant),
+    GameKind.shanghai => ShanghaiConfig(
+      length: _shanghaiLength,
+      instantShanghai: _instantShanghai,
+    ),
+    GameKind.killer => KillerConfig(
+      lives: _killerLives,
+      doublesToKiller: _doublesToKiller,
+    ),
   };
 
   GameKind get kind => _kind;
@@ -62,12 +92,43 @@ class SetupController extends ChangeNotifier {
     notifyListeners();
   }
 
+  ShanghaiLength get shanghaiLength => _shanghaiLength;
+
+  set shanghaiLength(ShanghaiLength value) {
+    _shanghaiLength = value;
+    notifyListeners();
+  }
+
+  bool get instantShanghai => _instantShanghai;
+
+  set instantShanghai(bool value) {
+    _instantShanghai = value;
+    notifyListeners();
+  }
+
+  int get killerLives => _killerLives;
+
+  set killerLives(int value) {
+    _killerLives = value;
+    notifyListeners();
+  }
+
+  int get doublesToKiller => _doublesToKiller;
+
+  set doublesToKiller(int value) {
+    _doublesToKiller = value;
+    notifyListeners();
+  }
+
   set kind(GameKind value) {
     _kind = value;
     notifyListeners();
   }
 
-  bool get canStart => _picked.isNotEmpty;
+  bool get canStart => switch (_kind) {
+    GameKind.killer => _picked.length >= minKillerPlayers,
+    _ => _picked.isNotEmpty,
+  };
 
   GameSetup get result => (players: picked, config: config);
 

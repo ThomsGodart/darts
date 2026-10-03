@@ -144,6 +144,38 @@ void repositoryContract(
       expect(resumed.state.game!.dartsInVisit, [const Dart.double(19)]);
     });
 
+    test('a Shanghai game in progress survives a relaunch', () async {
+      final repository = open();
+      final session = await repository.create();
+      session
+        ..startGame([alice, bob], config: const ShanghaiConfig())
+        ..throwDart(const Dart.treble(1))
+        ..throwDart(const Dart.single(1));
+      final before = scoreboardOf(session);
+
+      final resumed = await (await relaunch(repository)).resumable();
+
+      expect(resumed!.state.game, isA<ShanghaiGame>());
+      expect(scoreboardOf(resumed), before);
+    });
+
+    test('a Killer game mid-assignment survives a relaunch', () async {
+      const carol = Player(id: 'carol', name: 'Carol');
+      final repository = open();
+      final session = await repository.create();
+      session
+        ..startGame([alice, bob, carol], config: const KillerConfig())
+        ..assignNumber(20)
+        ..assignNumber(19);
+      final before = scoreboardOf(session);
+
+      final resumed = await (await relaunch(repository)).resumable();
+
+      expect(resumed!.state.game, isA<KillerGame>());
+      expect(scoreboardOf(resumed), before);
+      expect(resumed.assignNumber(18), isA<Accepted>());
+    });
+
     test('rematches survive a relaunch', () async {
       final repository = open();
       final session = await repository.create();

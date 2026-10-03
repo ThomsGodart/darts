@@ -314,3 +314,146 @@ final class CricketGame extends Game {
   double? marksPerRound(Player player) =>
       perRound(scoreOf(player).marksHit, roundsOf(player));
 }
+
+/// One player's side of a Shanghai game.
+class ShanghaiScore {
+  const ShanghaiScore({required this.player, this.points = 0});
+
+  final Player player;
+  final int points;
+
+  ShanghaiScore copyWith({int? points}) =>
+      ShanghaiScore(player: player, points: points ?? this.points);
+}
+
+/// A Shanghai game: score on a fixed number sequence; optional instant win
+/// on S+D+T of the number in one visit.
+final class ShanghaiGame extends Game {
+  const ShanghaiGame({
+    required this.config,
+    required this.scores,
+    required this.activeIndex,
+    this.numberIndex = 0,
+    this.visitsPlayed = 0,
+    this.dartsInVisit = const [],
+    this.winner,
+  });
+
+  @override
+  final ShanghaiConfig config;
+
+  /// One entry per player, in throwing order.
+  final List<ShanghaiScore> scores;
+  @override
+  final int activeIndex;
+
+  /// Index into [ShanghaiConfig.length.numbers].
+  final int numberIndex;
+  @override
+  final int visitsPlayed;
+  @override
+  final List<Dart> dartsInVisit;
+  @override
+  final Player? winner;
+
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
+
+  /// Number everyone is throwing at.
+  int get currentNumber => config.length.numbers[numberIndex];
+
+  ShanghaiScore get activeScore => scores[activeIndex];
+
+  int scoreOf(Player player) =>
+      scores.firstWhere((s) => s.player.id == player.id).points;
+}
+
+/// Where Killer sits in its life cycle.
+enum KillerPhase { assigning, playing, finished }
+
+/// One player's side of a Killer game.
+class KillerScore {
+  const KillerScore({
+    required this.player,
+    this.number,
+    this.lives,
+    this.killerProgress = 0,
+    this.isKiller = false,
+  });
+
+  final Player player;
+
+  /// Claimed sector 1–20; null until assigned.
+  final int? number;
+  final int? lives;
+  final int killerProgress;
+  final bool isKiller;
+
+  bool get isOut => lives != null && lives! <= 0;
+
+  bool get hasNumber => number != null;
+
+  KillerScore copyWith({
+    int? number,
+    int? lives,
+    int? killerProgress,
+    bool? isKiller,
+  }) => KillerScore(
+    player: player,
+    number: number ?? this.number,
+    lives: lives ?? this.lives,
+    killerProgress: killerProgress ?? this.killerProgress,
+    isKiller: isKiller ?? this.isKiller,
+  );
+}
+
+/// A Killer game: claim a number, become Killer on its double, remove lives.
+final class KillerGame extends Game {
+  const KillerGame({
+    required this.config,
+    required this.scores,
+    required this.activeIndex,
+    this.phase = KillerPhase.assigning,
+    this.visitsPlayed = 0,
+    this.dartsInVisit = const [],
+    this.winner,
+  });
+
+  @override
+  final KillerConfig config;
+
+  /// One entry per player, in throwing order.
+  final List<KillerScore> scores;
+  @override
+  final int activeIndex;
+  final KillerPhase phase;
+  @override
+  final int visitsPlayed;
+  @override
+  final List<Dart> dartsInVisit;
+  @override
+  final Player? winner;
+
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
+
+  @override
+  bool get isFinished => phase == KillerPhase.finished || winner != null;
+
+  KillerScore get activeScore => scores[activeIndex];
+
+  KillerScore scoreOf(Player player) =>
+      scores.firstWhere((s) => s.player.id == player.id);
+
+  /// Numbers already claimed.
+  Set<int> get takenNumbers => {
+    for (final s in scores)
+      if (s.number != null) s.number!,
+  };
+
+  /// Players still in (lives > 0), once playing has started.
+  List<KillerScore> get alive => [
+    for (final s in scores)
+      if (!s.isOut) s,
+  ];
+}

@@ -35,6 +35,15 @@ List<Object?> scoreboardOf(Session session) {
         for (final s in scores)
           (s.player, {...s.marks}.toString(), s.points, s.visitsPlayed),
       ],
+      ShanghaiGame(:final scores, :final numberIndex) => [
+        numberIndex,
+        for (final s in scores) (s.player, s.points),
+      ],
+      KillerGame(:final scores, :final phase) => [
+        phase,
+        for (final s in scores)
+          (s.player, s.number, s.lives, s.isKiller, s.killerProgress),
+      ],
     },
     game.activePlayer,
     game.dartsInVisit,

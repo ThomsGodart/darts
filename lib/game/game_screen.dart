@@ -9,8 +9,10 @@ import '../session_launcher.dart';
 import '../ui/average_label.dart';
 import '../ui/persist_failure_banner.dart';
 import 'cricket_board.dart';
+import 'killer_board.dart';
 import 'scoreboard.dart';
 import 'screen_awake.dart';
+import 'shanghai_board.dart';
 import 'turn_banner.dart';
 import 'visit_input.dart';
 
@@ -121,6 +123,8 @@ class _GameScreenState extends State<GameScreen> {
                   child: switch (game) {
                     final X01Game game => Scoreboard(game: game),
                     final CricketGame game => CricketBoard(game: game),
+                    final ShanghaiGame game => ShanghaiBoard(game: game),
+                    final KillerGame game => KillerBoard(game: game),
                   },
                 ),
                 if (game.isFinished)
@@ -132,20 +136,45 @@ class _GameScreenState extends State<GameScreen> {
                     onEnd: () => _endSession(context),
                   )
                 else
-                  VisitInput(
-                    key: ValueKey(game.visitsPlayed),
-                    onSubmit: switch (game) {
-                      final X01Game game => (score) => _submit(
-                        context,
-                        game,
-                        score,
+                  switch (game) {
+                    final KillerGame game
+                        when game.phase == KillerPhase.assigning =>
+                      KillerAssignInput(
+                        key: ValueKey('assign-${game.activeIndex}'),
+                        taken: game.takenNumbers,
+                        onAssign: controller.assignNumber,
+                        onUndo: controller.canUndo ? controller.undo : null,
                       ),
-                      CricketGame() => null,
-                    },
-                    onDart: controller.throwDart,
-                    dartsInVisit: game.dartsInVisit,
-                    onUndo: controller.canUndo ? controller.undo : null,
-                  ),
+                    final KillerGame game => KillerPlayInput(
+                      key: ValueKey(game.visitsPlayed),
+                      dartsInVisit: game.dartsInVisit,
+                      onDart: controller.throwDart,
+                      onEndVisit: () => _endVisit(controller),
+                      onUndo: controller.canUndo ? controller.undo : null,
+                    ),
+                    final ShanghaiGame game => ShanghaiInput(
+                      key: ValueKey(game.visitsPlayed),
+                      number: game.currentNumber,
+                      dartsInVisit: game.dartsInVisit,
+                      onDart: controller.throwDart,
+                      onEndVisit: () => _endVisit(controller),
+                      onUndo: controller.canUndo ? controller.undo : null,
+                    ),
+                    final X01Game game => VisitInput(
+                      key: ValueKey(game.visitsPlayed),
+                      onSubmit: (score) => _submit(context, game, score),
+                      onDart: controller.throwDart,
+                      dartsInVisit: game.dartsInVisit,
+                      onUndo: controller.canUndo ? controller.undo : null,
+                    ),
+                    CricketGame() => VisitInput(
+                      key: ValueKey(game.visitsPlayed),
+                      onSubmit: null,
+                      onDart: controller.throwDart,
+                      dartsInVisit: game.dartsInVisit,
+                      onUndo: controller.canUndo ? controller.undo : null,
+                    ),
+                  },
               ],
             ),
             if (bannerPlayerName != null)
@@ -209,6 +238,15 @@ class _GameScreenState extends State<GameScreen> {
     if (confirmed != true || !context.mounted) return;
     controller.endSession();
     Navigator.of(context).pop();
+  }
+
+  /// Pads the visit with misses so "Fin de tour" costs one action.
+  void _endVisit(SessionController controller) {
+    final startVisits = controller.state.game!.visitsPlayed;
+    while (!controller.state.game!.isFinished &&
+        controller.state.game!.visitsPlayed == startVisits) {
+      controller.throwDart(Dart.miss);
+    }
   }
 
   Future<void> _submit(BuildContext context, X01Game game, int score) async {
@@ -332,7 +370,9 @@ class _GameOverPanel extends StatelessWidget {
                   icon: const Icon(Icons.undo),
                   label: Text(switch (game) {
                     X01Game() => 'Annuler le checkout',
-                    CricketGame() => 'Annuler la dernière fléchette',
+                    CricketGame() ||
+                    ShanghaiGame() ||
+                    KillerGame() => 'Annuler la dernière fléchette',
                   }),
                 ),
                 TextButton.icon(
@@ -389,6 +429,26 @@ _Stats _statsOf(SessionState session, Game game) {
             [
               '${score.points}',
               averageLabel(game.marksPerRound(score.player)),
+              ...sessionStats(score.player),
+            ],
+          ),
+      ],
+    ),
+    ShanghaiGame(:final scores) => (
+      headings: ['pts', ...sessionHeadings],
+      rows: [
+        for (final score in scores)
+          (score.player, ['${score.points}', ...sessionStats(score.player)]),
+      ],
+    ),
+    KillerGame(:final scores) => (
+      headings: ['vies', ...sessionHeadings],
+      rows: [
+        for (final score in scores)
+          (
+            score.player,
+            [
+              score.isOut ? 'OUT' : '${score.lives ?? 0}',
               ...sessionStats(score.player),
             ],
           ),

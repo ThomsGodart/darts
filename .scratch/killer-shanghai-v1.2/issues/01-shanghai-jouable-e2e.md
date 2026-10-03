@@ -4,10 +4,10 @@
 
 **Blocked by:** None (can start immediately) — requires v1.1 Cricket shipped (Session multi-jeux).
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Carte setup Shanghai + options (longueur, instant on/off) ; démarrage &lt; 30 s
-- [ ] Fold + commandes : séquence, scoring, Shanghai instant, Fin de tour, undo
-- [ ] Persist/resume journal (`kind` shanghai) avec tests codec/migration
-- [ ] UI jeu : chiffre du tour, grille S/D/T, confort bannière/haptique/wakelock, écran de fin + rematch
-- [ ] Tests façade (longueurs, instant on/off, undo) + smoke widget setup→partie→fin
+- [x] Carte setup Shanghai + options (longueur, instant on/off) ; démarrage &lt; 30 s
+- [x] Fold + commandes : séquence, scoring, Shanghai instant, Fin de tour, undo
+- [x] Persist/resume journal (`kind` shanghai) avec tests codec/migration
+- [x] UI jeu : chiffre du tour, grille S/D/T, confort bannière/haptique/wakelock, écran de fin + rematch
+- [x] Tests façade (longueurs, instant on/off, undo) + smoke widget setup→partie→fin

@@ -4,9 +4,9 @@
 
 **Blocked by:** 01 Shanghai jouable E2E, 02 Killer jouable E2E
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Changer… ouvre le setup cartes avec les 4 kinds et démarre le kind choisi
-- [ ] Rejouer reste kind-local (Killer ré-attribue ; Shanghai garde options)
-- [ ] Lignes historique + détail Session lisibles pour Killer et Shanghai
-- [ ] Tests cycle mixte (au moins un enchaînement cross-kind) + formatage historique
+- [x] Changer… ouvre le setup cartes avec les 4 kinds et démarre le kind choisi
+- [x] Rejouer reste kind-local (Killer ré-attribue ; Shanghai garde options)
+- [x] Lignes historique + détail Session lisibles pour Killer et Shanghai
+- [x] Tests cycle mixte (au moins un enchaînement cross-kind) + formatage historique

@@ -10,6 +10,7 @@ abstract final class EventTypes {
   static const gameStarted = 'game_started';
   static const visitTotalSubmitted = 'visit_total_submitted';
   static const dartThrown = 'dart_thrown';
+  static const numberAssigned = 'number_assigned';
   static const sessionEnded = 'session_ended';
 }
 
@@ -17,6 +18,8 @@ abstract final class EventTypes {
 abstract final class GameKinds {
   static const x01 = 'x01';
   static const cricket = 'cricket';
+  static const shanghai = 'shanghai';
+  static const killer = 'killer';
 }
 
 Map<String, Object?> _encodeConfig(GameConfig config) => switch (config) {
@@ -29,6 +32,16 @@ Map<String, Object?> _encodeConfig(GameConfig config) => switch (config) {
     'kind': GameKinds.cricket,
     'variant': variant.name,
   },
+  ShanghaiConfig(:final length, :final instantShanghai) => {
+    'kind': GameKinds.shanghai,
+    'length': length.name,
+    'instantShanghai': instantShanghai,
+  },
+  KillerConfig(:final lives, :final doublesToKiller) => {
+    'kind': GameKinds.killer,
+    'lives': lives,
+    'doublesToKiller': doublesToKiller,
+  },
 };
 
 /// Journals written before game kinds existed hold X01 games only.
@@ -40,6 +53,14 @@ GameConfig _decodeConfig(Map<String, Object?> payload) =>
       ),
       GameKinds.cricket => CricketConfig(
         variant: CricketVariant.values.byName(payload['variant']! as String),
+      ),
+      GameKinds.shanghai => ShanghaiConfig(
+        length: ShanghaiLength.values.byName(payload['length']! as String),
+        instantShanghai: payload['instantShanghai']! as bool,
+      ),
+      GameKinds.killer => KillerConfig(
+        lives: payload['lives']! as int,
+        doublesToKiller: payload['doublesToKiller']! as int,
       ),
       final kind => throw FormatException('Unknown game kind "$kind"'),
     };
@@ -65,6 +86,10 @@ EncodedEvent encodeEvent(SessionEvent event) => switch (event) {
     type: EventTypes.dartThrown,
     payload: {'sector': dart.sector, 'multiplier': dart.multiplier},
   ),
+  NumberAssigned(:final sector) => (
+    type: EventTypes.numberAssigned,
+    payload: {'sector': sector},
+  ),
   SessionEnded() => (type: EventTypes.sessionEnded, payload: const {}),
 };
 
@@ -87,6 +112,7 @@ SessionEvent decodeEvent(String type, Map<String, Object?> payload) =>
           multiplier: payload['multiplier']! as int,
         ),
       ),
+      EventTypes.numberAssigned => NumberAssigned(payload['sector']! as int),
       EventTypes.sessionEnded => const SessionEnded(),
       _ => throw FormatException('Unknown event type "$type"'),
     };

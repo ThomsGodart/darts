@@ -148,47 +148,116 @@ class _SetupScreenState extends State<SetupScreen> {
             const SizedBox(height: 24),
             Text('Partie', style: textTheme.titleLarge),
             const SizedBox(height: 8),
-            SegmentedButton<GameKind>(
-              segments: const [
-                ButtonSegment(value: GameKind.x01, label: Text('X01')),
-                ButtonSegment(value: GameKind.cricket, label: Text('Cricket')),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final kind in GameKind.values)
+                  ChoiceChip(
+                    label: Text(switch (kind) {
+                      GameKind.x01 => 'X01',
+                      GameKind.cricket => 'Cricket',
+                      GameKind.shanghai => 'Shanghai',
+                      GameKind.killer => 'Killer',
+                    }),
+                    selected: setup.kind == kind,
+                    onSelected: (_) => setup.kind = kind,
+                  ),
               ],
-              selected: {setup.kind},
-              showSelectedIcon: false,
-              onSelectionChanged: (s) => setup.kind = s.single,
             ),
             const SizedBox(height: 8),
-            if (setup.kind == GameKind.x01) ...[
-              SegmentedButton<int>(
-                segments: const [
-                  ButtonSegment(value: 501, label: Text('501')),
-                  ButtonSegment(value: 301, label: Text('301')),
-                ],
-                selected: {setup.startScore},
-                showSelectedIcon: false,
-                onSelectionChanged: (s) => setup.startScore = s.single,
-              ),
-              SwitchListTile(
-                title: const Text('Double-out'),
-                value: setup.doubleOut,
-                onChanged: (value) => setup.doubleOut = value,
-              ),
-            ] else
-              SegmentedButton<CricketVariant>(
-                segments: const [
-                  ButtonSegment(
-                    value: CricketVariant.standard,
-                    label: Text('Standard'),
+            ...switch (setup.kind) {
+              GameKind.x01 => [
+                SegmentedButton<int>(
+                  segments: const [
+                    ButtonSegment(value: 501, label: Text('501')),
+                    ButtonSegment(value: 301, label: Text('301')),
+                  ],
+                  selected: {setup.startScore},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setup.startScore = s.single,
+                ),
+                SwitchListTile(
+                  title: const Text('Double-out'),
+                  value: setup.doubleOut,
+                  onChanged: (value) => setup.doubleOut = value,
+                ),
+              ],
+              GameKind.cricket => [
+                SegmentedButton<CricketVariant>(
+                  segments: const [
+                    ButtonSegment(
+                      value: CricketVariant.standard,
+                      label: Text('Standard'),
+                    ),
+                    ButtonSegment(
+                      value: CricketVariant.cutThroat,
+                      label: Text('Cut-Throat'),
+                    ),
+                  ],
+                  selected: {setup.variant},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setup.variant = s.single,
+                ),
+              ],
+              GameKind.shanghai => [
+                SegmentedButton<ShanghaiLength>(
+                  segments: const [
+                    ButtonSegment(
+                      value: ShanghaiLength.oneToSeven,
+                      label: Text('1–7'),
+                    ),
+                    ButtonSegment(
+                      value: ShanghaiLength.fourteenToTwenty,
+                      label: Text('14–20'),
+                    ),
+                    ButtonSegment(
+                      value: ShanghaiLength.oneToTwenty,
+                      label: Text('1–20'),
+                    ),
+                  ],
+                  selected: {setup.shanghaiLength},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setup.shanghaiLength = s.single,
+                ),
+                SwitchListTile(
+                  title: const Text('Shanghai instantané'),
+                  value: setup.instantShanghai,
+                  onChanged: (value) => setup.instantShanghai = value,
+                ),
+              ],
+              GameKind.killer => [
+                SegmentedButton<int>(
+                  segments: const [
+                    ButtonSegment(value: 3, label: Text('3 vies')),
+                    ButtonSegment(value: 5, label: Text('5 vies')),
+                  ],
+                  selected: {setup.killerLives},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setup.killerLives = s.single,
+                ),
+                const SizedBox(height: 8),
+                SegmentedButton<int>(
+                  segments: const [
+                    ButtonSegment(value: 1, label: Text('1 double')),
+                    ButtonSegment(value: 3, label: Text('3 doubles')),
+                  ],
+                  selected: {setup.doublesToKiller},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setup.doublesToKiller = s.single,
+                ),
+                if (setup.picked.length < minKillerPlayers)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Killer : au moins $minKillerPlayers joueurs',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ),
-                  ButtonSegment(
-                    value: CricketVariant.cutThroat,
-                    label: Text('Cut-Throat'),
-                  ),
-                ],
-                selected: {setup.variant},
-                showSelectedIcon: false,
-                onSelectionChanged: (s) => setup.variant = s.single,
-              ),
+              ],
+            },
           ],
         ),
       ),

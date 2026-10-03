@@ -25,6 +25,9 @@ class SessionController extends ChangeNotifier {
   CommandResult throwDart(Dart dart) =>
       _notifyIfAccepted(_session.throwDart(dart));
 
+  CommandResult assignNumber(int sector) =>
+      _notifyIfAccepted(_session.assignNumber(sector));
+
   CommandResult rematch({GameConfig? config}) =>
       _notifyIfAccepted(_session.rematch(config: config));
 

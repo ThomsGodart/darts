@@ -4,10 +4,10 @@
 
 **Blocked by:** None (can start immediately) — requires v1.1 ; parallel with 01.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Carte setup Killer + options vies / N ; refus hors 3–8 joueurs
-- [ ] State machine `assigning | playing | finished` + events attribution + fold vies/OUT/win
-- [ ] Persist/resume journal (`kind` killer) avec tests codec/migration
-- [ ] UI : attribution claire vs grille doubles ; bannière/haptique/wakelock ; fin + rematch ré-attribue
-- [ ] Tests façade (self-hit, last standing, skip OUT, doublon refusé, undo) + smoke widget
+- [x] Carte setup Killer + options vies / N ; refus hors 3–8 joueurs
+- [x] State machine `assigning | playing | finished` + events attribution + fold vies/OUT/win
+- [x] Persist/resume journal (`kind` killer) avec tests codec/migration
+- [x] UI : attribution claire vs grille doubles ; bannière/haptique/wakelock ; fin + rematch ré-attribue
+- [x] Tests façade (self-hit, last standing, skip OUT, doublon refusé, undo) + smoke widget

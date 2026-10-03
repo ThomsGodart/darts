@@ -104,6 +104,21 @@ class SessionDetailScreen extends StatelessWidget {
                           '${averageLabel(game.marksPerRound(score.player))}',
                     ),
                 ],
+                ShanghaiGame(:final scores) => [
+                  for (final score in scores)
+                    (score.player.name, '${score.points} pts'),
+                ],
+                KillerGame(:final scores) => [
+                  for (final score in scores)
+                    (
+                      score.player.name,
+                      [
+                        if (score.number != null) 'n°${score.number}',
+                        score.isOut ? 'OUT' : '${score.lives} vies',
+                        if (score.isKiller) 'Killer',
+                      ].join(' · '),
+                    ),
+                ],
               },
             ),
           ],

@@ -31,6 +31,9 @@ class Session {
     if (players.length > maxPlayers) {
       return const Rejected('At most $maxPlayers players');
     }
+    if (config is KillerConfig && players.length < minKillerPlayers) {
+      return const Rejected('Killer needs at least $minKillerPlayers players');
+    }
     if (players.map((p) => p.id).toSet().length != players.length) {
       return const Rejected('A player cannot play twice in a game');
     }
@@ -106,13 +109,37 @@ class Session {
     if (game == null || game.isFinished || _state.isEnded) {
       return _notInProgress(game);
     }
+    if (game is KillerGame && game.phase != KillerPhase.playing) {
+      return const Rejected('Assign numbers before throwing');
+    }
     if (!dart.isValid) return Rejected('No such dart: $dart');
     return _record(DartThrown(dart));
   }
 
+  /// Claims [sector] (1–20) for the active player during Killer attribution.
+  CommandResult assignNumber(int sector) {
+    final game = _state.game;
+    if (game == null || game.isFinished || _state.isEnded) {
+      return _notInProgress(game);
+    }
+    if (game is! KillerGame) {
+      return const Rejected('Only Killer assigns numbers');
+    }
+    if (game.phase != KillerPhase.assigning) {
+      return const Rejected('Numbers are already assigned');
+    }
+    if (sector < 1 || sector > 20) {
+      return Rejected('No such sector: $sector');
+    }
+    if (game.takenNumbers.contains(sector)) {
+      return const Rejected('That number is already taken');
+    }
+    return _record(NumberAssigned(sector));
+  }
+
   /// Whether there is an input of the current game to take back.
   bool get canUndo => switch (_journal.events.lastOrNull) {
-    VisitTotalSubmitted() || DartThrown() => true,
+    VisitTotalSubmitted() || DartThrown() || NumberAssigned() => true,
     GameStarted() || SessionEnded() || null => false,
   };
 

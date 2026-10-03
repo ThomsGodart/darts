@@ -110,3 +110,96 @@ final class CricketConfig extends GameConfig {
   @override
   int get hashCode => variant.hashCode;
 }
+
+/// How long a Shanghai game runs.
+enum ShanghaiLength {
+  /// Numbers 1 through 7.
+  oneToSeven,
+
+  /// Numbers 14 through 20.
+  fourteenToTwenty,
+
+  /// Numbers 1 through 20.
+  oneToTwenty;
+
+  /// Numbers in order for this length.
+  List<int> get numbers => switch (this) {
+    oneToSeven => const [1, 2, 3, 4, 5, 6, 7],
+    fourteenToTwenty => const [14, 15, 16, 17, 18, 19, 20],
+    oneToTwenty => const [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+    ],
+  };
+}
+
+/// Rules of a Shanghai game.
+final class ShanghaiConfig extends GameConfig {
+  const ShanghaiConfig({
+    this.length = ShanghaiLength.oneToSeven,
+    this.instantShanghai = true,
+  });
+
+  final ShanghaiLength length;
+
+  /// Whether S+D+T of the number in one visit wins at once.
+  final bool instantShanghai;
+
+  @override
+  bool get isValid => true;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ShanghaiConfig &&
+      other.length == length &&
+      other.instantShanghai == instantShanghai;
+
+  @override
+  int get hashCode => Object.hash(length, instantShanghai);
+}
+
+/// Fewest / most players for Killer.
+const minKillerPlayers = 3;
+
+/// Rules of a Killer game.
+final class KillerConfig extends GameConfig {
+  const KillerConfig({this.lives = 3, this.doublesToKiller = 1});
+
+  /// Lives each player starts with: 3 or 5.
+  final int lives;
+
+  /// Own doubles needed to become Killer: 1 or 3.
+  final int doublesToKiller;
+
+  @override
+  bool get isValid =>
+      (lives == 3 || lives == 5) &&
+      (doublesToKiller == 1 || doublesToKiller == 3);
+
+  @override
+  bool operator ==(Object other) =>
+      other is KillerConfig &&
+      other.lives == lives &&
+      other.doublesToKiller == doublesToKiller;
+
+  @override
+  int get hashCode => Object.hash(lives, doublesToKiller);
+}
