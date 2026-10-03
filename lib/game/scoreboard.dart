@@ -95,7 +95,7 @@ class _ActivePlayer extends StatelessWidget {
             // With a single player, their own bust is shown here.
             Container(
               color: busted ? tokens.bust : null,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: DartsSpace.sm),
               child: Text(
                 summary,
                 style: TextStyle(
@@ -109,8 +109,8 @@ class _ActivePlayer extends StatelessWidget {
                 key: const Key('checkout-suggestion'),
                 margin: const EdgeInsets.only(top: DartsSpace.sm),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
+                  horizontal: DartsSpace.md,
+                  vertical: DartsSpace.xs,
                 ),
                 decoration: BoxDecoration(
                   color: tokens.checkout,

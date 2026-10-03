@@ -2,6 +2,7 @@ import 'package:darts_points_counter/theme/app_themes.dart';
 import 'package:darts_points_counter/theme/contrast.dart';
 import 'package:darts_points_counter/theme/darts_space.dart';
 import 'package:darts_points_counter/theme/darts_tokens.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -45,6 +46,18 @@ void main() {
       contrastRatio(tokens.onActivePlayer, tokens.activePlayer),
       greaterThanOrEqualTo(4.5),
     );
+  });
+
+  test('live cricket marks stay readable on the board surface', () {
+    final theme = themeById(defaultThemeId);
+    final tokens = theme.extension<DartsTokens>()!;
+    final surface = theme.colorScheme.surface;
+    final activeColumn = Color.alphaBlend(tokens.cricketActiveColumn, surface);
+    for (final background in [surface, activeColumn]) {
+      for (final mark in [tokens.cricketMark, tokens.cricketClosed]) {
+        expect(contrastRatio(mark, background), greaterThanOrEqualTo(4.5));
+      }
+    }
   });
 
   test('spacing scale exposes a 48 dp tap target', () {

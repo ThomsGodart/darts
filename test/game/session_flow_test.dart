@@ -94,6 +94,11 @@ void main() {
     await tester.tap(find.text('Nouvelle session'));
     await tester.pumpAndSettle();
     expect(find.text('Une session est en cours'), findsOneWidget);
+    // The open session only ends once the new game actually starts.
+    expect(
+      find.textContaining('au lancement de la nouvelle partie'),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Annuler'));
     await tester.pumpAndSettle();
     expect(find.text('Reprendre la session'), findsOneWidget);

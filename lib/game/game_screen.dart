@@ -446,7 +446,7 @@ class _Cell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 16),
+    padding: const EdgeInsets.only(left: DartsSpace.lg),
     child: Text(text, textAlign: TextAlign.end, style: style),
   );
 }

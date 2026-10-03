@@ -28,7 +28,7 @@ class ShanghaiBoard extends StatelessWidget {
           const SizedBox(height: DartsSpace.lg),
           for (final (i, score) in game.scores.indexed)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: DartsSpace.xs),
               child: Row(
                 children: [
                   if (i == game.activeIndex)

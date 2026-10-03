@@ -117,13 +117,16 @@ class CricketBoard extends StatelessWidget {
     return TableRow(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: DartsSpace.sm),
           child: label,
         ),
         for (final (i, score) in game.scores.indexed)
           Container(
             color: i == game.activeIndex ? tokens.cricketActiveColumn : null,
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+            padding: const EdgeInsets.symmetric(
+              vertical: DartsSpace.xs,
+              horizontal: DartsSpace.xxs,
+            ),
             alignment: Alignment.center,
             child: cellOf(score),
           ),

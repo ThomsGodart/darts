@@ -43,7 +43,7 @@ class _DartPickerState extends State<DartPicker> {
           showSelectedIcon: false,
           onSelectionChanged: (s) => setState(() => _multiplier = s.single),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: DartsSpace.xs),
         for (var row = 0; row < 4; row++)
           Row(
             children: [

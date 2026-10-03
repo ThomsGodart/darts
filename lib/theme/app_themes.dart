@@ -29,7 +29,8 @@ ThemeData _buildDefault() {
         checkout: Color(0xFF0B3D0F),
         onCheckout: Color(0xFFFFFFFF),
         cricketMark: Color(0xFFE0E0E0),
-        cricketClosed: Color(0xFF66BB6A),
+        // Light enough to clear 4.5:1 on the amber-tinted active column too.
+        cricketClosed: Color(0xFF81C784),
         cricketDead: Color(0xFF616161),
         cricketActiveColumn: Color(0x40FFC107),
         remainingFontSize: 120,

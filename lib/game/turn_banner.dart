@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/darts_space.dart';
 import '../theme/darts_tokens.dart';
 
 /// Briefly names the player who should take the phone, then fades out.
@@ -28,7 +29,7 @@ class TurnBanner extends StatelessWidget {
           key: const Key('turn-banner'),
           width: double.infinity,
           color: tokens.activePlayer,
-          padding: const EdgeInsets.symmetric(vertical: 24),
+          padding: const EdgeInsets.symmetric(vertical: DartsSpace.xl),
           child: Text(
             'À toi, $playerName !',
             textAlign: TextAlign.center,

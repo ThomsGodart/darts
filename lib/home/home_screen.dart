@@ -90,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Une session est en cours'),
         content: const Text(
           'La terminer pour en commencer une nouvelle ? '
-          'Elle passera dans l’historique.',
+          'Elle passera dans l’historique au lancement de la nouvelle partie.',
         ),
         actions: [
           TextButton(
