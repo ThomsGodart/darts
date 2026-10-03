@@ -13,7 +13,7 @@ String currentTable() {
   for (var remaining = 2; remaining <= 170; remaining++) {
     final session = newSession()
       ..startGame([alice], config: X01Config(startScore: remaining));
-    final route = session.state.game!.checkoutSuggestion;
+    final route = session.state.x01!.checkoutSuggestion;
     lines.add('$remaining: ${route?.map((d) => d.notation).join(' ') ?? '-'}');
   }
   return '${lines.join('\n')}\n';

@@ -5,7 +5,7 @@ import 'fold.dart';
 import 'journal.dart';
 import 'player.dart';
 import 'state.dart';
-import 'x01_config.dart';
+import 'game_config.dart';
 import 'x01_rules.dart';
 
 /// Single entry point to the session domain.
@@ -24,7 +24,7 @@ class Session {
   /// session, or the next one with players added, removed or reordered.
   CommandResult startGame(
     List<Player> players, {
-    X01Config config = const X01Config(),
+    GameConfig config = const X01Config(),
   }) {
     if (_state.isEnded) return const Rejected('The session is over');
     if (players.isEmpty) return const Rejected('A game needs players');
@@ -35,7 +35,7 @@ class Session {
       return const Rejected('A player cannot play twice in a game');
     }
     if (!config.isValid) {
-      return Rejected('Invalid start score ${config.startScore}');
+      return const Rejected('These rules cannot be played');
     }
     final game = _state.game;
     if (game != null && !game.isFinished) {
@@ -48,7 +48,7 @@ class Session {
 
   /// Starts the next game with the same players, whoever started the last
   /// one now throwing last; with the same rules unless [config] is given.
-  CommandResult rematch({X01Config? config}) {
+  CommandResult rematch({GameConfig? config}) {
     final game = _state.game;
     if (game == null) return const Rejected('No game to play again');
     if (!game.isFinished) return const Rejected('The game is not over');
@@ -64,12 +64,17 @@ class Session {
 
   /// Submits a visit by its total. When it brings the remaining score to
   /// exactly 0, [dartsAtCheckout] must say how many darts it took (one of
-  /// [GameState.checkoutDartOptions]); otherwise it must be omitted.
+  /// [X01Game.checkoutDartOptions]); otherwise it must be omitted. Only
+  /// X01 games take totals.
   CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) {
-    final game = _state.game;
-    if (game == null || game.isFinished || _state.isEnded) {
-      return _notInProgress(game);
+    final current = _state.game;
+    if (current == null || current.isFinished || _state.isEnded) {
+      return _notInProgress(current);
     }
+    if (current is! X01Game) {
+      return const Rejected('Only X01 visits are entered as a total');
+    }
+    final game = current;
     if (game.dartsInVisit.isNotEmpty) {
       return const Rejected('This visit is being entered dart by dart');
     }
@@ -121,7 +126,7 @@ class Session {
 
   /// Why no input can be entered into [game]: missing, finished, or left
   /// unfinished by an abandoned session.
-  Rejected _notInProgress(GameState? game) => switch (game) {
+  Rejected _notInProgress(Game? game) => switch (game) {
     null => const Rejected('No game in progress'),
     _ when _state.isEnded => const Rejected('The session is over'),
     _ => const Rejected('The game is over'),

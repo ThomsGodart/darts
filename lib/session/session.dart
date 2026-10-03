@@ -14,4 +14,4 @@ export 'player_catalog.dart';
 export 'repository.dart';
 export 'session_facade.dart';
 export 'state.dart';
-export 'x01_config.dart';
+export 'game_config.dart';

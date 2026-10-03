@@ -40,13 +40,23 @@ enum OutRule {
       remaining < 0 || (remaining == 1 && !finishingDartScores.contains(1));
 }
 
-/// Rules of an X01 game, recorded with each game so replays stay exact.
-class X01Config {
+/// Rules of a game, recorded with it so replays stay exact. Its type says
+/// which game is played.
+sealed class GameConfig {
+  const GameConfig();
+
+  /// Whether a game can be played with these rules.
+  bool get isValid;
+}
+
+/// Rules of an X01 game.
+final class X01Config extends GameConfig {
   const X01Config({this.startScore = 501, this.outRule = OutRule.double});
 
   final int startScore;
   final OutRule outRule;
 
+  @override
   bool get isValid => startScore > 1;
 
   @override

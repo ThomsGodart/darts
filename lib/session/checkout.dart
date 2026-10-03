@@ -1,5 +1,5 @@
 import 'dart.dart';
-import 'x01_config.dart';
+import 'game_config.dart';
 
 /// Every dart that scores, from the board.
 final List<Dart> _scoringDarts = [

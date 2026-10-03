@@ -87,10 +87,12 @@ class SessionDetailScreen extends StatelessWidget {
             }, style: textTheme.bodyMedium),
             const SizedBox(height: 4),
             _AveragesTable(
-              rows: [
-                for (final score in game.scores)
-                  (score.player.name, score.threeDartAverage),
-              ],
+              rows: switch (game) {
+                X01Game(:final scores) => [
+                  for (final score in scores)
+                    (score.player.name, score.threeDartAverage),
+                ],
+              },
             ),
           ],
         ],

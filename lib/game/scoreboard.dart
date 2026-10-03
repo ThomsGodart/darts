@@ -9,7 +9,7 @@ import '../ui/average_label.dart';
 class Scoreboard extends StatelessWidget {
   const Scoreboard({super.key, required this.game});
 
-  final GameState game;
+  final X01Game game;
 
   @override
   Widget build(BuildContext context) {

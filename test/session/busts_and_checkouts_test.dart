@@ -6,7 +6,7 @@ import 'helpers.dart';
 const doubleOut301 = X01Config(startScore: 301);
 const straightOut301 = X01Config(startScore: 301, outRule: OutRule.straight);
 
-GameState gameOf(Session session) => session.state.game!;
+X01Game gameOf(Session session) => session.state.x01!;
 
 /// Totals no combination of three darts can make.
 const impossibleTotals = {179, 178, 176, 175, 173, 172, 169, 166, 163};

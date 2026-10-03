@@ -1,7 +1,7 @@
 import 'dart.dart';
 import 'events.dart';
 import 'player.dart';
-import 'x01_config.dart';
+import 'game_config.dart';
 
 /// Stable type tags stored with each event. Renaming one breaks every
 /// stored journal unless a database migration rewrites it too (as the
@@ -13,6 +13,29 @@ abstract final class EventTypes {
   static const sessionEnded = 'session_ended';
 }
 
+/// Game kinds stored in `game_started`. Never rename one.
+abstract final class GameKinds {
+  static const x01 = 'x01';
+}
+
+Map<String, Object?> _encodeConfig(GameConfig config) => switch (config) {
+  X01Config(:final startScore, :final outRule) => {
+    'kind': GameKinds.x01,
+    'startScore': startScore,
+    'outRule': outRule.name,
+  },
+};
+
+/// Journals written before game kinds existed hold X01 games only.
+GameConfig _decodeConfig(Map<String, Object?> payload) =>
+    switch (payload['kind'] ?? GameKinds.x01) {
+      GameKinds.x01 => X01Config(
+        startScore: payload['startScore']! as int,
+        outRule: OutRule.values.byName(payload['outRule']! as String),
+      ),
+      final kind => throw FormatException('Unknown game kind "$kind"'),
+    };
+
 /// A storable form of an event: a type tag and a JSON-compatible payload.
 typedef EncodedEvent = ({String type, Map<String, Object?> payload});
 
@@ -23,8 +46,7 @@ EncodedEvent encodeEvent(SessionEvent event) => switch (event) {
       'players': [
         for (final p in players) {'id': p.id, 'name': p.name},
       ],
-      'startScore': config.startScore,
-      'outRule': config.outRule.name,
+      ..._encodeConfig(config),
     },
   ),
   VisitTotalSubmitted(:final score, :final darts) => (
@@ -45,10 +67,7 @@ SessionEvent decodeEvent(String type, Map<String, Object?> payload) =>
           for (final p in payload['players']! as List)
             Player(id: p['id'] as String, name: p['name'] as String),
         ],
-        config: X01Config(
-          startScore: payload['startScore']! as int,
-          outRule: OutRule.values.byName(payload['outRule']! as String),
-        ),
+        config: _decodeConfig(payload),
       ),
       EventTypes.visitTotalSubmitted => VisitTotalSubmitted(
         payload['score']! as int,

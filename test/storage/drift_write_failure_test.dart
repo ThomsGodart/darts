@@ -39,8 +39,8 @@ void main() {
       // Only a consistent prefix was stored: the game, without the visits
       // after the failure (45 was never written over a gap).
       final reloaded = await DriftSessionRepository(database).latest();
-      expect(reloaded!.state.game!.scoreOf(alice).remaining, 501);
-      expect(reloaded.state.game!.scoreOf(bob).remaining, 501);
+      expect(reloaded!.state.x01!.scoreOf(alice).remaining, 501);
+      expect(reloaded.state.x01!.scoreOf(bob).remaining, 501);
     },
   );
 

@@ -10,14 +10,14 @@ void main() {
       for (var total = 0; total <= 180; total++) {
         final session = newSession()
           ..startGame([alice, bob], config: X01Config(startScore: remaining));
-        final game = session.state.game!;
+        final game = session.state.x01!;
         final options = game.checkoutDartOptions(total);
         final result = session.submitVisitTotal(
           total,
           dartsAtCheckout: options.isEmpty ? null : options.first,
         );
         if (result is Rejected) continue; // impossible totals or finishes
-        final visit = session.state.game!.scoreOf(alice).lastVisit!;
+        final visit = session.state.x01!.scoreOf(alice).lastVisit!;
         final after = remaining - total;
         final shouldBust = after < 0 || after == 1;
         if (visit.isBust != shouldBust) {

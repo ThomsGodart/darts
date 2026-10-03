@@ -12,7 +12,7 @@ void main() {
     final session = newSession();
     expect(session.startGame([alice, bob]), isA<Accepted>());
 
-    final game = session.state.game!;
+    final game = session.state.x01!;
     expect(game.scores.map((s) => s.remaining), [501, 501]);
     expect(game.activePlayer, alice);
     expect(game.isFinished, isFalse);
@@ -23,7 +23,7 @@ void main() {
     final session = newSession()..startGame([alice, bob]);
     play(session, [60]);
 
-    final game = session.state.game!;
+    final game = session.state.x01!;
     expect(game.scoreOf(alice).remaining, 441);
     expect(game.scoreOf(alice).lastVisit!.points, 60);
     expect(game.activePlayer, bob);
@@ -33,7 +33,7 @@ void main() {
     final session = newSession()..startGame([alice, bob]);
     play(session, [60, 45]);
 
-    final game = session.state.game!;
+    final game = session.state.x01!;
     expect(game.activePlayer, alice);
     expect(game.scoreOf(bob).remaining, 456);
   });
@@ -41,7 +41,7 @@ void main() {
   test('301 starts everyone on 301', () {
     final session = newSession()
       ..startGame([alice, bob], config: const X01Config(startScore: 301));
-    expect(session.state.game!.scores.map((s) => s.remaining), [301, 301]);
+    expect(session.state.x01!.scores.map((s) => s.remaining), [301, 301]);
   });
 
   test('Alice and Bob, 501: Alice checks out exactly and wins', () {
@@ -49,7 +49,7 @@ void main() {
     play(session, [180, 60, 180, 60]);
     checkOut(session, 141);
 
-    final game = session.state.game!;
+    final game = session.state.x01!;
     expect(game.scoreOf(alice).remaining, 0);
     expect(game.isFinished, isTrue);
     expect(game.winner, alice);
@@ -60,7 +60,7 @@ void main() {
       ..startGame([alice, bob], config: const X01Config(startScore: 301));
     play(session, [180, 0, 140]);
 
-    final game = session.state.game!;
+    final game = session.state.x01!;
     expect(game.scoreOf(alice).remaining, 121);
     expect(game.scoreOf(alice).lastVisit!.isBust, isTrue);
     expect(game.scoreOf(alice).lastVisit!.points, 0);
@@ -127,8 +127,8 @@ void main() {
     checkOut(session, 121);
 
     expect(session.startGame([bob, alice]), isA<Accepted>());
-    expect(session.state.game!.activePlayer, bob);
-    expect(session.state.game!.isFinished, isFalse);
+    expect(session.state.x01!.activePlayer, bob);
+    expect(session.state.x01!.isFinished, isFalse);
   });
 
   group('starting a session from the setup', () {
@@ -145,7 +145,7 @@ void main() {
         config: const X01Config(startScore: 301, outRule: OutRule.straight),
       );
 
-      final game = session.state.game!;
+      final game = session.state.x01!;
       expect(game.scores.map((s) => s.player), players);
       expect(game.activePlayer.name, 'Chloé');
       expect(game.config.startScore, 301);

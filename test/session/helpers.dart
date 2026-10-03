@@ -26,10 +26,19 @@ List<Object?> scoreboardOf(Session session) {
   if (game == null) return [];
   return [
     game.config,
-    for (final s in game.scores)
-      (s.player, s.remaining, s.lastVisit, s.threeDartAverage),
+    ...switch (game) {
+      X01Game(:final scores) => [
+        for (final s in scores)
+          (s.player, s.remaining, s.lastVisit, s.threeDartAverage),
+      ],
+    },
     game.activePlayer,
     game.dartsInVisit,
     game.winner,
   ];
+}
+
+/// The current game as an X01 game, for tests that only play X01.
+extension X01Access on SessionState {
+  X01Game? get x01 => game as X01Game?;
 }

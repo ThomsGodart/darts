@@ -40,7 +40,7 @@ void main() {
       addTearDown(database.close);
 
       final resumed = await DriftSessionRepository(database).resumable();
-      expect(resumed!.state.game!.scoreOf(alice).remaining, 441);
+      expect(resumed!.state.x01!.scoreOf(alice).remaining, 441);
 
       final catalog = DriftPlayerCatalog(database);
       await catalog.add('Ana');
@@ -89,7 +89,7 @@ void main() {
 
       final history = await DriftSessionRepository(database).history();
       expect(history.single.state.isEnded, isTrue);
-      expect(history.single.state.game!.winner!.name, 'Ana');
+      expect(history.single.state.x01!.winner!.name, 'Ana');
 
       final players = await DriftPlayerCatalog(database).active();
       expect([for (final p in players) p.name], ['Ana']);

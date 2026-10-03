@@ -3,15 +3,20 @@ import 'package:flutter/foundation.dart';
 import '../session/session.dart';
 
 /// What the setup screen hands back: who plays, in order, and the rules.
-typedef GameSetup = ({List<Player> players, X01Config config});
+typedef GameSetup = ({List<Player> players, GameConfig config});
 
 /// State of the session setup screen, over the player catalog.
 class SetupController extends ChangeNotifier {
   /// A blank setup, or one starting from the players and rules of [from].
   SetupController(this._catalog, {GameSetup? from})
     : _picked = [...?from?.players],
-      _startScore = from?.config.startScore ?? 501,
-      _doubleOut = (from?.config.outRule ?? OutRule.double) == OutRule.double;
+      _startScore = _x01Of(from)?.startScore ?? 501,
+      _doubleOut = (_x01Of(from)?.outRule ?? OutRule.double) == OutRule.double;
+
+  static X01Config? _x01Of(GameSetup? setup) => switch (setup?.config) {
+    final X01Config config => config,
+    _ => null,
+  };
 
   final PlayerCatalog _catalog;
 

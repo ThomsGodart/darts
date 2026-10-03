@@ -1,6 +1,6 @@
 import 'dart.dart';
 import 'player.dart';
-import 'x01_config.dart';
+import 'game_config.dart';
 
 /// A fact recorded in a session's journal. The state is a fold of these.
 sealed class SessionEvent {
@@ -12,7 +12,7 @@ class GameStarted extends SessionEvent {
 
   /// Players in throwing order.
   final List<Player> players;
-  final X01Config config;
+  final GameConfig config;
 }
 
 /// A visit entered as its total (0–180).

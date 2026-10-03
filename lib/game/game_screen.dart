@@ -110,7 +110,8 @@ class _GameScreenState extends State<GameScreen> {
     final gameBody = ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        final game = controller.state.game!;
+        // Only X01 is played so far; Cricket gets its own board (ticket 02).
+        final game = controller.state.game! as X01Game;
         final bannerPlayerName = _bannerPlayerName;
         return Stack(
           children: [
@@ -198,7 +199,7 @@ class _GameScreenState extends State<GameScreen> {
     Navigator.of(context).pop();
   }
 
-  Future<void> _submit(BuildContext context, GameState game, int score) async {
+  Future<void> _submit(BuildContext context, X01Game game, int score) async {
     int? dartsAtCheckout;
     final options = game.checkoutDartOptions(score);
     if (options.length == 1) {
@@ -257,7 +258,7 @@ class _GameOverPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final game = session.game!;
+    final game = session.game! as X01Game;
     final showSession = session.games.length > 1;
     final onChangeSetup = this.onChangeSetup;
     return Material(

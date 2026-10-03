@@ -14,7 +14,7 @@ class SessionController extends ChangeNotifier {
 
   CommandResult startGame(
     List<Player> players, {
-    X01Config config = const X01Config(),
+    GameConfig config = const X01Config(),
   }) => _notifyIfAccepted(_session.startGame(players, config: config));
 
   CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) =>
@@ -25,7 +25,7 @@ class SessionController extends ChangeNotifier {
   CommandResult throwDart(Dart dart) =>
       _notifyIfAccepted(_session.throwDart(dart));
 
-  CommandResult rematch({X01Config? config}) =>
+  CommandResult rematch({GameConfig? config}) =>
       _notifyIfAccepted(_session.rematch(config: config));
 
   CommandResult endSession() => _notifyIfAccepted(_session.endSession());

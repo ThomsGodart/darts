@@ -1,7 +1,7 @@
 import 'checkout.dart';
 import 'dart.dart';
 import 'player.dart';
-import 'x01_config.dart';
+import 'game_config.dart';
 import 'x01_rules.dart';
 
 /// Points per three darts; null before the first dart.
@@ -12,13 +12,13 @@ class SessionState {
   const SessionState({this.games = const [], this.isEnded = false});
 
   /// Every game of the session, in the order they were played.
-  final List<GameState> games;
+  final List<Game> games;
 
   /// Whether the session was ended; nothing more can be played then.
   final bool isEnded;
 
   /// The current (latest) game, or null when none has been started.
-  GameState? get game => games.lastOrNull;
+  Game? get game => games.lastOrNull;
 
   /// Everyone who played, in the order they first did, under the name they
   /// had in their latest game.
@@ -26,18 +26,18 @@ class SessionState {
     // A map keeps each key where it was first inserted; values update.
     final byId = <String, Player>{
       for (final game in games)
-        for (final score in game.scores) score.player.id: score.player,
+        for (final player in game.players) player.id: player,
     };
     return byId.values.toList();
   }
 
-  /// Three-dart average of [player] over all their games of the session;
-  /// null if they have not thrown yet.
+  /// Three-dart average of [player] over their X01 games of the session;
+  /// null if they have not thrown in one yet.
   /// Matched by id: a player renamed between games stays one player.
   double? averageOf(Player player) {
     var points = 0;
     var darts = 0;
-    for (final game in games) {
+    for (final game in games.whereType<X01Game>()) {
       for (final score in game.scores) {
         if (score.player.id != player.id) continue;
         points += score.pointsScored;
@@ -47,12 +47,12 @@ class SessionState {
     return averagePerVisit(points, darts);
   }
 
-  SessionState addGame(GameState game) => SessionState(
+  SessionState addGame(Game game) => SessionState(
     games: List.unmodifiable([...games, game]),
     isEnded: isEnded,
   );
 
-  SessionState replaceCurrentGame(GameState game) => SessionState(
+  SessionState replaceCurrentGame(Game game) => SessionState(
     games: List.unmodifiable([...games.take(games.length - 1), game]),
     isEnded: isEnded,
   );
@@ -113,8 +113,35 @@ class PlayerScore {
   );
 }
 
-class GameState {
-  const GameState({
+/// What every game exposes, whatever is played.
+sealed class Game {
+  const Game();
+
+  GameConfig get config;
+
+  /// Players in throwing order.
+  List<Player> get players;
+  int get activeIndex;
+
+  /// Darts already thrown in the active player's visit when it is entered
+  /// dart by dart; empty between visits.
+  List<Dart> get dartsInVisit;
+  Player? get winner;
+
+  /// Completed visits, all players together: changes on every turn.
+  int get visitsPlayed;
+
+  bool get isFinished => winner != null;
+
+  Player get activePlayer => players[activeIndex];
+
+  /// Throwing order of a rematch: whoever started this game throws last.
+  List<Player> get rematchOrder => [...players.skip(1), players.first];
+}
+
+/// An X01 game: each player counts down from the start score.
+final class X01Game extends Game {
+  const X01Game({
     required this.config,
     required this.scores,
     required this.activeIndex,
@@ -122,24 +149,24 @@ class GameState {
     this.winner,
   });
 
+  @override
   final X01Config config;
 
   /// One entry per player, in throwing order.
   final List<PlayerScore> scores;
+  @override
   final int activeIndex;
-
-  /// Darts already thrown in the active player's visit when it is entered
-  /// dart by dart; empty between visits.
+  @override
   final List<Dart> dartsInVisit;
+  @override
   final Player? winner;
 
-  bool get isFinished => winner != null;
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
 
   PlayerScore get activeScore => scores[activeIndex];
 
-  Player get activePlayer => activeScore.player;
-
-  /// Completed visits, all players together: changes on every turn.
+  @override
   int get visitsPlayed => scores.fold(0, (sum, s) => sum + s.visitsPlayed);
 
   /// The active player's remaining score, counting darts already thrown.
@@ -158,12 +185,6 @@ class GameState {
 
   /// Points of the darts already thrown in the visit in progress.
   int get dartsInVisitScore => dartsInVisit.fold(0, (sum, d) => sum + d.score);
-
-  /// Throwing order of a rematch: whoever started this game throws last.
-  List<Player> get rematchOrder => [
-    for (final s in scores.skip(1)) s.player,
-    scores.first.player,
-  ];
 
   /// Everyone but the active player, in the order they will throw next.
   List<PlayerScore> get waitingInTurnOrder => [

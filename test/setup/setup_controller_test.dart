@@ -105,7 +105,7 @@ void main() {
 
       final result = setup.result;
       expect([for (final p in result.players) p.name], ['Bob', 'Ana']);
-      expect(result.config.startScore, 301);
+      expect((result.config as X01Config).startScore, 301);
     },
   );
 

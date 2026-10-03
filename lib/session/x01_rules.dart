@@ -1,4 +1,4 @@
-import 'x01_config.dart';
+import 'game_config.dart';
 
 /// Totals reachable with up to three darts (a miss scores 0).
 final Set<int> _possibleVisitTotals = {

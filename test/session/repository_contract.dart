@@ -68,8 +68,8 @@ void repositoryContract(
       session.undo();
 
       final resumed = await (await relaunch(repository)).resumable();
-      expect(resumed!.state.game!.scoreOf(bob).lastVisit, isNull);
-      expect(resumed.state.game!.activePlayer, bob);
+      expect(resumed!.state.x01!.scoreOf(bob).lastVisit, isNull);
+      expect(resumed.state.x01!.activePlayer, bob);
     });
 
     test('a resumed session keeps recording', () async {
@@ -81,7 +81,7 @@ void repositoryContract(
       (await second.resumable())!.submitVisitTotal(45);
 
       final third = await (await relaunch(second)).resumable();
-      expect(third!.state.game!.scoreOf(bob).remaining, 456);
+      expect(third!.state.x01!.scoreOf(bob).remaining, 456);
     });
 
     test('darts of a visit in progress survive a relaunch', () async {
@@ -97,7 +97,7 @@ void repositoryContract(
 
       final resumed = await (await relaunch(repository)).resumable();
       expect(scoreboardOf(resumed!), before);
-      expect(resumed.state.game!.dartsInVisit, [Dart.bull]);
+      expect(resumed.state.x01!.dartsInVisit, [Dart.bull]);
     });
 
     test('a session whose game is over is offered, to play again', () async {
@@ -107,7 +107,7 @@ void repositoryContract(
       checkOut(session, 40, darts: 1);
 
       final resumed = await (await relaunch(repository)).resumable();
-      expect(resumed!.state.game!.winner, alice);
+      expect(resumed!.state.x01!.winner, alice);
       expect(resumed.rematch(), isA<Accepted>());
     });
 
@@ -152,8 +152,8 @@ void repositoryContract(
       play(second, [100]);
 
       final resumed = await (await relaunch(repository)).resumable();
-      expect(resumed!.state.game!.activePlayer, alice);
-      expect(resumed.state.game!.scoreOf(bob).remaining, 401);
+      expect(resumed!.state.x01!.activePlayer, alice);
+      expect(resumed.state.x01!.scoreOf(bob).remaining, 401);
     });
 
     group('history', () {
@@ -207,13 +207,14 @@ void repositoryContract(
 
         final history = await (await relaunch(repository)).history();
         final (latest, earliest) = (history.first.state, history.last.state);
+        final firstGames = earliest.games.cast<X01Game>();
 
         expect([for (final g in earliest.games) g.winner], [alice, alice]);
         expect([for (final g in latest.games) g.winner], [bob]);
-        expect(earliest.games[0].scoreOf(alice).threeDartAverage, 120);
-        expect(earliest.games[0].scoreOf(bob).threeDartAverage, isNull);
-        expect(earliest.games[1].scoreOf(bob).threeDartAverage, 20);
-        expect(earliest.games[1].scoreOf(alice).threeDartAverage, 60);
+        expect(firstGames[0].scoreOf(alice).threeDartAverage, 120);
+        expect(firstGames[0].scoreOf(bob).threeDartAverage, isNull);
+        expect(firstGames[1].scoreOf(bob).threeDartAverage, 20);
+        expect(firstGames[1].scoreOf(alice).threeDartAverage, 60);
         expect(earliest.averageOf(alice), 80 / 3 * 3);
         expect(earliest.averageOf(bob), 20);
         expect(latest.averageOf(bob), 40);

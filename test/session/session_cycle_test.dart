@@ -17,7 +17,7 @@ Session afterAliceWins({List<Player> players = const [alice, bob]}) {
 }
 
 List<Player> orderOf(Session session) => [
-  for (final s in session.state.game!.scores) s.player,
+  for (final s in session.state.x01!.scores) s.player,
 ];
 
 void main() {
@@ -27,7 +27,7 @@ void main() {
 
       expect(session.rematch(), isA<Accepted>());
 
-      final game = session.state.game!;
+      final game = session.state.x01!;
       expect(orderOf(session), [bob, chloe, alice]);
       expect(game.activePlayer, bob);
       expect(game.config, const X01Config(startScore: 40));
@@ -40,7 +40,7 @@ void main() {
       final firsts = <Player>[];
       for (var i = 0; i < 3; i++) {
         session.rematch();
-        firsts.add(session.state.game!.activePlayer);
+        firsts.add(session.state.x01!.activePlayer);
         checkOut(session, 40, darts: 1);
       }
       expect(firsts, [bob, chloe, alice]);
@@ -51,7 +51,7 @@ void main() {
       const config = X01Config(startScore: 301, outRule: OutRule.straight);
 
       session.rematch(config: config);
-      expect(session.state.game!.config, config);
+      expect(session.state.x01!.config, config);
     });
 
     test('refused while a game is in progress', () {
@@ -94,7 +94,7 @@ void main() {
       checkOut(session, 40, darts: 1);
 
       session.rematch();
-      expect(session.state.game!.activePlayer, chloe);
+      expect(session.state.x01!.activePlayer, chloe);
     });
 
     test('players cannot change during a game', () {
@@ -145,7 +145,7 @@ void main() {
 
       expect(session.endSession(), isA<Accepted>());
       expect(session.state.isEnded, isTrue);
-      expect(session.state.game!.isFinished, isFalse);
+      expect(session.state.x01!.isFinished, isFalse);
       expect(session.submitVisitTotal(60), isA<Rejected>());
       expect(session.canUndo, isFalse);
     });

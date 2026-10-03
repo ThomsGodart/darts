@@ -15,5 +15,7 @@ String sessionDate(DateTime when) {
 String gamesCount(int count) => count == 1 ? '1 partie' : '$count parties';
 
 /// "501 DO", "301 SO".
-String configLabel(X01Config config) =>
-    '${config.startScore} ${config.outRule == OutRule.double ? 'DO' : 'SO'}';
+String configLabel(GameConfig config) => switch (config) {
+  X01Config(:final startScore, :final outRule) =>
+    '$startScore ${outRule == OutRule.double ? 'DO' : 'SO'}',
+};

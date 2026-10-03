@@ -10,7 +10,7 @@ Session aliceOn(int remaining, {OutRule outRule = OutRule.double}) =>
     ], config: X01Config(startScore: remaining, outRule: outRule));
 
 List<Dart>? suggestionFor(Session session) =>
-    session.state.game!.checkoutSuggestion;
+    session.state.x01!.checkoutSuggestion;
 
 int total(List<Dart> darts) => darts.fold(0, (sum, d) => sum + d.score);
 
@@ -63,7 +63,7 @@ void main() {
           // Fewest darts: a 1-dart finish is never suggested in 2.
           final session = aliceOn(remaining);
           expect(
-            session.state.game!.checkoutDartOptions(remaining).first,
+            session.state.x01!.checkoutDartOptions(remaining).first,
             route.length,
             reason: '$remaining',
           );

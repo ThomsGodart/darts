@@ -5,7 +5,7 @@ import 'helpers.dart';
 
 const doubleOut301 = X01Config(startScore: 301);
 
-GameState gameOf(Session session) => session.state.game!;
+X01Game gameOf(Session session) => session.state.x01!;
 
 /// Throws [darts] in order and fails the test on the first rejection.
 void throwDarts(Session session, List<Dart> darts) {
