@@ -41,21 +41,36 @@ enum OutRule {
       remaining < 0 || (remaining == 1 && !finishingDartScores.contains(1));
 }
 
+/// The games that can be played. Their names are stored with every game
+/// started: never rename one.
+enum GameKind { x01, cricket, shanghai, killer }
+
 /// Rules of a game, recorded with it so replays stay exact. Its type says
 /// which game is played.
 sealed class GameConfig {
   const GameConfig();
 
+  GameKind get kind;
+
   /// Whether a game can be played with these rules.
   bool get isValid;
+
+  /// Fewest players these rules can be played with.
+  int get minPlayers => 1;
 }
 
 /// Rules of an X01 game.
 final class X01Config extends GameConfig {
   const X01Config({this.startScore = 501, this.outRule = OutRule.double});
 
+  /// Start scores the setup offers; any score above 1 can be played.
+  static const offeredStartScores = [501, 301];
+
   final int startScore;
   final OutRule outRule;
+
+  @override
+  GameKind get kind => GameKind.x01;
 
   @override
   bool get isValid => startScore > 1;
@@ -113,6 +128,9 @@ final class CricketConfig extends GameConfig {
 
   final CricketVariant variant;
   final CricketInput input;
+
+  @override
+  GameKind get kind => GameKind.cricket;
 
   @override
   bool get isValid => true;
@@ -180,6 +198,9 @@ final class ShanghaiConfig extends GameConfig {
   final bool instantShanghai;
 
   @override
+  GameKind get kind => GameKind.shanghai;
+
+  @override
   bool get isValid => true;
 
   @override
@@ -192,23 +213,32 @@ final class ShanghaiConfig extends GameConfig {
   int get hashCode => Object.hash(length, instantShanghai);
 }
 
-/// Fewest / most players for Killer.
+/// Fewest players for Killer.
 const minKillerPlayers = 3;
 
 /// Rules of a Killer game.
 final class KillerConfig extends GameConfig {
   const KillerConfig({this.lives = 3, this.doublesToKiller = 1});
 
-  /// Lives each player starts with: 3 or 5.
+  static const livesOptions = [3, 5];
+  static const doublesToKillerOptions = [1, 3];
+
+  /// Lives each player starts with, one of [livesOptions].
   final int lives;
 
-  /// Own doubles needed to become Killer: 1 or 3.
+  /// Own doubles needed to become Killer, one of [doublesToKillerOptions].
   final int doublesToKiller;
 
   @override
+  GameKind get kind => GameKind.killer;
+
+  @override
   bool get isValid =>
-      (lives == 3 || lives == 5) &&
-      (doublesToKiller == 1 || doublesToKiller == 3);
+      livesOptions.contains(lives) &&
+      doublesToKillerOptions.contains(doublesToKiller);
+
+  @override
+  int get minPlayers => minKillerPlayers;
 
   @override
   bool operator ==(Object other) =>

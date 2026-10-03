@@ -15,45 +15,36 @@ abstract final class EventTypes {
   static const sessionEnded = 'session_ended';
 }
 
-/// Game kinds stored in `game_started`. Never rename one.
-abstract final class GameKinds {
-  static const x01 = 'x01';
-  static const cricket = 'cricket';
-  static const shanghai = 'shanghai';
-  static const killer = 'killer';
-}
-
-Map<String, Object?> _encodeConfig(GameConfig config) => switch (config) {
-  X01Config(:final startScore, :final outRule) => {
-    'kind': GameKinds.x01,
-    'startScore': startScore,
-    'outRule': outRule.name,
-  },
-  CricketConfig(:final variant, :final input) => {
-    'kind': GameKinds.cricket,
-    'variant': variant.name,
-    'input': input.name,
-  },
-  ShanghaiConfig(:final length, :final instantShanghai) => {
-    'kind': GameKinds.shanghai,
-    'length': length.name,
-    'instantShanghai': instantShanghai,
-  },
-  KillerConfig(:final lives, :final doublesToKiller) => {
-    'kind': GameKinds.killer,
-    'lives': lives,
-    'doublesToKiller': doublesToKiller,
+Map<String, Object?> _encodeConfig(GameConfig config) => {
+  'kind': config.kind.name,
+  ...switch (config) {
+    X01Config(:final startScore, :final outRule) => {
+      'startScore': startScore,
+      'outRule': outRule.name,
+    },
+    CricketConfig(:final variant, :final input) => {
+      'variant': variant.name,
+      'input': input.name,
+    },
+    ShanghaiConfig(:final length, :final instantShanghai) => {
+      'length': length.name,
+      'instantShanghai': instantShanghai,
+    },
+    KillerConfig(:final lives, :final doublesToKiller) => {
+      'lives': lives,
+      'doublesToKiller': doublesToKiller,
+    },
   },
 };
 
 /// Journals written before game kinds existed hold X01 games only.
 GameConfig _decodeConfig(Map<String, Object?> payload) =>
-    switch (payload['kind'] ?? GameKinds.x01) {
-      GameKinds.x01 => X01Config(
+    switch (_decodeKind(payload['kind'])) {
+      GameKind.x01 => X01Config(
         startScore: payload['startScore']! as int,
         outRule: OutRule.values.byName(payload['outRule']! as String),
       ),
-      GameKinds.cricket => CricketConfig(
+      GameKind.cricket => CricketConfig(
         variant: CricketVariant.values.byName(payload['variant']! as String),
         // Games recorded before the choice existed used the keypad.
         input: switch (payload['input']) {
@@ -61,16 +52,23 @@ GameConfig _decodeConfig(Map<String, Object?> payload) =>
           _ => CricketInput.keypad,
         },
       ),
-      GameKinds.shanghai => ShanghaiConfig(
+      GameKind.shanghai => ShanghaiConfig(
         length: ShanghaiLength.values.byName(payload['length']! as String),
         instantShanghai: payload['instantShanghai']! as bool,
       ),
-      GameKinds.killer => KillerConfig(
+      GameKind.killer => KillerConfig(
         lives: payload['lives']! as int,
         doublesToKiller: payload['doublesToKiller']! as int,
       ),
-      final kind => throw FormatException('Unknown game kind "$kind"'),
     };
+
+GameKind _decodeKind(Object? stored) => switch (stored) {
+  null => GameKind.x01,
+  final String name =>
+    GameKind.values.asNameMap()[name] ??
+        (throw FormatException('Unknown game kind "$name"')),
+  _ => throw FormatException('Unknown game kind "$stored"'),
+};
 
 /// A storable form of an event: a type tag and a JSON-compatible payload.
 typedef EncodedEvent = ({String type, Map<String, Object?> payload});

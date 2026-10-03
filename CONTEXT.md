@@ -6,7 +6,8 @@ in French.
 | Term | Meaning | UI (fr) |
 | --- | --- | --- |
 | **Session** | A group of players chaining games in one sitting, whatever the time of day. Ends explicitly, then goes to the history. Never "night" or "soirée". | session |
-| **Game** | One leg of X01 or one Cricket game inside a session, with its own config and winner. | partie |
+| **Game** | One game inside a session, of one **game kind** (X01, Cricket, Shanghai or Killer), with its own config and winner. | partie |
+| **Game kind** | Which game is played; a game's config says its kind. Stored by name with every game started. | — |
 | **Rematch** | The next game with the same players and rules; whoever started last throws last. | Rejouer |
 | **Visit** | One player's turn: up to three darts (a **round** for Cricket MPR). Entered as a total or dart by dart in X01; dart by dart only in Cricket. A visit ended early counts its missing darts as misses. | volée |
 | **Dart** | One throw: a sector (1–20, 25) with a multiplier (single, double, treble), or a miss. | fléchette |

@@ -31,8 +31,8 @@ class Session {
     if (players.length > maxPlayers) {
       return const Rejected('At most $maxPlayers players');
     }
-    if (config is KillerConfig && players.length < minKillerPlayers) {
-      return const Rejected('Killer needs at least $minKillerPlayers players');
+    if (players.length < config.minPlayers) {
+      return Rejected('These rules need at least ${config.minPlayers} players');
     }
     if (players.map((p) => p.id).toSet().length != players.length) {
       return const Rejected('A player cannot play twice in a game');

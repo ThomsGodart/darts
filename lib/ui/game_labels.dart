@@ -23,3 +23,11 @@ String configLabel(GameConfig config) => switch (config) {
     'Killer ${lives}v'
         '${doublesToKiller == 1 ? '' : ' · ${doublesToKiller}D'}',
 };
+
+/// "X01", "Cricket", …: the game as the setup offers it.
+String kindLabel(GameKind kind) => switch (kind) {
+  GameKind.x01 => 'X01',
+  GameKind.cricket => 'Cricket',
+  GameKind.shanghai => 'Shanghai',
+  GameKind.killer => 'Killer',
+};

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../session/session.dart';
 import '../theme/darts_space.dart';
+import '../ui/game_labels.dart';
 import 'setup_controller.dart';
 
 /// Picks who plays, in which order, and the rules; pops a [GameSetup].
@@ -190,127 +191,149 @@ class _SetupScreenState extends State<SetupScreen> {
               children: [
                 for (final kind in GameKind.values)
                   ChoiceChip(
-                    label: Text(switch (kind) {
-                      GameKind.x01 => 'X01',
-                      GameKind.cricket => 'Cricket',
-                      GameKind.shanghai => 'Shanghai',
-                      GameKind.killer => 'Killer',
-                    }),
+                    label: Text(kindLabel(kind)),
                     selected: setup.kind == kind,
                     onSelected: (_) => setup.kind = kind,
                   ),
               ],
             ),
             const SizedBox(height: DartsSpace.sm),
-            ...switch (setup.kind) {
-              GameKind.x01 => [
+            ...switch (setup.config) {
+              X01Config(:final startScore, :final outRule) => [
                 SegmentedButton<int>(
-                  segments: const [
-                    ButtonSegment(value: 501, label: Text('501')),
-                    ButtonSegment(value: 301, label: Text('301')),
+                  segments: [
+                    for (final score in X01Config.offeredStartScores)
+                      ButtonSegment(value: score, label: Text('$score')),
                   ],
-                  selected: {setup.startScore},
+                  selected: {startScore},
                   showSelectedIcon: false,
-                  onSelectionChanged: (s) => setup.startScore = s.single,
+                  onSelectionChanged: (s) => setup.config = X01Config(
+                    startScore: s.single,
+                    outRule: outRule,
+                  ),
                 ),
                 SwitchListTile(
                   title: const Text('Double-out'),
-                  value: setup.doubleOut,
-                  onChanged: (value) => setup.doubleOut = value,
+                  value: outRule == OutRule.double,
+                  onChanged: (value) => setup.config = X01Config(
+                    startScore: startScore,
+                    outRule: value ? OutRule.double : OutRule.straight,
+                  ),
                 ),
               ],
-              GameKind.cricket => [
+              CricketConfig(:final variant, :final input) => [
                 SegmentedButton<CricketVariant>(
-                  segments: const [
-                    ButtonSegment(
-                      value: CricketVariant.standard,
-                      label: Text('Standard'),
-                    ),
-                    ButtonSegment(
-                      value: CricketVariant.cutThroat,
-                      label: Text('Cut-Throat'),
-                    ),
+                  segments: [
+                    for (final variant in CricketVariant.values)
+                      ButtonSegment(
+                        value: variant,
+                        label: Text(switch (variant) {
+                          CricketVariant.standard => 'Standard',
+                          CricketVariant.cutThroat => 'Cut-Throat',
+                        }),
+                      ),
                   ],
-                  selected: {setup.variant},
+                  selected: {variant},
                   showSelectedIcon: false,
-                  onSelectionChanged: (s) => setup.variant = s.single,
+                  onSelectionChanged: (s) => setup.config = CricketConfig(
+                    variant: s.single,
+                    input: input,
+                  ),
                 ),
                 const SizedBox(height: DartsSpace.sm),
                 SegmentedButton<CricketInput>(
                   key: const Key('cricket-input'),
-                  segments: const [
-                    ButtonSegment(
-                      value: CricketInput.board,
-                      label: Text('Saisie sur le tableau'),
-                    ),
-                    ButtonSegment(
-                      value: CricketInput.keypad,
-                      label: Text('Clavier fléchettes'),
-                    ),
+                  segments: [
+                    for (final input in CricketInput.values)
+                      ButtonSegment(
+                        value: input,
+                        label: Text(switch (input) {
+                          CricketInput.board => 'Saisie sur le tableau',
+                          CricketInput.keypad => 'Clavier fléchettes',
+                        }),
+                      ),
                   ],
-                  selected: {setup.cricketInput},
+                  selected: {input},
                   showSelectedIcon: false,
-                  onSelectionChanged: (s) => setup.cricketInput = s.single,
+                  onSelectionChanged: (s) => setup.config = CricketConfig(
+                    variant: variant,
+                    input: s.single,
+                  ),
                 ),
               ],
-              GameKind.shanghai => [
+              ShanghaiConfig(:final length, :final instantShanghai) => [
                 SegmentedButton<ShanghaiLength>(
-                  segments: const [
-                    ButtonSegment(
-                      value: ShanghaiLength.oneToSeven,
-                      label: Text('1–7'),
-                    ),
-                    ButtonSegment(
-                      value: ShanghaiLength.fourteenToTwenty,
-                      label: Text('14–20'),
-                    ),
-                    ButtonSegment(
-                      value: ShanghaiLength.oneToTwenty,
-                      label: Text('1–20'),
-                    ),
+                  segments: [
+                    for (final length in ShanghaiLength.values)
+                      ButtonSegment(
+                        value: length,
+                        label: Text(switch (length) {
+                          ShanghaiLength.oneToSeven => '1–7',
+                          ShanghaiLength.fourteenToTwenty => '14–20',
+                          ShanghaiLength.oneToTwenty => '1–20',
+                        }),
+                      ),
                   ],
-                  selected: {setup.shanghaiLength},
+                  selected: {length},
                   showSelectedIcon: false,
-                  onSelectionChanged: (s) => setup.shanghaiLength = s.single,
+                  onSelectionChanged: (s) => setup.config = ShanghaiConfig(
+                    length: s.single,
+                    instantShanghai: instantShanghai,
+                  ),
                 ),
                 SwitchListTile(
                   title: const Text('Shanghai instantané'),
-                  value: setup.instantShanghai,
-                  onChanged: (value) => setup.instantShanghai = value,
+                  value: instantShanghai,
+                  onChanged: (value) => setup.config = ShanghaiConfig(
+                    length: length,
+                    instantShanghai: value,
+                  ),
                 ),
               ],
-              GameKind.killer => [
+              KillerConfig(:final lives, :final doublesToKiller) => [
                 SegmentedButton<int>(
-                  segments: const [
-                    ButtonSegment(value: 3, label: Text('3 vies')),
-                    ButtonSegment(value: 5, label: Text('5 vies')),
+                  segments: [
+                    for (final lives in KillerConfig.livesOptions)
+                      ButtonSegment(value: lives, label: Text('$lives vies')),
                   ],
-                  selected: {setup.killerLives},
+                  selected: {lives},
                   showSelectedIcon: false,
-                  onSelectionChanged: (s) => setup.killerLives = s.single,
+                  onSelectionChanged: (s) => setup.config = KillerConfig(
+                    lives: s.single,
+                    doublesToKiller: doublesToKiller,
+                  ),
                 ),
                 const SizedBox(height: DartsSpace.sm),
                 SegmentedButton<int>(
-                  segments: const [
-                    ButtonSegment(value: 1, label: Text('1 double')),
-                    ButtonSegment(value: 3, label: Text('3 doubles')),
-                  ],
-                  selected: {setup.doublesToKiller},
-                  showSelectedIcon: false,
-                  onSelectionChanged: (s) => setup.doublesToKiller = s.single,
-                ),
-                if (setup.picked.length < minKillerPlayers)
-                  Padding(
-                    padding: const EdgeInsets.only(top: DartsSpace.sm),
-                    child: Text(
-                      'Killer : au moins $minKillerPlayers joueurs',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
+                  segments: [
+                    for (final doubles in KillerConfig.doublesToKillerOptions)
+                      ButtonSegment(
+                        value: doubles,
+                        label: Text(
+                          doubles == 1 ? '1 double' : '$doubles doubles',
+                        ),
                       ),
-                    ),
+                  ],
+                  selected: {doublesToKiller},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setup.config = KillerConfig(
+                    lives: lives,
+                    doublesToKiller: s.single,
                   ),
+                ),
               ],
             },
+            if (setup.picked.length < setup.config.minPlayers)
+              Padding(
+                padding: const EdgeInsets.only(top: DartsSpace.sm),
+                child: Text(
+                  '${kindLabel(setup.kind)} : au moins '
+                  '${setup.config.minPlayers} joueurs',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

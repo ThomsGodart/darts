@@ -39,4 +39,40 @@ void main() {
       const CricketConfig(input: CricketInput.keypad),
     );
   });
+
+  test('every game kind is stored under its name and read back', () {
+    const configs = [
+      X01Config(startScore: 301, outRule: OutRule.straight),
+      CricketConfig(variant: CricketVariant.cutThroat),
+      ShanghaiConfig(length: ShanghaiLength.oneToTwenty),
+      KillerConfig(lives: 5, doublesToKiller: 3),
+    ];
+    expect({for (final c in configs) c.kind}, GameKind.values.toSet());
+    for (final config in configs) {
+      final event = GameStarted(players: const [], config: config);
+      expect(encodeEvent(event).payload['kind'], config.kind.name);
+      expect((roundTrip(event) as GameStarted).config, config);
+    }
+  });
+
+  test('a game stored before kinds existed is an X01 game', () {
+    final encoded = encodeEvent(
+      const GameStarted(players: [], config: X01Config(startScore: 301)),
+    );
+    final decoded = decodeEvent(
+      encoded.type,
+      Map.of(encoded.payload)..remove('kind'),
+    );
+    expect((decoded as GameStarted).config, const X01Config(startScore: 301));
+  });
+
+  test('an unknown game kind is refused', () {
+    expect(
+      () => decodeEvent(EventTypes.gameStarted, {
+        'players': const <Object?>[],
+        'kind': 'bowling',
+      }),
+      throwsFormatException,
+    );
+  });
 }

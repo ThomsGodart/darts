@@ -85,9 +85,7 @@ void main() {
 
   test('301 and straight-out can be chosen', () async {
     final setup = await setupWith(['Ana']);
-    setup
-      ..startScore = 301
-      ..doubleOut = false;
+    setup.config = const X01Config(startScore: 301, outRule: OutRule.straight);
     expect(
       setup.config,
       const X01Config(startScore: 301, outRule: OutRule.straight),
@@ -101,7 +99,7 @@ void main() {
       setup
         ..toggle(named(setup, 'Bob'))
         ..toggle(named(setup, 'Ana'))
-        ..startScore = 301;
+        ..config = const X01Config(startScore: 301);
 
       final result = setup.result;
       expect([for (final p in result.players) p.name], ['Bob', 'Ana']);
@@ -153,5 +151,17 @@ void main() {
     );
     await setup.load();
     expect(setup.picked.single.name, 'Ana');
+  });
+
+  test('each game keeps its rules while another is picked', () async {
+    final setup = await setupWith(['Ana']);
+    setup.config = const KillerConfig(lives: 5);
+    expect(setup.kind, GameKind.killer);
+    expect(setup.canStart, isFalse, reason: 'Killer needs three players');
+
+    setup.kind = GameKind.x01;
+    expect(setup.config, const X01Config());
+    setup.kind = GameKind.killer;
+    expect(setup.config, const KillerConfig(lives: 5));
   });
 }
