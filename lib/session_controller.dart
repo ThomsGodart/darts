@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import 'setup/setup_controller.dart' show GameSetup;
 import 'session/session.dart';
 
 /// Exposes the [Session] facade to widgets; widgets never touch the domain

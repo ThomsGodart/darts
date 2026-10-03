@@ -31,8 +31,14 @@ class SessionLauncher extends ChangeNotifier {
       SetupController(_catalog, from: from);
 
   /// A new session with its first game started as [setup] says. A session
-  /// left open is ended first, so it reaches the history.
+  /// left open is ended first, so it reaches the history; a setup the
+  /// rules refuse throws before anything is touched.
   Future<SessionController> newGame(GameSetup setup) async {
+    final dryRun = Session(InMemoryJournal())
+        .startGame(setup.players, config: setup.config);
+    if (dryRun is Rejected) {
+      throw StateError('The setup was refused: ${dryRun.reason}');
+    }
     (await _repository.resumable())?.endSession();
     final controller = SessionController(await _repository.create());
     try {

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../game/game_screen.dart';
 import '../history/history_screen.dart';
 import '../settings/settings_screen.dart';
-import '../setup/setup_controller.dart';
+import '../session/session.dart';
 import '../setup/setup_screen.dart';
 import '../session_controller.dart';
 import '../session_launcher.dart';

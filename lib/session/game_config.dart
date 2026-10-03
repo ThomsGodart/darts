@@ -1,4 +1,5 @@
 import 'dart.dart';
+import 'player.dart';
 
 /// Most players a game can have.
 const maxPlayers = 8;
@@ -218,3 +219,6 @@ final class KillerConfig extends GameConfig {
   @override
   int get hashCode => Object.hash(lives, doublesToKiller);
 }
+
+/// What a game starts from: who plays, in throwing order, and the rules.
+typedef GameSetup = ({List<Player> players, GameConfig config});

@@ -2,9 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import '../session/session.dart';
 
-/// What the setup screen hands back: who plays, in order, and the rules.
-typedef GameSetup = ({List<Player> players, GameConfig config});
-
 /// The games the setup offers.
 enum GameKind { x01, cricket, shanghai, killer }
 
