@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../session/session.dart';
 import '../theme/darts_space.dart';
+import '../ui/game_stats.dart';
 import 'input_pane.dart';
 
 /// Lives, numbers and Killer status.
@@ -51,10 +52,7 @@ class KillerBoard extends StatelessWidget {
                           : textTheme.titleMedium,
                     ),
                   ),
-                  Text(
-                    score.isOut ? 'OUT' : '${score.lives ?? 0}',
-                    style: textTheme.headlineSmall,
-                  ),
+                  Text(killerLivesLabel(score), style: textTheme.headlineSmall),
                 ],
               ),
             ),

@@ -5,9 +5,10 @@ import '../theme/darts_space.dart';
 import '../session/session.dart';
 import '../session_controller.dart';
 import '../session_launcher.dart';
-import '../ui/average_label.dart';
 import '../ui/game_labels.dart';
+import '../ui/game_stats.dart';
 import '../ui/persist_failure_banner.dart';
+import '../ui/stats_table_view.dart';
 import 'cricket_board.dart';
 import 'game_shell.dart';
 import 'killer_board.dart';
@@ -333,7 +334,6 @@ class _GameOverPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final game = session.game!;
-    final stats = _statsOf(session, game);
     final onChangeSetup = this.onChangeSetup;
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -347,26 +347,9 @@ class _GameOverPanel extends StatelessWidget {
               style: textTheme.headlineMedium,
             ),
             const SizedBox(height: DartsSpace.sm),
-            Table(
+            StatsTableView(
               key: const Key('game-averages'),
-              columnWidths: const {0: FlexColumnWidth()},
-              defaultColumnWidth: const IntrinsicColumnWidth(),
-              children: [
-                TableRow(
-                  children: [
-                    const SizedBox.shrink(),
-                    for (final heading in stats.headings)
-                      _Cell(heading, style: textTheme.labelMedium),
-                  ],
-                ),
-                for (final (player, values) in stats.rows)
-                  TableRow(
-                    children: [
-                      Text(player.name, style: textTheme.titleMedium),
-                      for (final value in values) _Cell(value),
-                    ],
-                  ),
-              ],
+              stats: gameOverStats(session),
             ),
             const SizedBox(height: DartsSpace.lg),
             SizedBox(
@@ -411,85 +394,4 @@ class _GameOverPanel extends StatelessWidget {
       ),
     );
   }
-}
-
-/// The end-of-game table: column headings, then each player's values.
-typedef _Stats = ({List<String> headings, List<(Player, List<String>)> rows});
-
-_Stats _statsOf(SessionState session, Game game) {
-  // From the second game on: each session stat of a game type played in it,
-  // so a cricket game still shows the X01 average and the other way round.
-  final later = session.games.length > 1;
-  final sessionX01 = later && session.games.any((g) => g is X01Game);
-  final sessionCricket = later && session.games.any((g) => g is CricketGame);
-  List<String> sessionStats(Player player) => [
-    if (sessionX01) averageLabel(session.averageOf(player)),
-    if (sessionCricket) averageLabel(session.marksPerRoundOf(player)),
-  ];
-  final sessionHeadings = [
-    if (sessionX01) 'moy. session',
-    if (sessionCricket) 'MPR session',
-  ];
-  return switch (game) {
-    X01Game(:final scores) => (
-      headings: ['moy.', ...sessionHeadings],
-      rows: [
-        for (final score in scores)
-          (
-            score.player,
-            [
-              averageLabel(score.threeDartAverage),
-              ...sessionStats(score.player),
-            ],
-          ),
-      ],
-    ),
-    CricketGame(:final scores) => (
-      headings: ['pts', 'MPR', ...sessionHeadings],
-      rows: [
-        for (final score in scores)
-          (
-            score.player,
-            [
-              '${score.points}',
-              averageLabel(game.marksPerRound(score.player)),
-              ...sessionStats(score.player),
-            ],
-          ),
-      ],
-    ),
-    ShanghaiGame(:final scores) => (
-      headings: ['pts', ...sessionHeadings],
-      rows: [
-        for (final score in scores)
-          (score.player, ['${score.points}', ...sessionStats(score.player)]),
-      ],
-    ),
-    KillerGame(:final scores) => (
-      headings: ['vies', ...sessionHeadings],
-      rows: [
-        for (final score in scores)
-          (
-            score.player,
-            [
-              score.isOut ? 'OUT' : '${score.lives ?? 0}',
-              ...sessionStats(score.player),
-            ],
-          ),
-      ],
-    ),
-  };
-}
-
-class _Cell extends StatelessWidget {
-  const _Cell(this.text, {this.style});
-
-  final String text;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: DartsSpace.lg),
-    child: Text(text, textAlign: TextAlign.end, style: style),
-  );
 }

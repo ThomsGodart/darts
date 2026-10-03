@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../session/session.dart';
 import '../theme/darts_space.dart';
 import '../ui/game_labels.dart';
-import '../ui/average_label.dart';
+import '../ui/game_stats.dart';
+import '../ui/stats_table_view.dart';
 import 'formatting.dart';
 
 /// One ended session: everyone's average over it, then each game with its
@@ -43,9 +44,7 @@ class SessionDetailScreen extends StatelessWidget {
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossible de supprimer cette session.'),
-        ),
+        const SnackBar(content: Text('Impossible de supprimer cette session.')),
       );
       return;
     }
@@ -72,12 +71,9 @@ class SessionDetailScreen extends StatelessWidget {
         children: [
           Text('Stats de la session', style: textTheme.titleLarge),
           const SizedBox(height: DartsSpace.sm),
-          _StatsTable(
+          StatsTableView(
             key: const Key('session-stats'),
-            rows: [
-              for (final player in state.players)
-                (player.name, _sessionStats(state, player)),
-            ],
+            stats: sessionStats(state),
           ),
           for (final (i, game) in state.games.indexed) ...[
             const SizedBox(height: DartsSpace.xl),
@@ -90,76 +86,10 @@ class SessionDetailScreen extends StatelessWidget {
               null => 'Non terminée',
             }, style: textTheme.bodyMedium),
             const SizedBox(height: DartsSpace.xs),
-            _StatsTable(
-              rows: switch (game) {
-                X01Game(:final scores) => [
-                  for (final score in scores)
-                    (
-                      score.player.name,
-                      'moy. ${averageLabel(score.threeDartAverage)}',
-                    ),
-                ],
-                CricketGame(:final scores) => [
-                  for (final score in scores)
-                    (
-                      score.player.name,
-                      '${score.points} pts · MPR '
-                          '${averageLabel(game.marksPerRound(score.player))}',
-                    ),
-                ],
-                ShanghaiGame(:final scores) => [
-                  for (final score in scores)
-                    (score.player.name, '${score.points} pts'),
-                ],
-                KillerGame(:final scores) => [
-                  for (final score in scores)
-                    (
-                      score.player.name,
-                      [
-                        if (score.number != null) 'n°${score.number}',
-                        score.isOut ? 'OUT' : '${score.lives} vies',
-                        if (score.isKiller) 'Killer',
-                      ].join(' · '),
-                    ),
-                ],
-              },
-            ),
+            StatsTableView(stats: gameStats(game)),
           ],
         ],
       ),
-    );
-  }
-}
-
-/// "moy. 45.2 · MPR 2.1": each stat of the game types [player] played.
-String _sessionStats(SessionState state, Player player) {
-  final average = state.averageOf(player);
-  final mpr = state.marksPerRoundOf(player);
-  return [
-    if (average != null) 'moy. ${averageLabel(average)}',
-    if (mpr != null) 'MPR ${averageLabel(mpr)}',
-  ].join(' · ');
-}
-
-/// One row per player: their name and a stat already formatted.
-class _StatsTable extends StatelessWidget {
-  const _StatsTable({super.key, required this.rows});
-
-  final List<(String, String)> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Table(
-      columnWidths: const {1: IntrinsicColumnWidth()},
-      children: [
-        for (final (name, value) in rows)
-          TableRow(
-            children: [
-              Text(name),
-              Text(value, textAlign: TextAlign.end),
-            ],
-          ),
-      ],
     );
   }
 }
