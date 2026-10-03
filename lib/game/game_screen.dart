@@ -369,9 +369,18 @@ _Stats _statsOf(SessionState session, Game game) {
       ],
     ),
     CricketGame(:final scores) => (
-      headings: ['pts'],
+      headings: ['pts', 'MPR', if (showSession) 'session'],
       rows: [
-        for (final score in scores) (score.player, ['${score.points}']),
+        for (final score in scores)
+          (
+            score.player,
+            [
+              '${score.points}',
+              averageLabel(game.marksPerRound(score.player)),
+              if (showSession)
+                averageLabel(session.marksPerRoundOf(score.player)),
+            ],
+          ),
       ],
     ),
   };

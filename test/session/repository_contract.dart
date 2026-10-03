@@ -242,6 +242,45 @@ void repositoryContract(
         expect(latest.averageOf(alice), isNull);
       });
 
+      test('a mixed session keeps its winners, MPR and averages', () async {
+        final repository = open();
+        final session = await repository.create();
+        session.startGame([
+          alice,
+          bob,
+        ], config: const X01Config(startScore: 40));
+        checkOut(session, 40, darts: 1);
+        session.startGame([bob, alice], config: const CricketConfig());
+        for (final dart in [
+          const Dart.treble(20),
+          const Dart.treble(19),
+          const Dart.treble(18),
+          Dart.miss,
+          Dart.miss,
+          Dart.miss,
+          const Dart.treble(17),
+          const Dart.treble(16),
+          const Dart.treble(15),
+          Dart.miss,
+          Dart.miss,
+          Dart.miss,
+          Dart.bull,
+          Dart.outerBull,
+        ]) {
+          session.throwDart(dart);
+        }
+        session.endSession();
+
+        final state = (await (await relaunch(
+          repository,
+        )).history()).single.state;
+        expect([for (final g in state.games) g.winner], [alice, bob]);
+        expect(state.averageOf(alice), 120);
+        expect(state.averageOf(bob), isNull);
+        expect(state.marksPerRoundOf(bob), 21 / 3);
+        expect(state.marksPerRoundOf(alice), 0);
+      });
+
       test('a deleted session is gone for good', () async {
         final repository = open();
         final kept = await repository.create();

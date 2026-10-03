@@ -4,6 +4,9 @@ import 'player.dart';
 import 'game_config.dart';
 import 'x01_rules.dart';
 
+/// [count] per round, null before the first round.
+double? perRound(int count, int rounds) => rounds == 0 ? null : count / rounds;
+
 /// Points per three darts; null before the first dart.
 double? averagePerVisit(int points, int darts) =>
     darts == 0 ? null : points / darts * dartsPerVisit;
@@ -45,6 +48,21 @@ class SessionState {
       }
     }
     return averagePerVisit(points, darts);
+  }
+
+  /// MPR of [player] over their cricket games of the session; null if
+  /// they have not thrown in one yet.
+  double? marksPerRoundOf(Player player) {
+    var marks = 0;
+    var rounds = 0;
+    for (final game in games.whereType<CricketGame>()) {
+      for (final score in game.scores) {
+        if (score.player.id != player.id) continue;
+        marks += score.marksHit;
+        rounds += game.roundsOf(score.player);
+      }
+    }
+    return perRound(marks, rounds);
   }
 
   SessionState addGame(Game game) => SessionState(
@@ -212,6 +230,7 @@ class CricketScore {
     this.marks = const {},
     this.points = 0,
     this.visitsPlayed = 0,
+    this.marksHit = 0,
   });
 
   final Player player;
@@ -220,6 +239,9 @@ class CricketScore {
   final Map<int, int> marks;
   final int points;
   final int visitsPlayed;
+
+  /// Every mark thrown on 15–20 and the bull: closing, scoring or dead.
+  final int marksHit;
 
   int marksOn(int number) => marks[number] ?? 0;
 
@@ -231,11 +253,13 @@ class CricketScore {
     Map<int, int>? marks,
     int? points,
     int? visitsPlayed,
+    int? marksHit,
   }) => CricketScore(
     player: player,
     marks: marks ?? this.marks,
     points: points ?? this.points,
     visitsPlayed: visitsPlayed ?? this.visitsPlayed,
+    marksHit: marksHit ?? this.marksHit,
   );
 }
 
@@ -275,4 +299,15 @@ final class CricketGame extends Game {
 
   /// Closed by every player: no one scores on it any more.
   bool isDead(int number) => scores.every((s) => s.isClosed(number));
+
+  /// Rounds [player] has played, the visit in progress included.
+  int roundsOf(Player player) {
+    final score = scoreOf(player);
+    final inProgress = score == activeScore && dartsInVisit.isNotEmpty;
+    return score.visitsPlayed + (inProgress ? 1 : 0);
+  }
+
+  /// MPR: marks per round, null before [player]'s first dart.
+  double? marksPerRound(Player player) =>
+      perRound(scoreOf(player).marksHit, roundsOf(player));
 }

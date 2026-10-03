@@ -66,13 +66,13 @@ class SessionDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Moyennes de la session', style: textTheme.titleLarge),
+          Text('Stats de la session', style: textTheme.titleLarge),
           const SizedBox(height: 8),
           _StatsTable(
             key: const Key('session-averages'),
             rows: [
               for (final player in state.players)
-                (player.name, 'moy. ${averageLabel(state.averageOf(player))}'),
+                (player.name, _sessionStats(state, player)),
             ],
           ),
           for (final (i, game) in state.games.indexed) ...[
@@ -97,7 +97,11 @@ class SessionDetailScreen extends StatelessWidget {
                 ],
                 CricketGame(:final scores) => [
                   for (final score in scores)
-                    (score.player.name, '${score.points} pts'),
+                    (
+                      score.player.name,
+                      '${score.points} pts · MPR '
+                          '${averageLabel(game.marksPerRound(score.player))}',
+                    ),
                 ],
               },
             ),
@@ -106,6 +110,16 @@ class SessionDetailScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "moy. 45.2 · MPR 2.1": each stat of the game types [player] played.
+String _sessionStats(SessionState state, Player player) {
+  final average = state.averageOf(player);
+  final mpr = state.marksPerRoundOf(player);
+  return [
+    if (average != null) 'moy. ${averageLabel(average)}',
+    if (mpr != null) 'MPR ${averageLabel(mpr)}',
+  ].join(' · ');
 }
 
 /// One row per player: their name and a stat already formatted.

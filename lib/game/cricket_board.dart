@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../session/session.dart';
 import '../theme/darts_tokens.dart';
+import '../ui/average_label.dart';
 
 /// "/", "X" or "Ⓧ" for 1, 2 or 3 marks; empty for none.
 String markSymbol(int marks) => switch (marks) {
@@ -119,6 +120,22 @@ class CricketBoard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+              ),
+          ],
+        ),
+        TableRow(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text('MPR', style: textTheme.labelLarge),
+            ),
+            for (final (i, score) in game.scores.indexed)
+              cell(
+                i,
+                Text(
+                  averageLabel(game.marksPerRound(score.player)),
+                  style: onColumn(i, textTheme.labelLarge),
                 ),
               ),
           ],

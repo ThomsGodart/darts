@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../app_test_harness.dart';
+import 'session_flow_test.dart' show joueur1Wins;
 
 Future<void> launchCricket(WidgetTester tester) async {
   await pumpApp(tester, await AppStorage.withTwoPlayers());
@@ -58,5 +59,23 @@ void main() {
       startsWith('Cut-Throat'),
     );
   });
-}
 
+  testWidgets('Changer… switches from X01 to cricket mid-session', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await launchGame(tester);
+    await joueur1Wins(tester);
+
+    await tester.tap(find.text('Changer…'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Cricket'));
+    await tester.tap(find.text('Cricket'));
+    await tester.pump();
+    await tester.tap(find.text('Lancer la partie'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('cricket-board')), findsOneWidget);
+    expect(find.text('MPR'), findsOneWidget);
+  });
+}
