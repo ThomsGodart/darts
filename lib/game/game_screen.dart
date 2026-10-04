@@ -218,7 +218,15 @@ class _GameScreenState extends State<GameScreen> {
           children: [
             Column(
               children: [
-                _GameBar(label: configLabel(game.config)),
+                _GameBar(
+                  // In a match, the score matters more than the rules.
+                  label: switch (controller.state.match) {
+                    final match? =>
+                      '${matchScoreHeading(match)} : '
+                          '${matchScoreLabel(match, controller.state.matchPlayers)}',
+                    null => configLabel(game.config),
+                  },
+                ),
                 Expanded(
                   child: GameShell(statePane: statePane, inputPane: inputPane),
                 ),
@@ -390,6 +398,8 @@ class _GameOverPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final game = session.game!;
+    final match = session.match;
+    final matchIsOpen = match != null && match.winner == null;
     final onChangeSetup = this.onChangeSetup;
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -398,10 +408,22 @@ class _GameOverPanel extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '${game.winner!.name} gagne !',
-              style: textTheme.headlineMedium,
-            ),
+            Text(switch (match) {
+              null => '${game.winner!.name} gagne !',
+              MatchScore(winner: null) =>
+                '${game.winner!.name} gagne la manche',
+              MatchScore() => '${game.winner!.name} gagne le match !',
+            }, style: textTheme.headlineMedium),
+            if (match != null) ...[
+              const SizedBox(height: DartsSpace.xs),
+              Text(
+                '${matchScoreHeading(match)} : '
+                '${matchScoreLabel(match, session.matchPlayers)}',
+                key: const Key('match-score'),
+                textAlign: TextAlign.center,
+                style: textTheme.titleMedium,
+              ),
+            ],
             const SizedBox(height: DartsSpace.sm),
             StatsTableView(
               key: const Key('game-averages'),
@@ -414,7 +436,14 @@ class _GameOverPanel extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: onRematch,
                 icon: const Icon(Icons.replay),
-                label: Text('Rejouer', style: textTheme.titleLarge),
+                // The text theme's colour is the surface's: on a filled
+                // button it would be light on light.
+                label: Text(
+                  matchIsOpen ? 'Manche suivante' : 'Rejouer',
+                  style: textTheme.titleLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: DartsSpace.sm),

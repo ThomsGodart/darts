@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../game/game_screen.dart';
 import '../history/history_screen.dart';
 import '../settings/settings_screen.dart';
+import '../stats/stats_screen.dart';
 import '../session/session.dart';
 import '../setup/setup_screen.dart';
 import '../session_controller.dart';
@@ -113,6 +114,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openHistory() => Navigator.of(context).push(
     MaterialPageRoute<void>(
       builder: (_) => HistoryScreen(launcher: widget.launcher),
+    ),
+  );
+
+  Future<void> _openStats() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => StatsScreen(launcher: widget.launcher),
     ),
   );
 
@@ -257,6 +264,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           onPressed: _openHistory,
                           icon: const Icon(Icons.history),
                           label: const Text('Historique'),
+                        ),
+                        TextButton.icon(
+                          onPressed: _openStats,
+                          icon: const Icon(Icons.bar_chart),
+                          label: const Text('Statistiques'),
                         ),
                       ],
                     ),

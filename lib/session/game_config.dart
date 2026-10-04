@@ -73,30 +73,64 @@ sealed class GameConfig {
   int get minPlayers => 1;
 }
 
-/// Rules of an X01 game.
+/// Rules of an X01 game: one leg, and the match it may be a leg of.
 final class X01Config extends GameConfig {
-  const X01Config({this.startScore = 501, this.outRule = OutRule.double});
+  const X01Config({
+    this.startScore = 501,
+    this.outRule = OutRule.double,
+    this.legsToWin = 1,
+    this.setsToWin = 1,
+  });
 
   /// Start scores the setup offers; any score above 1 can be played.
   static const offeredStartScores = [501, 301];
 
+  /// Legs to win the setup offers: a single leg, or first to 2, 3 or 5.
+  static const offeredLegsToWin = [1, 2, 3, 5];
+
+  /// Sets to win the setup offers.
+  static const offeredSetsToWin = [1, 2, 3];
+
   final int startScore;
   final OutRule outRule;
+
+  /// Legs a player must win to take a set (the match, without sets).
+  final int legsToWin;
+
+  /// Sets a player must win to take the match.
+  final int setsToWin;
+
+  /// Whether legs are chained into a match, rather than played alone.
+  bool get isMatch => legsToWin > 1 || setsToWin > 1;
+
+  X01Config copyWith({
+    int? startScore,
+    OutRule? outRule,
+    int? legsToWin,
+    int? setsToWin,
+  }) => X01Config(
+    startScore: startScore ?? this.startScore,
+    outRule: outRule ?? this.outRule,
+    legsToWin: legsToWin ?? this.legsToWin,
+    setsToWin: setsToWin ?? this.setsToWin,
+  );
 
   @override
   GameKind get kind => GameKind.x01;
 
   @override
-  bool get isValid => startScore > 1;
+  bool get isValid => startScore > 1 && legsToWin >= 1 && setsToWin >= 1;
 
   @override
   bool operator ==(Object other) =>
       other is X01Config &&
       other.startScore == startScore &&
-      other.outRule == outRule;
+      other.outRule == outRule &&
+      other.legsToWin == legsToWin &&
+      other.setsToWin == setsToWin;
 
   @override
-  int get hashCode => Object.hash(startScore, outRule);
+  int get hashCode => Object.hash(startScore, outRule, legsToWin, setsToWin);
 }
 
 /// Numbers that count in cricket, as a board lists them; 25 is the bull.

@@ -2,6 +2,7 @@ import 'checkout.dart';
 import 'dart.dart';
 import 'player.dart';
 import 'game_config.dart';
+import 'match.dart';
 import 'x01_rules.dart';
 
 /// [count] per round, null before the first round.
@@ -65,6 +66,23 @@ class SessionState {
     return perRound(marks, rounds);
   }
 
+  /// The match the current game is a leg of; null when it is played
+  /// alone, or is not an X01 game.
+  MatchScore? get match => matchOf(games);
+
+  /// The players of the current match, in the order they first played in
+  /// the session: the throwing order turns with every leg, a score line
+  /// should not.
+  List<Player> get matchPlayers {
+    final ids = {
+      for (final player in match?.players ?? const <Player>[]) player.id,
+    };
+    return [
+      for (final player in players)
+        if (ids.contains(player.id)) player,
+    ];
+  }
+
   SessionState addGame(Game game) => SessionState(
     games: List.unmodifiable([...games, game]),
     isEnded: isEnded,
@@ -103,20 +121,23 @@ class PlayerScore {
   const PlayerScore({
     required this.player,
     required this.remaining,
-    this.lastVisit,
+    this.visits = const [],
     this.pointsScored = 0,
     this.dartsThrown = 0,
-    this.visitsPlayed = 0,
   });
 
   final Player player;
   final int remaining;
 
-  /// The player's latest visit, null before their first.
-  final Visit? lastVisit;
+  /// Every visit the player completed in the game, in order.
+  final List<Visit> visits;
   final int pointsScored;
   final int dartsThrown;
-  final int visitsPlayed;
+
+  /// The player's latest visit, null before their first.
+  Visit? get lastVisit => visits.lastOrNull;
+
+  int get visitsPlayed => visits.length;
 
   /// Points per three darts, null before the first dart.
   double? get threeDartAverage => averagePerVisit(pointsScored, dartsThrown);
@@ -124,10 +145,9 @@ class PlayerScore {
   PlayerScore after(Visit visit) => PlayerScore(
     player: player,
     remaining: remaining - visit.points,
-    lastVisit: visit,
+    visits: List.unmodifiable([...visits, visit]),
     pointsScored: pointsScored + visit.points,
     dartsThrown: dartsThrown + visit.darts,
-    visitsPlayed: visitsPlayed + 1,
   );
 }
 

@@ -8,6 +8,9 @@ in French.
 | **Session** | A group of players chaining games in one sitting, whatever the time of day. Ends explicitly, then goes to the history. Never "night" or "soirée". | session |
 | **Game** | One game inside a session, of one **game kind** (X01, Cricket, Shanghai, Killer, Halve-It, Golf, Around the Clock, Bob's 27, Count-Up or Baseball), with its own config and winner. | partie |
 | **Game kind** | Which game is played; a game's config says its kind. Stored by name with every game started. | — |
+| **Leg** | An X01 game that is part of a match. | manche |
+| **Set** | A group of legs: the first to the legs asked takes the set. | set |
+| **Match** | X01 legs chained with the same players and rules, won by the first to the legs asked, or to the sets asked. Not stored: it is read off the session's consecutive games. | match |
 | **Rematch** | The next game with the same players and rules; whoever started last throws last. | Rejouer |
 | **Visit** | One player's turn: up to three darts (a **round** for Cricket MPR). Entered as a total or dart by dart in X01 and Count-Up; dart by dart only in the other games. A visit ended early counts its missing darts as misses, except in Golf, where the last dart thrown stands. | volée |
 | **Dart** | One throw: a sector (1–20, 25) with a multiplier (single, double, treble), or a miss. | fléchette |

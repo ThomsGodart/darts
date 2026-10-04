@@ -199,27 +199,58 @@ class _SetupScreenState extends State<SetupScreen> {
             ),
             const SizedBox(height: DartsSpace.sm),
             ...switch (setup.config) {
-              X01Config(:final startScore, :final outRule) => [
+              final X01Config x01 => [
                 SegmentedButton<int>(
                   segments: [
                     for (final score in X01Config.offeredStartScores)
                       ButtonSegment(value: score, label: Text('$score')),
                   ],
-                  selected: {startScore},
+                  selected: {x01.startScore},
                   showSelectedIcon: false,
-                  onSelectionChanged: (s) => setup.config = X01Config(
-                    startScore: s.single,
-                    outRule: outRule,
-                  ),
+                  onSelectionChanged: (s) =>
+                      setup.config = x01.copyWith(startScore: s.single),
                 ),
                 SwitchListTile(
                   title: const Text('Double-out'),
-                  value: outRule == OutRule.double,
-                  onChanged: (value) => setup.config = X01Config(
-                    startScore: startScore,
+                  value: x01.outRule == OutRule.double,
+                  onChanged: (value) => setup.config = x01.copyWith(
                     outRule: value ? OutRule.double : OutRule.straight,
                   ),
                 ),
+                SegmentedButton<int>(
+                  key: const Key('legs-to-win'),
+                  segments: [
+                    for (final legs in X01Config.offeredLegsToWin)
+                      ButtonSegment(
+                        value: legs,
+                        label: Text(legs == 1 ? '1 manche' : '1er à $legs'),
+                      ),
+                  ],
+                  selected: {x01.legsToWin},
+                  showSelectedIcon: false,
+                  // A single leg is not played in sets.
+                  onSelectionChanged: (s) => setup.config = x01.copyWith(
+                    legsToWin: s.single,
+                    setsToWin: s.single == 1 ? 1 : null,
+                  ),
+                ),
+                if (x01.legsToWin > 1) ...[
+                  const SizedBox(height: DartsSpace.sm),
+                  SegmentedButton<int>(
+                    key: const Key('sets-to-win'),
+                    segments: [
+                      for (final sets in X01Config.offeredSetsToWin)
+                        ButtonSegment(
+                          value: sets,
+                          label: Text(sets == 1 ? 'Sans sets' : '$sets sets'),
+                        ),
+                    ],
+                    selected: {x01.setsToWin},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (s) =>
+                        setup.config = x01.copyWith(setsToWin: s.single),
+                  ),
+                ],
               ],
               CricketConfig(:final variant, :final input) => [
                 SegmentedButton<CricketVariant>(

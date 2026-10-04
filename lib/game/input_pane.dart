@@ -121,7 +121,13 @@ class PadKey extends StatelessWidget {
       fit: BoxFit.scaleDown,
       child: Text(
         label,
-        style: large ? textTheme.titleLarge : textTheme.titleMedium,
+        // A filled key is the primary colour: its label takes the colour
+        // that reads on it, not the surface's.
+        style: (large ? textTheme.titleLarge : textTheme.titleMedium)?.copyWith(
+          color: emphasized && onTap != null
+              ? Theme.of(context).colorScheme.onPrimary
+              : null,
+        ),
       ),
     );
     return Expanded(

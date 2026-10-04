@@ -101,7 +101,12 @@ class _VisitInputState extends State<VisitInput> {
             height: DartsSpace.tap,
             child: FilledButton(
               onPressed: () => _submit(score),
-              child: Text('$score', style: textTheme.titleMedium),
+              child: Text(
+                '$score',
+                style: textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
             ),
           ),
       ],

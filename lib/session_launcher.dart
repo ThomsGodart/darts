@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'setup/setup_controller.dart';
+import 'session/player_stats.dart' as session_stats;
 import 'session/session.dart';
 import 'session_controller.dart';
 
@@ -73,6 +74,17 @@ class SessionLauncher extends ChangeNotifier {
 
   /// Past and open sessions, newest first.
   Future<List<SessionRecord>> history() => _repository.history();
+
+  /// Everyone's stats over every session, the open one included.
+  Future<List<PlayerStats>> playerStats() async {
+    final open = await _repository.resumable();
+    final ended = await _repository.history();
+    return session_stats.playerStats([
+      // Oldest first, so the latest name of a renamed player wins.
+      for (final record in ended.reversed) record.state,
+      if (open != null) open.state,
+    ]);
+  }
 
   /// Deletes a session from the history for good.
   Future<void> deleteSession(SessionRecord record) =>
