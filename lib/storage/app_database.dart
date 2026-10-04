@@ -35,7 +35,17 @@ class Players extends Table {
   BoolColumn get hasPlayed => boolean().withDefault(const Constant(false))();
 }
 
-@DriftDatabase(tables: [Sessions, SessionEvents, Players])
+/// The app's settings, one row per key.
+@DataClassName('StoredSetting')
+class Settings extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {key};
+}
+
+@DriftDatabase(tables: [Sessions, SessionEvents, Players, Settings])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
@@ -43,7 +53,7 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.onDevice() => AppDatabase(driftDatabase(name: 'darts'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +73,7 @@ class AppDatabase extends _$AppDatabase {
           "WHERE type = 'soiree_ended'",
         );
       }
+      if (from < 4) await m.createTable(settings);
     },
   );
 }

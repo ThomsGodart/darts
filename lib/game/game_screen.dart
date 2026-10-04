@@ -33,6 +33,7 @@ class GameScreen extends StatefulWidget {
     this.launcher,
     this.onChangeSetup,
     this.onCancelGame,
+    this.portraitLock = false,
     this.screenAwake = const WakelockScreenAwake(),
     this.botDelay = const Duration(milliseconds: 900),
     this.botRandom,
@@ -51,6 +52,10 @@ class GameScreen extends StatefulWidget {
   /// on what it was started with, and says whether another game started.
   /// Null makes Back simply leave the screen.
   final Future<bool> Function(GameSetup cancelled)? onCancelGame;
+
+  /// Whether the screen stays in portrait when the phone is turned; it
+  /// follows the phone otherwise.
+  final bool portraitLock;
   final ScreenAwake screenAwake;
 
   /// How long a virtual opponent takes to throw.
@@ -88,13 +93,18 @@ class _GameScreenState extends State<GameScreen> {
     _gamesSeen = controller.state.games.length;
     _visitsSeen = controller.state.game!.visitsPlayed;
     controller.addListener(_onGameChanged);
-    // Game screens may rotate; home/setup stay natural portrait when we leave.
-    SystemChrome.setPreferredOrientations(const [
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    // The game screen may rotate, unless the players locked it; home and
+    // setup stay in portrait, and take it back when we leave.
+    SystemChrome.setPreferredOrientations(
+      widget.portraitLock
+          ? const [DeviceOrientation.portraitUp]
+          : const [
+              DeviceOrientation.portraitUp,
+              DeviceOrientation.portraitDown,
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+    );
     _syncScreenAwake();
     _scheduleBot();
   }

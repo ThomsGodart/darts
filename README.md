@@ -31,7 +31,7 @@ Building and signing the Android release is described in `docs/release/android-1
 The state of a session is never stored: it is a fold over its **journal**, an ordered list of events.
 
 - `lib/session/`: the domain, plain Dart. `Session` (`session_facade.dart`) is the single entry point: it validates a command, appends an event to the journal and folds it into the new state (`fold.dart`, `state.dart`). Undo removes the last event and folds again. `event_codec.dart` is the storage format of events.
-- `lib/storage/`: Drift (SQLite) adapters for the session repository and the player catalog. Tests use the in-memory adapters from `lib/session/`.
+- `lib/storage/`: Drift (SQLite) adapters for the session repository, the player catalog and the settings store. Tests use the in-memory adapters from `lib/session/`.
 - `lib/session_launcher.dart`, `lib/session_controller.dart`: what widgets talk to. They never touch the domain or storage directly.
 - `lib/setup/`, `lib/game/`, `lib/history/`, `lib/home/`, `lib/settings/`: one folder per screen. Every game input is built on `lib/game/input_pane.dart`.
 - `lib/ui/`: labels and stats shared by several screens. `lib/theme/`: the `default` theme, its `DartsTokens` and the `DartsSpace` spacing scale.

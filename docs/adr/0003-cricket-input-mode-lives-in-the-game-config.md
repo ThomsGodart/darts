@@ -2,7 +2,7 @@
 
 A Cricket game is entered either on the board (single / double / treble keys between the players' columns) or on the dart keypad. The choice is made in the setup and stored in `CricketConfig.input`, next to the variant, although it is not a rule of the game.
 
-It is there because the config is the only thing that travels with a game: it is recorded in the journal, so the choice survives resuming the session, "Rejouer" and "Partie suivante" without any other storage. The app has no settings store yet.
+It is there because the config is the only thing that travels with a game: it is recorded in the journal, so the choice survives resuming the session, "Rejouer" and "Partie suivante" without any other storage. When this was decided the app had no settings store; it has had one since (`lib/settings/app_settings.dart`, first used by the portrait lock), and the choice stayed here because it is made per game, at launch.
 
 ## Considered options
 

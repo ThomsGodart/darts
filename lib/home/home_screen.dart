@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../game/game_screen.dart';
 import '../history/history_screen.dart';
+import '../settings/app_settings.dart';
 import '../settings/settings_screen.dart';
 import '../stats/stats_screen.dart';
 import '../session/session.dart';
@@ -12,9 +13,10 @@ import '../theme/darts_space.dart';
 import '../ui/persist_failure_banner.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.launcher});
+  const HomeScreen({super.key, required this.launcher, required this.settings});
 
   final SessionLauncher launcher;
+  final AppSettings settings;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -123,8 +125,11 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   );
 
-  Future<void> _openSettings() => Navigator.of(context)
-      .push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+  Future<void> _openSettings() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => SettingsScreen(settings: widget.settings),
+    ),
+  );
 
   /// The setup screen for the next game of [controller]'s session,
   /// starting from [from], or from the last game with its order turned.
@@ -164,6 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => GameScreen(
           controller: controller,
           launcher: widget.launcher,
+          portraitLock: widget.settings.portraitLock,
           onChangeSetup: () => _changeSetup(controller),
           onCancelGame: (cancelled) => _changeSetup(
             controller,

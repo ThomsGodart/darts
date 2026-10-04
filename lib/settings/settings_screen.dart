@@ -3,14 +3,17 @@ import 'package:flutter/services.dart';
 
 import '../theme/darts_space.dart';
 import '../app_version.dart';
+import 'app_settings.dart';
 
-/// Stub settings: privacy policy (asset) and app version. No accounts.
+/// The app's settings, its version and its privacy policy. No accounts.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({
     super.key,
+    required this.settings,
     this.privacyAsset = 'assets/privacy_fr.txt',
   });
 
+  final AppSettings settings;
   final String privacyAsset;
 
   @override
@@ -21,6 +24,22 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(DartsSpace.lg),
         children: [
+          Text('Écran de jeu', style: textTheme.titleLarge),
+          ListenableBuilder(
+            listenable: settings,
+            builder: (context, _) => SwitchListTile(
+              key: const Key('portrait-lock'),
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Verrouiller en portrait'),
+              subtitle: const Text(
+                'L’écran de jeu ne passe plus en paysage quand le '
+                'téléphone tourne',
+              ),
+              value: settings.portraitLock,
+              onChanged: settings.setPortraitLock,
+            ),
+          ),
+          const SizedBox(height: DartsSpace.xl),
           Text('Version', style: textTheme.titleLarge),
           const SizedBox(height: DartsSpace.xs),
           Text(

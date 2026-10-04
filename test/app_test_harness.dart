@@ -1,5 +1,6 @@
 import 'package:darts_points_counter/app.dart';
 import 'package:darts_points_counter/session/session.dart';
+import 'package:darts_points_counter/settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,6 +24,7 @@ Future<void> pumpApp(
   WidgetTester tester,
   AppStorage storage, {
   SessionRepository? repository,
+  SettingsStore? settingsStore,
 }) async {
   tester.view.physicalSize = const Size(1080, 2340);
   tester.view.devicePixelRatio = 2.75;
@@ -31,6 +33,7 @@ Future<void> pumpApp(
     DartsApp(
       repository: repository ?? InMemorySessionRepository(storage.sessions),
       catalog: InMemoryPlayerCatalog(storage.players),
+      settingsStore: settingsStore,
     ),
   );
   await tester.pumpAndSettle();

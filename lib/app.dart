@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'home/home_screen.dart';
 import 'session/session.dart';
 import 'session_launcher.dart';
+import 'settings/app_settings.dart';
 import 'theme/app_themes.dart';
 
 class DartsApp extends StatefulWidget {
@@ -10,6 +11,7 @@ class DartsApp extends StatefulWidget {
     super.key,
     required this.repository,
     required this.catalog,
+    this.settingsStore,
     this.themeId = defaultThemeId,
   });
 
@@ -18,6 +20,9 @@ class DartsApp extends StatefulWidget {
 
   /// The players known to the app.
   final PlayerCatalog catalog;
+
+  /// Where settings are kept; in memory when not given.
+  final SettingsStore? settingsStore;
   final String themeId;
 
   @override
@@ -32,8 +37,19 @@ class _DartsAppState extends State<DartsApp> {
     widget.catalog,
   );
 
+  late final AppSettings _settings = AppSettings(
+    widget.settingsStore ?? InMemorySettingsStore(),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _settings.load();
+  }
+
   @override
   void dispose() {
+    _settings.dispose();
     _launcher.dispose();
     super.dispose();
   }
@@ -44,7 +60,7 @@ class _DartsAppState extends State<DartsApp> {
       title: 'Darts',
       debugShowCheckedModeBanner: false,
       theme: themeById(widget.themeId),
-      home: HomeScreen(launcher: _launcher),
+      home: HomeScreen(launcher: _launcher, settings: _settings),
     );
   }
 }

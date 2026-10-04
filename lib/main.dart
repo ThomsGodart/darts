@@ -8,6 +8,7 @@ import 'crash_reporting.dart';
 import 'storage/app_database.dart';
 import 'storage/drift_player_catalog.dart';
 import 'storage/drift_session_repository.dart';
+import 'storage/drift_settings_store.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +20,7 @@ void main() {
     DartsApp(
       repository: DriftSessionRepository(database),
       catalog: DriftPlayerCatalog(database),
+      settingsStore: DriftSettingsStore(database),
     ),
   );
 }
