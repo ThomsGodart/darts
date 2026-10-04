@@ -1,6 +1,9 @@
 import 'dart.dart';
 import 'player.dart';
 
+/// The highest number on the board.
+const lastSector = 20;
+
 /// Most players a game can have.
 const maxPlayers = 8;
 
@@ -43,7 +46,18 @@ enum OutRule {
 
 /// The games that can be played. Their names are stored with every game
 /// started: never rename one.
-enum GameKind { x01, cricket, shanghai, killer, halveIt, golf }
+enum GameKind {
+  x01,
+  cricket,
+  shanghai,
+  killer,
+  halveIt,
+  golf,
+  aroundTheClock,
+  bobs27,
+  countUp,
+  baseball,
+}
 
 /// Rules of a game, recorded with it so replays stay exact. Its type says
 /// which game is played.
@@ -344,6 +358,103 @@ final class GolfConfig extends GameConfig {
   int get hashCode => holes.hashCode;
 }
 
+/// Rules of an Around the Clock game.
+final class AroundTheClockConfig extends GameConfig {
+  const AroundTheClockConfig({this.finishOnBull = false});
+
+  /// Whether the bull comes after 20, as the last target.
+  final bool finishOnBull;
+
+  /// Targets to hit to win: 1 to 20, then the bull if asked.
+  int get targets => finishOnBull ? lastSector + 1 : lastSector;
+
+  @override
+  GameKind get kind => GameKind.aroundTheClock;
+
+  @override
+  bool get isValid => true;
+
+  @override
+  bool operator ==(Object other) =>
+      other is AroundTheClockConfig && other.finishOnBull == finishOnBull;
+
+  @override
+  int get hashCode => finishOnBull.hashCode;
+}
+
+/// What every Bob's 27 player starts on.
+const bobs27StartScore = 27;
+
+/// The targets of Bob's 27, in order: double 1 to double 20, then the bull.
+final List<Dart> bobs27Targets = List.unmodifiable([
+  for (var n = 1; n <= 20; n++) Dart.double(n),
+  Dart.bull,
+]);
+
+/// Rules of a Bob's 27 game: there is nothing to choose.
+final class Bobs27Config extends GameConfig {
+  const Bobs27Config();
+
+  @override
+  GameKind get kind => GameKind.bobs27;
+
+  @override
+  bool get isValid => true;
+
+  @override
+  bool operator ==(Object other) => other is Bobs27Config;
+
+  @override
+  int get hashCode => (Bobs27Config).hashCode;
+}
+
+/// Rules of a Count-Up game.
+final class CountUpConfig extends GameConfig {
+  const CountUpConfig({this.rounds = 8});
+
+  static const roundsOptions = [8, 10];
+
+  /// Visits each player throws, one of [roundsOptions].
+  final int rounds;
+
+  @override
+  GameKind get kind => GameKind.countUp;
+
+  @override
+  bool get isValid => roundsOptions.contains(rounds);
+
+  @override
+  bool operator ==(Object other) =>
+      other is CountUpConfig && other.rounds == rounds;
+
+  @override
+  int get hashCode => rounds.hashCode;
+}
+
+/// Innings of a Baseball game before any extra one.
+const baseballInnings = 9;
+
+/// The last inning that can be played, extra ones included: the board
+/// has no number past it.
+const baseballLastInning = lastSector;
+
+/// Rules of a Baseball game: there is nothing to choose.
+final class BaseballConfig extends GameConfig {
+  const BaseballConfig();
+
+  @override
+  GameKind get kind => GameKind.baseball;
+
+  @override
+  bool get isValid => true;
+
+  @override
+  bool operator ==(Object other) => other is BaseballConfig;
+
+  @override
+  int get hashCode => (BaseballConfig).hashCode;
+}
+
 /// The rules a game of [kind] is offered with.
 GameConfig defaultConfigOf(GameKind kind) => switch (kind) {
   GameKind.x01 => const X01Config(),
@@ -352,6 +463,10 @@ GameConfig defaultConfigOf(GameKind kind) => switch (kind) {
   GameKind.killer => const KillerConfig(),
   GameKind.halveIt => const HalveItConfig(),
   GameKind.golf => const GolfConfig(),
+  GameKind.aroundTheClock => const AroundTheClockConfig(),
+  GameKind.bobs27 => const Bobs27Config(),
+  GameKind.countUp => const CountUpConfig(),
+  GameKind.baseball => const BaseballConfig(),
 };
 
 /// What a game starts from: who plays, in throwing order, and the rules.

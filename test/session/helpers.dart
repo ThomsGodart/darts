@@ -52,6 +52,21 @@ List<Object?> scoreboardOf(Session session) {
         holeIndex,
         for (final s in scores) (s.player, s.holeStrokes.toString()),
       ],
+      AroundTheClockGame(:final scores) => [
+        for (final s in scores) (s.player, s.hits),
+      ],
+      Bobs27Game(:final scores, :final targetIndex) => [
+        targetIndex,
+        for (final s in scores) (s.player, s.points),
+      ],
+      CountUpGame(:final scores, :final roundIndex) => [
+        roundIndex,
+        for (final s in scores) (s.player, s.points),
+      ],
+      BaseballGame(:final scores, :final inningIndex) => [
+        inningIndex,
+        for (final s in scores) (s.player, s.runs),
+      ],
     },
     game.activePlayer,
     game.dartsInVisit,

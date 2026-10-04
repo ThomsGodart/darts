@@ -52,6 +52,30 @@ StatsTable gameStats(Game game) => switch (game) {
       for (final score in scores) (score.player, ['${score.strokes}']),
     ],
   ),
+  AroundTheClockGame(:final scores) => (
+    headings: const ['cibles'],
+    rows: [
+      for (final score in scores) (score.player, ['${score.hits}']),
+    ],
+  ),
+  Bobs27Game(:final scores) => (
+    headings: const ['pts'],
+    rows: [
+      for (final score in scores) (score.player, ['${score.points}']),
+    ],
+  ),
+  CountUpGame(:final scores) => (
+    headings: const ['pts'],
+    rows: [
+      for (final score in scores) (score.player, ['${score.points}']),
+    ],
+  ),
+  BaseballGame(:final scores) => (
+    headings: const ['runs'],
+    rows: [
+      for (final score in scores) (score.player, ['${score.runs}']),
+    ],
+  ),
 };
 
 /// "3", or "OUT" once the player has no life left.

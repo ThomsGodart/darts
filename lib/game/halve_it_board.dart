@@ -34,55 +34,13 @@ class HalveItBoard extends StatelessWidget {
   );
 }
 
-/// The rings of [target] that count, and a miss.
-class HalveItInput extends StatelessWidget {
-  const HalveItInput({
-    super.key,
-    required this.target,
-    required this.dartsInVisit,
-    required this.onDart,
-    required this.onEndVisit,
-    this.onUndo,
-  });
-
-  final HalveItTarget target;
-  final List<Dart> dartsInVisit;
-  final ValueChanged<Dart> onDart;
-  final VoidCallback onEndVisit;
-  final VoidCallback? onUndo;
-
-  List<Dart> get _darts => switch ((target.sector, target.multiplier)) {
-    (Dart.bullSector, _) => const [Dart.outerBull, Dart.bull],
-    (final sector, 2) => [Dart.double(sector)],
-    (final sector, 3) => [Dart.treble(sector)],
-    (final sector, _) => [
-      Dart.single(sector),
-      Dart.double(sector),
-      Dart.treble(sector),
-    ],
-  };
-
-  @override
-  Widget build(BuildContext context) => InputPane(
-    dartsInVisit: dartsInVisit,
-    onUndo: onUndo,
-    onEndVisit: onEndVisit,
-    children: [
-      Row(
-        children: [
-          for (final dart in _darts)
-            PadKey(
-              // "S20" rather than "20": the ring is what is being chosen.
-              label: dart.multiplier == 1 && dart.sector != Dart.bullSector
-                  ? 'S${dart.sector}'
-                  : dart.notation,
-              onTap: () => onDart(dart),
-            ),
-        ],
-      ),
-      Row(
-        children: [PadKey(label: 'Raté', onTap: () => onDart(Dart.miss))],
-      ),
-    ],
-  );
-}
+/// The rings of [target] that count.
+List<DartKey> halveItKeys(HalveItTarget target) => switch ((
+  target.sector,
+  target.multiplier,
+)) {
+  (Dart.bullSector, _) => const [('25', Dart.outerBull), ('Bull', Dart.bull)],
+  (final sector, 2) => [('D$sector', Dart.double(sector))],
+  (final sector, 3) => [('T$sector', Dart.treble(sector))],
+  (final sector, _) => ringKeys(sector),
+};

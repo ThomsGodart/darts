@@ -36,6 +36,10 @@ Map<String, Object?> _encodeConfig(GameConfig config) => {
     },
     HalveItConfig() => const {},
     GolfConfig(:final holes) => {'holes': holes},
+    AroundTheClockConfig(:final finishOnBull) => {'finishOnBull': finishOnBull},
+    Bobs27Config() => const {},
+    CountUpConfig(:final rounds) => {'rounds': rounds},
+    BaseballConfig() => const {},
   },
 };
 
@@ -64,6 +68,12 @@ GameConfig _decodeConfig(Map<String, Object?> payload) =>
       ),
       GameKind.halveIt => const HalveItConfig(),
       GameKind.golf => GolfConfig(holes: payload['holes']! as int),
+      GameKind.aroundTheClock => AroundTheClockConfig(
+        finishOnBull: payload['finishOnBull']! as bool,
+      ),
+      GameKind.bobs27 => const Bobs27Config(),
+      GameKind.countUp => CountUpConfig(rounds: payload['rounds']! as int),
+      GameKind.baseball => const BaseballConfig(),
     };
 
 GameKind _decodeKind(Object? stored) => switch (stored) {

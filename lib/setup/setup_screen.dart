@@ -349,6 +349,57 @@ class _SetupScreenState extends State<SetupScreen> {
                   style: textTheme.bodyMedium,
                 ),
               ],
+              AroundTheClockConfig(:final finishOnBull) => [
+                Text(
+                  'De 1 à 20 dans l’ordre, n’importe quel anneau compte. '
+                  'Le premier arrivé gagne.',
+                  style: textTheme.bodyMedium,
+                ),
+                SwitchListTile(
+                  title: const Text('Finir par le bull'),
+                  value: finishOnBull,
+                  onChanged: (value) =>
+                      setup.config = AroundTheClockConfig(finishOnBull: value),
+                ),
+              ],
+              Bobs27Config() => [
+                Text(
+                  'Départ à $bobs27StartScore. Trois fléchettes sur chaque '
+                  'double, de D1 à D20 puis le bull : chaque touche ajoute sa '
+                  'valeur, une volée sans touche la retire. À zéro ou moins, '
+                  'on est éliminé.',
+                  style: textTheme.bodyMedium,
+                ),
+              ],
+              CountUpConfig(:final rounds) => [
+                SegmentedButton<int>(
+                  segments: [
+                    for (final rounds in CountUpConfig.roundsOptions)
+                      ButtonSegment(
+                        value: rounds,
+                        label: Text('$rounds manches'),
+                      ),
+                  ],
+                  selected: {rounds},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) =>
+                      setup.config = CountUpConfig(rounds: s.single),
+                ),
+                const SizedBox(height: DartsSpace.sm),
+                Text(
+                  'Chaque fléchette compte sa valeur ; le plus gros total '
+                  'gagne.',
+                  style: textTheme.bodyMedium,
+                ),
+              ],
+              BaseballConfig() => [
+                Text(
+                  '$baseballInnings manches : la manche n se joue sur le '
+                  'numéro n. Simple 1 run, double 2, triple 3. En cas '
+                  'd’égalité en tête, on joue des prolongations.',
+                  style: textTheme.bodyMedium,
+                ),
+              ],
             },
             if (setup.config.minPlayers > 1 &&
                 setup.picked.length < setup.config.minPlayers)

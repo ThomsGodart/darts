@@ -1,5 +1,5 @@
 name: darts_points_counter
-description: "Compteur de fléchettes offline — sessions X01, Cricket, Killer, Shanghai, Halve-It, Golf."
+description: "Compteur de fléchettes offline — sessions X01, Cricket, Killer, Shanghai, Halve-It, Golf, Tour de l'horloge, Bob's 27, Count-Up, Baseball."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

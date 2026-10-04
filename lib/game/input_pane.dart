@@ -176,3 +176,53 @@ class SectorGrid extends StatelessWidget {
     ],
   );
 }
+
+/// A key of a [DartKeysInput]: its label and the dart it enters.
+typedef DartKey = (String label, Dart dart);
+
+/// Single, double and treble of [number]: the keys of a game thrown at
+/// one number at a time.
+List<DartKey> ringKeys(int number) => [
+  ('S$number', Dart.single(number)),
+  ('D$number', Dart.double(number)),
+  ('T$number', Dart.treble(number)),
+];
+
+/// The input pane of a game thrown at one target at a time: the few
+/// darts that count, and a miss for everything else.
+class DartKeysInput extends StatelessWidget {
+  const DartKeysInput({
+    super.key,
+    required this.keys,
+    required this.dartsInVisit,
+    required this.onDart,
+    required this.onEndVisit,
+    required this.onUndo,
+  });
+
+  final List<DartKey> keys;
+  final List<Dart> dartsInVisit;
+  final ValueChanged<Dart> onDart;
+  final VoidCallback onEndVisit;
+
+  /// Takes back the latest dart; null when there is nothing to undo.
+  final VoidCallback? onUndo;
+
+  @override
+  Widget build(BuildContext context) => InputPane(
+    dartsInVisit: dartsInVisit,
+    onUndo: onUndo,
+    onEndVisit: onEndVisit,
+    children: [
+      Row(
+        children: [
+          for (final (label, dart) in keys)
+            PadKey(label: label, onTap: () => onDart(dart)),
+        ],
+      ),
+      Row(
+        children: [PadKey(label: 'Raté', onTap: () => onDart(Dart.miss))],
+      ),
+    ],
+  );
+}

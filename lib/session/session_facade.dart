@@ -68,14 +68,26 @@ class Session {
   /// Submits a visit by its total. When it brings the remaining score to
   /// exactly 0, [dartsAtCheckout] must say how many darts it took (one of
   /// [X01Game.checkoutDartOptions]); otherwise it must be omitted. Only
-  /// X01 games take totals.
+  /// X01 and Count-Up games take totals.
   CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) {
     final current = _state.game;
     if (current == null || current.isFinished || _state.isEnded) {
       return _notInProgress(current);
     }
+    if (current is CountUpGame) {
+      if (current.dartsInVisit.isNotEmpty) {
+        return const Rejected('This visit is being entered dart by dart');
+      }
+      if (dartsAtCheckout != null) {
+        return const Rejected('A dart count is only given on a checkout');
+      }
+      if (!isPossibleVisitTotal(score)) {
+        return Rejected('$score cannot be scored with three darts');
+      }
+      return _record(VisitTotalSubmitted(score));
+    }
     if (current is! X01Game) {
-      return const Rejected('Only X01 visits are entered as a total');
+      return const Rejected('This game is entered dart by dart');
     }
     final game = current;
     if (game.dartsInVisit.isNotEmpty) {

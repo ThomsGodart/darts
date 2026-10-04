@@ -584,3 +584,221 @@ final class GolfGame extends Game {
   GolfScore scoreOf(Player player) =>
       scores.firstWhere((s) => s.player.id == player.id);
 }
+
+/// One player's progress around the clock.
+class AroundTheClockScore {
+  const AroundTheClockScore({required this.player, this.hits = 0});
+
+  final Player player;
+
+  /// Targets already hit, in order from 1.
+  final int hits;
+}
+
+/// An Around the Clock game: hit 1 to 20 in order, any ring counting;
+/// the first to finish wins.
+final class AroundTheClockGame extends Game {
+  const AroundTheClockGame({
+    required this.config,
+    required this.scores,
+    required this.activeIndex,
+    this.visitsPlayed = 0,
+    this.dartsInVisit = const [],
+    this.winner,
+  });
+
+  @override
+  final AroundTheClockConfig config;
+
+  /// One entry per player, in throwing order.
+  final List<AroundTheClockScore> scores;
+  @override
+  final int activeIndex;
+  @override
+  final int visitsPlayed;
+  @override
+  final List<Dart> dartsInVisit;
+  @override
+  final Player? winner;
+
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
+
+  AroundTheClockScore get activeScore => scores[activeIndex];
+
+  /// The number [score] must hit next: the bull once past 20.
+  int targetOf(AroundTheClockScore score) =>
+      score.hits < lastSector ? score.hits + 1 : Dart.bullSector;
+
+  /// The number the active player must hit next.
+  int get activeTarget => targetOf(activeScore);
+
+  /// Matched by id: a player renamed between games stays one player.
+  AroundTheClockScore scoreOf(Player player) =>
+      scores.firstWhere((s) => s.player.id == player.id);
+}
+
+/// One player's side of a Bob's 27 game.
+class Bobs27Score {
+  const Bobs27Score({required this.player, required this.points});
+
+  final Player player;
+  final int points;
+
+  /// Down to zero or less: the player throws no more.
+  bool get isOut => points <= 0;
+}
+
+/// A Bob's 27 game: three darts at each double in turn, then the bull.
+/// Hits add the target's value, a visit without one costs it; the highest
+/// score wins.
+final class Bobs27Game extends Game {
+  const Bobs27Game({
+    required this.config,
+    required this.scores,
+    required this.activeIndex,
+    this.targetIndex = 0,
+    this.visitsPlayed = 0,
+    this.dartsInVisit = const [],
+    this.winner,
+  });
+
+  @override
+  final Bobs27Config config;
+
+  /// One entry per player, in throwing order.
+  final List<Bobs27Score> scores;
+  @override
+  final int activeIndex;
+
+  /// Index into [bobs27Targets].
+  final int targetIndex;
+  @override
+  final int visitsPlayed;
+  @override
+  final List<Dart> dartsInVisit;
+  @override
+  final Player? winner;
+
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
+
+  /// The double (or the bull) everyone is throwing at.
+  Dart get currentTarget => bobs27Targets[targetIndex];
+
+  Bobs27Score get activeScore => scores[activeIndex];
+
+  /// Matched by id: a player renamed between games stays one player.
+  Bobs27Score scoreOf(Player player) =>
+      scores.firstWhere((s) => s.player.id == player.id);
+}
+
+/// One player's total in a Count-Up game.
+class CountUpScore {
+  const CountUpScore({required this.player, this.points = 0});
+
+  final Player player;
+  final int points;
+}
+
+/// A Count-Up game: every dart scores what it is worth; the highest total
+/// after the last round wins.
+final class CountUpGame extends Game {
+  const CountUpGame({
+    required this.config,
+    required this.scores,
+    required this.activeIndex,
+    this.roundIndex = 0,
+    this.visitsPlayed = 0,
+    this.dartsInVisit = const [],
+    this.winner,
+  });
+
+  @override
+  final CountUpConfig config;
+
+  /// One entry per player, in throwing order.
+  final List<CountUpScore> scores;
+  @override
+  final int activeIndex;
+
+  /// Rounds already thrown by everyone.
+  final int roundIndex;
+  @override
+  final int visitsPlayed;
+  @override
+  final List<Dart> dartsInVisit;
+  @override
+  final Player? winner;
+
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
+
+  /// The round being thrown, from 1.
+  int get round => roundIndex + 1;
+
+  CountUpScore get activeScore => scores[activeIndex];
+
+  /// The active player's total, counting darts already thrown.
+  int get activeLivePoints =>
+      activeScore.points + dartsInVisit.fold(0, (sum, d) => sum + d.score);
+
+  /// Matched by id: a player renamed between games stays one player.
+  CountUpScore scoreOf(Player player) =>
+      scores.firstWhere((s) => s.player.id == player.id);
+}
+
+/// One player's runs in a Baseball game.
+class BaseballScore {
+  const BaseballScore({required this.player, this.runs = 0});
+
+  final Player player;
+  final int runs;
+}
+
+/// A Baseball game: inning n is thrown at the number n, a single scoring
+/// 1 run, a double 2, a treble 3. The most runs after nine innings win;
+/// a tie for the lead plays extra innings.
+final class BaseballGame extends Game {
+  const BaseballGame({
+    required this.config,
+    required this.scores,
+    required this.activeIndex,
+    this.inningIndex = 0,
+    this.visitsPlayed = 0,
+    this.dartsInVisit = const [],
+    this.winner,
+  });
+
+  @override
+  final BaseballConfig config;
+
+  /// One entry per player, in throwing order.
+  final List<BaseballScore> scores;
+  @override
+  final int activeIndex;
+
+  /// Innings already played by everyone.
+  final int inningIndex;
+  @override
+  final int visitsPlayed;
+  @override
+  final List<Dart> dartsInVisit;
+  @override
+  final Player? winner;
+
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
+
+  /// The inning being played, which is also the number to hit.
+  int get inning => inningIndex + 1;
+
+  BaseballScore get activeScore => scores[activeIndex];
+
+  /// Runs [dart] scores in this inning.
+  int runsOf(Dart dart) => dart.sector == inning ? dart.multiplier : 0;
+
+  /// Matched by id: a player renamed between games stays one player.
+  BaseballScore scoreOf(Player player) =>
+      scores.firstWhere((s) => s.player.id == player.id);
+}

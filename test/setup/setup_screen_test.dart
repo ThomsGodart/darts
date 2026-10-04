@@ -27,8 +27,7 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
     }
-    await tester.tap(find.text('301'));
-    await tester.pump();
+    await tapInSetup(tester, '301');
     await tester.tap(find.text('Lancer la partie'));
     await tester.pumpAndSettle();
 

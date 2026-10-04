@@ -31,7 +31,18 @@ void main() {
   test('stored game kinds', () {
     expect(
       [for (final kind in GameKind.values) kind.name],
-      ['x01', 'cricket', 'shanghai', 'killer', 'halveIt', 'golf'],
+      [
+        'x01',
+        'cricket',
+        'shanghai',
+        'killer',
+        'halveIt',
+        'golf',
+        'aroundTheClock',
+        'bobs27',
+        'countUp',
+        'baseball',
+      ],
     );
   });
 

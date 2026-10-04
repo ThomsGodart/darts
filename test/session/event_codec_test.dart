@@ -48,6 +48,10 @@ void main() {
       KillerConfig(lives: 5, doublesToKiller: 3),
       HalveItConfig(),
       GolfConfig(holes: 18),
+      AroundTheClockConfig(finishOnBull: true),
+      Bobs27Config(),
+      CountUpConfig(rounds: 10),
+      BaseballConfig(),
     ];
     expect({for (final c in configs) c.kind}, GameKind.values.toSet());
     for (final config in configs) {

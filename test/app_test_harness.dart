@@ -50,16 +50,24 @@ Future<void> launchGame(
     await tester.tap(find.widgetWithText(CheckboxListTile, name));
     await tester.pump();
   }
-  if (game != null) {
-    await tester.ensureVisible(find.text(game));
-    await tester.tap(find.text(game));
-    await tester.pump();
-  }
-  for (final option in options) {
-    await tester.ensureVisible(find.text(option));
-    await tester.tap(find.text(option));
-    await tester.pump();
+  for (final choice in [?game, ...options]) {
+    await tapInSetup(tester, choice);
   }
   await tester.tap(find.text('Lancer la partie'));
   await tester.pumpAndSettle();
+}
+
+/// Taps [text] on the setup screen, scrolling it clear of the edges
+/// first: the rules sit under a list of games that fills the screen.
+Future<void> tapInSetup(WidgetTester tester, String text) async {
+  final finder = find.text(text);
+  await tester.scrollUntilVisible(
+    finder,
+    100,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await Scrollable.ensureVisible(tester.element(finder), alignment: 0.5);
+  await tester.pump();
+  await tester.tap(finder);
+  await tester.pump();
 }

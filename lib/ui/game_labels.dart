@@ -24,6 +24,11 @@ String configLabel(GameConfig config) => switch (config) {
         '${doublesToKiller == 1 ? '' : ' · ${doublesToKiller}D'}',
   HalveItConfig() => 'Halve-It',
   GolfConfig(:final holes) => 'Golf $holes trous',
+  AroundTheClockConfig(:final finishOnBull) =>
+    'Tour de l’horloge${finishOnBull ? ' · bull' : ''}',
+  Bobs27Config() => 'Bob’s 27',
+  CountUpConfig(:final rounds) => 'Count-Up $rounds manches',
+  BaseballConfig() => 'Baseball',
 };
 
 /// "X01", "Cricket", …: the game as the setup offers it.
@@ -34,4 +39,8 @@ String kindLabel(GameKind kind) => switch (kind) {
   GameKind.killer => 'Killer',
   GameKind.halveIt => 'Halve-It',
   GameKind.golf => 'Golf',
+  GameKind.aroundTheClock => 'Tour de l’horloge',
+  GameKind.bobs27 => 'Bob’s 27',
+  GameKind.countUp => 'Count-Up',
+  GameKind.baseball => 'Baseball',
 };

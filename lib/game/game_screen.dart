@@ -13,7 +13,9 @@ import 'cricket_board.dart';
 import 'game_shell.dart';
 import 'golf_board.dart';
 import 'halve_it_board.dart';
+import 'input_pane.dart';
 import 'killer_board.dart';
+import 'round_boards.dart';
 import 'scoreboard.dart';
 import 'screen_awake.dart';
 import 'shanghai_board.dart';
@@ -125,6 +127,10 @@ class _GameScreenState extends State<GameScreen> {
           final KillerGame game => KillerBoard(game: game),
           final HalveItGame game => HalveItBoard(game: game),
           final GolfGame game => GolfBoard(game: game),
+          final AroundTheClockGame game => AroundTheClockBoard(game: game),
+          final Bobs27Game game => Bobs27Board(game: game),
+          final CountUpGame game => CountUpBoard(game: game),
+          final BaseballGame game => BaseballBoard(game: game),
         };
         final inputPane = game.isFinished
             ? _GameOverPanel(
@@ -150,21 +156,30 @@ class _GameScreenState extends State<GameScreen> {
                   onEndVisit: controller.endVisit,
                   onUndo: onUndo,
                 ),
-                final HalveItGame game => HalveItInput(
+                final CountUpGame game => VisitInput(
                   key: ValueKey(game.visitsPlayed),
-                  target: game.currentTarget,
-                  dartsInVisit: game.dartsInVisit,
+                  onSubmit: (score) => _submitTotal(context, score),
                   onDart: controller.throwDart,
+                  dartsInVisit: game.dartsInVisit,
                   onEndVisit: controller.endVisit,
                   onUndo: onUndo,
                 ),
-                final GolfGame game => GolfInput(
-                  key: ValueKey(game.visitsPlayed),
-                  hole: game.currentHole,
-                  dartsInVisit: game.dartsInVisit,
-                  onDart: controller.throwDart,
-                  onEndVisit: controller.endVisit,
-                  onUndo: onUndo,
+                final HalveItGame game => _dartKeys(
+                  game,
+                  halveItKeys(game.currentTarget),
+                ),
+                final GolfGame game => _dartKeys(
+                  game,
+                  ringKeys(game.currentHole),
+                ),
+                final AroundTheClockGame game => _dartKeys(
+                  game,
+                  aroundTheClockKeys(game),
+                ),
+                final Bobs27Game game => _dartKeys(game, bobs27Keys(game)),
+                final BaseballGame game => _dartKeys(
+                  game,
+                  ringKeys(game.inning),
                 ),
                 final ShanghaiGame game => ShanghaiInput(
                   key: ValueKey(game.visitsPlayed),
@@ -266,6 +281,31 @@ class _GameScreenState extends State<GameScreen> {
     Navigator.of(context).pop();
   }
 
+  /// The input of a game thrown at one target at a time.
+  Widget _dartKeys(Game game, List<DartKey> keys) => DartKeysInput(
+    key: ValueKey(game.visitsPlayed),
+    keys: keys,
+    dartsInVisit: game.dartsInVisit,
+    onDart: controller.throwDart,
+    onEndVisit: controller.endVisit,
+    onUndo: controller.canUndo ? controller.undo : null,
+  );
+
+  /// A visit total of a game without checkouts.
+  void _submitTotal(BuildContext context, int score) =>
+      _reportIfRejected(context, controller.submitVisitTotal(score), score);
+
+  void _reportIfRejected(
+    BuildContext context,
+    CommandResult result,
+    int score,
+  ) {
+    if (result is! Rejected || !context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text('Score invalide : $score')));
+  }
+
   Future<void> _submit(BuildContext context, X01Game game, int score) async {
     int? dartsAtCheckout;
     final options = game.checkoutDartOptions(score);
@@ -279,11 +319,7 @@ class _GameScreenState extends State<GameScreen> {
       score,
       dartsAtCheckout: dartsAtCheckout,
     );
-    if (result is Rejected && context.mounted) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Score invalide : $score')));
-    }
+    _reportIfRejected(context, result, score);
   }
 }
 
@@ -401,7 +437,11 @@ class _GameOverPanel extends StatelessWidget {
                     ShanghaiGame() ||
                     KillerGame() ||
                     HalveItGame() ||
-                    GolfGame() => 'Annuler la dernière fléchette',
+                    GolfGame() ||
+                    AroundTheClockGame() ||
+                    Bobs27Game() ||
+                    BaseballGame() => 'Annuler la dernière fléchette',
+                    CountUpGame() => 'Annuler la dernière saisie',
                   }),
                 ),
                 TextButton.icon(
