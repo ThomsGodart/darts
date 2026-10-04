@@ -22,6 +22,7 @@ Map<String, Object?> _encodeConfig(GameConfig config) => {
       :final startScore,
       :final outRule,
       :final doubleIn,
+      :final trackDoubles,
       :final legsToWin,
       :final setsToWin,
     ) =>
@@ -29,6 +30,7 @@ Map<String, Object?> _encodeConfig(GameConfig config) => {
         'startScore': startScore,
         'outRule': outRule.name,
         'doubleIn': doubleIn,
+        'trackDoubles': trackDoubles,
         'legsToWin': legsToWin,
         'setsToWin': setsToWin,
       },
@@ -60,6 +62,7 @@ GameConfig _decodeConfig(Map<String, Object?> payload) =>
         startScore: payload['startScore']! as int,
         outRule: OutRule.values.byName(payload['outRule']! as String),
         doubleIn: payload['doubleIn'] as bool? ?? false,
+        trackDoubles: payload['trackDoubles'] as bool? ?? false,
         // Games recorded before matches existed were single legs.
         legsToWin: payload['legsToWin'] as int? ?? 1,
         setsToWin: payload['setsToWin'] as int? ?? 1,
@@ -128,9 +131,9 @@ EncodedEvent encodeEvent(SessionEvent event) => switch (event) {
       ..._encodeConfig(config),
     },
   ),
-  VisitTotalSubmitted(:final score, :final darts) => (
+  VisitTotalSubmitted(:final score, :final darts, :final dartsAtDouble) => (
     type: EventTypes.visitTotalSubmitted,
-    payload: {'score': score, 'darts': darts},
+    payload: {'score': score, 'darts': darts, 'dartsAtDouble': ?dartsAtDouble},
   ),
   DartThrown(:final dart) => (
     type: EventTypes.dartThrown,
@@ -155,6 +158,7 @@ SessionEvent decodeEvent(String type, Map<String, Object?> payload) =>
       EventTypes.visitTotalSubmitted => VisitTotalSubmitted(
         payload['score']! as int,
         darts: payload['darts']! as int,
+        dartsAtDouble: payload['dartsAtDouble'] as int?,
       ),
       EventTypes.dartThrown => DartThrown(
         Dart.fromStored(

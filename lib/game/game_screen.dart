@@ -407,12 +407,45 @@ class _GameScreenState extends State<GameScreen> {
       dartsAtCheckout = await _askCheckoutDarts(context, options);
       if (dartsAtCheckout == null || !context.mounted) return;
     }
+    int? dartsAtDouble;
+    if (game.config.trackDoubles) {
+      final counts = game.doubleDartOptions(
+        score,
+        dartsAtCheckout: dartsAtCheckout,
+      );
+      if (counts.length == 1) {
+        dartsAtDouble = counts.single;
+      } else if (counts.isNotEmpty) {
+        dartsAtDouble = await _askDoubleDarts(context, counts);
+        if (dartsAtDouble == null || !context.mounted) return;
+      }
+    }
     final result = controller.submitVisitTotal(
       score,
       dartsAtCheckout: dartsAtCheckout,
+      dartsAtDouble: dartsAtDouble,
     );
-    _reportIfRejected(context, result, score);
+    if (context.mounted) _reportIfRejected(context, result, score);
   }
+}
+
+/// Asks how many darts of the visit were thrown at a finish; null if
+/// dismissed.
+Future<int?> _askDoubleDarts(BuildContext context, List<int> counts) {
+  return showDialog<int>(
+    context: context,
+    builder: (context) => AlertDialog(
+      key: const Key('double-darts-dialog'),
+      title: const Text('Fléchettes sur un double ?'),
+      actions: [
+        for (final count in counts)
+          FilledButton.tonal(
+            onPressed: () => Navigator.of(context).pop(count),
+            child: Text('$count'),
+          ),
+      ],
+    ),
+  );
 }
 
 /// Slim bar over the game: the way back to the menu, and what is played.

@@ -13,15 +13,14 @@ SessionState applyEvent(SessionState state, SessionEvent event) {
     GameStarted(:final players, :final config) => state.addGame(
       _newGame(players, config),
     ),
-    VisitTotalSubmitted(:final score, :final darts) => state.replaceCurrentGame(
-      switch (state.game) {
-        final X01Game game => _visitTotal(game, score, darts),
+    VisitTotalSubmitted(:final score, :final darts, :final dartsAtDouble) =>
+      state.replaceCurrentGame(switch (state.game) {
+        final X01Game game => _visitTotal(game, score, darts, dartsAtDouble),
         final CountUpGame game => _countUpCompleteVisit(game, score),
         _ => throw const FormatException(
           'A visit total in a game entered dart by dart',
         ),
-      },
-    ),
+      }),
     DartThrown(:final dart) => state.replaceCurrentGame(
       _dartThrown(state.game!, dart),
     ),
@@ -244,7 +243,7 @@ extension on GolfGame {
   );
 }
 
-X01Game _visitTotal(X01Game game, int score, int darts) {
+X01Game _visitTotal(X01Game game, int score, int darts, int? dartsAtDouble) {
   final after = game.activeScore.remaining - score;
   return _x01CompleteVisit(
     game,
@@ -252,6 +251,7 @@ X01Game _visitTotal(X01Game game, int score, int darts) {
       score: score,
       darts: darts,
       isBust: game.config.outRule.bustsOn(after),
+      dartsAtDouble: dartsAtDouble,
     ),
     // A total says nothing of the darts: scoring is taken as being in.
     isIn: game.activeScore.isIn || score > 0,
@@ -271,7 +271,15 @@ X01Game _x01Dart(X01Game game, Dart dart) {
   }
   return _x01CompleteVisit(
     game,
-    Visit(score: visitScore, darts: darts.length, isBust: isBust),
+    Visit(
+      score: visitScore,
+      darts: darts.length,
+      isBust: isBust,
+      // Straight-out has no double to aim at: nothing to count.
+      dartsAtDouble: outRule == OutRule.straight
+          ? null
+          : game.dartsAtDoubleIn(darts),
+    ),
     isIn: game.activeScore.isIn || darts.any((d) => d.isDouble),
   );
 }

@@ -17,6 +17,8 @@ in French.
 | **Remaining** | Points a player still has to score in X01. | reste |
 | **Bust** | A visit that would leave the remaining below 0, on 1 in double-out, or on 0 without a double; it scores nothing. | BUST |
 | **Checkout** | The visit that brings the remaining to exactly 0 and wins the game. | checkout |
+| **Dart at a double** | A dart thrown with a one-dart finish left under the out rule (a double, or a treble too in master-out). Counted on visits entered dart by dart; asked on totals only when the game tracks doubles. | fléchette sur un double |
+| **Checkout rate** | Checkouts per dart at a double, over the visits that say how many there were. | pourcentage de checkout |
 | **Out rule** | How a game must be finished: straight-out (any dart), double-out (a double or the bull) or master-out (a double or a treble). | Double-out |
 | **Double-in** | An X01 option: a player's darts score nothing until they hit a double. A visit entered as a total gets them in when it scores. | Double-in |
 | **Mark** | A hit count toward closing a Cricket number (need 3; S/D/T = 1/2/3; outer/inner bull = 1/2). | marque |

@@ -308,6 +308,15 @@ class _SetupScreenState extends State<SetupScreen> {
                   onChanged: (value) =>
                       setup.config = x01.copyWith(doubleIn: value),
                 ),
+                SwitchListTile(
+                  title: const Text('Pourcentage de checkout'),
+                  subtitle: const Text(
+                    'Demande les fléchettes tirées sur un double',
+                  ),
+                  value: x01.trackDoubles,
+                  onChanged: (value) =>
+                      setup.config = x01.copyWith(trackDoubles: value),
+                ),
                 SegmentedButton<int>(
                   key: const Key('legs-to-win'),
                   segments: [

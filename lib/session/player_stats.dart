@@ -15,6 +15,8 @@ class PlayerStats {
     required this.bestCheckout,
     required this.fewestDartsToWin,
     required this.marksPerRound,
+    required this.dartsAtDouble,
+    required this.checkouts,
   });
 
   /// The player, under the name of their latest game.
@@ -45,6 +47,16 @@ class PlayerStats {
 
   /// Marks per round over every cricket game; null before the first dart.
   final double? marksPerRound;
+
+  /// Darts thrown at a finish in X01, over the visits that say so (those
+  /// entered dart by dart, or as a total with the count given), and the
+  /// games won on those visits.
+  final int dartsAtDouble;
+  final int checkouts;
+
+  /// Checkouts per dart at a finish; null when no visit said.
+  double? get checkoutRate =>
+      dartsAtDouble == 0 ? null : checkouts / dartsAtDouble;
 }
 
 /// Everyone's stats over [sessions], in the order they first played.
@@ -92,6 +104,8 @@ class _Tally {
   int? fewestDartsToWin;
   var marks = 0;
   var rounds = 0;
+  var dartsAtDouble = 0;
+  var checkouts = 0;
 
   void addX01(X01Game game, PlayerScore score) {
     points += score.pointsScored;
@@ -105,7 +119,14 @@ class _Tally {
       if (visit.points >= 140) ton40s++;
       if (visit.points == 180) ton80s++;
     }
-    if (game.winner?.id != score.player.id) return;
+    final won = game.winner?.id == score.player.id;
+    for (final (i, visit) in score.visits.indexed) {
+      final atDouble = visit.dartsAtDouble;
+      if (atDouble == null) continue;
+      dartsAtDouble += atDouble;
+      if (won && i == score.visits.length - 1) checkouts++;
+    }
+    if (!won) return;
     final checkout = score.lastVisit!.points;
     if (checkout > (bestCheckout ?? 0)) bestCheckout = checkout;
     if (score.dartsThrown < (fewestDartsToWin ?? score.dartsThrown + 1)) {
@@ -125,5 +146,7 @@ class _Tally {
     bestCheckout: bestCheckout,
     fewestDartsToWin: fewestDartsToWin,
     marksPerRound: perRound(marks, rounds),
+    dartsAtDouble: dartsAtDouble,
+    checkouts: checkouts,
   );
 }

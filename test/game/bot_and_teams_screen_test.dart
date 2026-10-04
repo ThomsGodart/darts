@@ -132,8 +132,11 @@ void main() {
         await tester.pump();
       }
       await tapInSetup(tester, 'Équipes de 2');
-      await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
-      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('setup-problem')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
 
       expect(find.byKey(const Key('setup-problem')), findsOneWidget);
     });

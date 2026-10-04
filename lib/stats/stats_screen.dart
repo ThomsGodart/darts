@@ -72,6 +72,12 @@ List<(String, String)> playerStatsLines(PlayerStats stats) => [
     ('Moyenne X01', averageLabel(stats.x01Average)),
     ('Moyenne des 9 premières', averageLabel(stats.firstNineAverage)),
     ('100+ · 140+ · 180', '${stats.tons} · ${stats.ton40s} · ${stats.ton80s}'),
+    if (stats.checkoutRate case final rate?)
+      (
+        'Checkout',
+        '${(100 * rate).round()} % '
+            '(${stats.checkouts}/${stats.dartsAtDouble})',
+      ),
     if (stats.bestCheckout case final checkout?)
       ('Meilleure finition', '$checkout'),
     if (stats.fewestDartsToWin case final darts?)

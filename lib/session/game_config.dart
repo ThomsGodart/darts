@@ -89,6 +89,7 @@ final class X01Config extends GameConfig {
     this.startScore = 501,
     this.outRule = OutRule.double,
     this.doubleIn = false,
+    this.trackDoubles = false,
     this.legsToWin = 1,
     this.setsToWin = 1,
   });
@@ -108,6 +109,11 @@ final class X01Config extends GameConfig {
   /// Whether a player scores nothing until they hit a double.
   final bool doubleIn;
 
+  /// Whether a visit entered as a total is asked how many of its darts
+  /// were thrown at a finish, for the checkout rate. Visits entered dart
+  /// by dart are counted either way. Not a rule: it changes no score.
+  final bool trackDoubles;
+
   /// Legs a player must win to take a set (the match, without sets).
   final int legsToWin;
 
@@ -121,12 +127,14 @@ final class X01Config extends GameConfig {
     int? startScore,
     OutRule? outRule,
     bool? doubleIn,
+    bool? trackDoubles,
     int? legsToWin,
     int? setsToWin,
   }) => X01Config(
     startScore: startScore ?? this.startScore,
     outRule: outRule ?? this.outRule,
     doubleIn: doubleIn ?? this.doubleIn,
+    trackDoubles: trackDoubles ?? this.trackDoubles,
     legsToWin: legsToWin ?? this.legsToWin,
     setsToWin: setsToWin ?? this.setsToWin,
   );
@@ -143,12 +151,19 @@ final class X01Config extends GameConfig {
       other.startScore == startScore &&
       other.outRule == outRule &&
       other.doubleIn == doubleIn &&
+      other.trackDoubles == trackDoubles &&
       other.legsToWin == legsToWin &&
       other.setsToWin == setsToWin;
 
   @override
-  int get hashCode =>
-      Object.hash(startScore, outRule, doubleIn, legsToWin, setsToWin);
+  int get hashCode => Object.hash(
+    startScore,
+    outRule,
+    doubleIn,
+    trackDoubles,
+    legsToWin,
+    setsToWin,
+  );
 }
 
 /// Numbers that count in cricket, as a board lists them; 25 is the bull.

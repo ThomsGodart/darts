@@ -96,12 +96,22 @@ class SessionState {
 
 /// One visit as it was played.
 class Visit {
-  const Visit({required this.score, required this.darts, required this.isBust});
+  const Visit({
+    required this.score,
+    required this.darts,
+    required this.isBust,
+    this.dartsAtDouble,
+  });
 
   /// Total entered for the visit, even when it busted.
   final int score;
   final int darts;
   final bool isBust;
+
+  /// How many of the darts were thrown at a finish, i.e. with a one-dart
+  /// finish left; null when the visit was entered as a total and nobody
+  /// said.
+  final int? dartsAtDouble;
 
   /// Points that count towards the remaining score and the average.
   int get points => isBust ? 0 : score;
@@ -111,10 +121,11 @@ class Visit {
       other is Visit &&
       other.score == score &&
       other.darts == darts &&
-      other.isBust == isBust;
+      other.isBust == isBust &&
+      other.dartsAtDouble == dartsAtDouble;
 
   @override
-  int get hashCode => Object.hash(score, darts, isBust);
+  int get hashCode => Object.hash(score, darts, isBust, dartsAtDouble);
 }
 
 class PlayerScore {
@@ -254,6 +265,46 @@ final class X01Game extends Game {
       if (isIn) points += dart.score;
     }
     return points;
+  }
+
+  /// How many of [darts], thrown by the active player in one visit, were
+  /// thrown with a one-dart finish left.
+  int dartsAtDoubleIn(List<Dart> darts) {
+    final finishes = config.outRule.finishingDartScores;
+    var count = 0;
+    for (var i = 0; i < darts.length; i++) {
+      final before =
+          activeScore.remaining - countedScoreOf(darts.sublist(0, i));
+      if (finishes.contains(before)) count++;
+    }
+    return count;
+  }
+
+  /// The counts of darts at a finish worth asking about for a visit of
+  /// [score] entered as a total: empty when there is nothing to ask, a
+  /// single value when it can only be that. [dartsAtCheckout] is how
+  /// many darts a checkout took.
+  ///
+  /// Straight-out has no doubles to aim at: nothing is ever asked.
+  List<int> doubleDartOptions(int score, {int? dartsAtCheckout}) {
+    final outRule = config.outRule;
+    if (outRule == OutRule.straight) return const [];
+    final remaining = activeScore.remaining;
+    final fewest = fewestDartsToFinish(remaining, outRule);
+    if (fewest == null) return const [];
+    // Darts spent getting to a finish were not thrown at one.
+    final most = dartsPerVisit - (fewest - 1);
+    final after = remaining - score;
+    if (after == 0) {
+      final thrown = dartsAtCheckout ?? dartsPerVisit;
+      return [for (var n = 1; n <= thrown - (fewest - 1); n++) n];
+    }
+    final finishes = outRule.finishingDartScores;
+    final nearAFinish =
+        outRule.bustsOn(after) ||
+        finishes.contains(after) ||
+        finishes.contains(remaining);
+    return nearAFinish ? [for (var n = 0; n <= most; n++) n] : const [];
   }
 
   /// Everyone but the active player, in the order they will throw next.

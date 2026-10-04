@@ -17,12 +17,19 @@ class GameStarted extends SessionEvent {
 
 /// A visit entered as its total (0–180).
 class VisitTotalSubmitted extends SessionEvent {
-  const VisitTotalSubmitted(this.score, {this.darts = dartsPerVisit});
+  const VisitTotalSubmitted(
+    this.score, {
+    this.darts = dartsPerVisit,
+    this.dartsAtDouble,
+  });
 
   final int score;
 
   /// Darts thrown: a full visit, unless the visit checked out in fewer.
   final int darts;
+
+  /// How many of them were thrown at a finish; null when nobody said.
+  final int? dartsAtDouble;
 }
 
 /// The session is over: it goes to the history.

@@ -16,10 +16,17 @@ class SessionController extends ChangeNotifier {
     GameConfig config = const X01Config(),
   }) => _notifyIfAccepted(_session.startGame(players, config: config));
 
-  CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) =>
-      _notifyIfAccepted(
-        _session.submitVisitTotal(score, dartsAtCheckout: dartsAtCheckout),
-      );
+  CommandResult submitVisitTotal(
+    int score, {
+    int? dartsAtCheckout,
+    int? dartsAtDouble,
+  }) => _notifyIfAccepted(
+    _session.submitVisitTotal(
+      score,
+      dartsAtCheckout: dartsAtCheckout,
+      dartsAtDouble: dartsAtDouble,
+    ),
+  );
 
   CommandResult throwDart(Dart dart) =>
       _notifyIfAccepted(_session.throwDart(dart));

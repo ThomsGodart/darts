@@ -94,8 +94,14 @@ void main() {
     await tester.pumpAndSettle();
 
     Future<void> scrollToEnd() async {
-      await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
-      await tester.pumpAndSettle();
+      // More than one fling: the rules under the games keep growing.
+      for (var i = 0; i < 3; i++) {
+        await tester.drag(
+          find.byType(Scrollable).first,
+          const Offset(0, -2000),
+        );
+        await tester.pumpAndSettle();
+      }
     }
 
     for (final game in ['X01', 'Cricket', 'Shanghai']) {

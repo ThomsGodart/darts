@@ -68,8 +68,13 @@ class Session {
   /// Submits a visit by its total. When it brings the remaining score to
   /// exactly 0, [dartsAtCheckout] must say how many darts it took (one of
   /// [X01Game.checkoutDartOptions]); otherwise it must be omitted. Only
-  /// X01 and Count-Up games take totals.
-  CommandResult submitVisitTotal(int score, {int? dartsAtCheckout}) {
+  /// X01 and Count-Up games take totals. [dartsAtDouble] optionally says
+  /// how many darts of an X01 visit were thrown at a finish.
+  CommandResult submitVisitTotal(
+    int score, {
+    int? dartsAtCheckout,
+    int? dartsAtDouble,
+  }) {
     final current = _state.game;
     if (current == null || current.isFinished || _state.isEnded) {
       return _notInProgress(current);
@@ -100,7 +105,11 @@ class Session {
       if (dartsAtCheckout != null) {
         return const Rejected('A dart count is only given on a checkout');
       }
-      return _record(VisitTotalSubmitted(score));
+      if (dartsAtDouble != null &&
+          (dartsAtDouble < 0 || dartsAtDouble > dartsPerVisit)) {
+        return Rejected('$dartsAtDouble darts cannot be thrown at a double');
+      }
+      return _record(VisitTotalSubmitted(score, dartsAtDouble: dartsAtDouble));
     }
     // From here the visit would bring the remaining score to exactly 0.
     final options = game.checkoutDartOptions(score);
@@ -111,7 +120,19 @@ class Session {
     if (!options.contains(dartsAtCheckout)) {
       return Rejected('$score cannot be checked out in $dartsAtCheckout');
     }
-    return _record(VisitTotalSubmitted(score, darts: dartsAtCheckout));
+    if (dartsAtDouble != null &&
+        (dartsAtDouble < 1 || dartsAtDouble > dartsAtCheckout)) {
+      return Rejected(
+        'A checkout in $dartsAtCheckout cannot take $dartsAtDouble at a double',
+      );
+    }
+    return _record(
+      VisitTotalSubmitted(
+        score,
+        darts: dartsAtCheckout,
+        dartsAtDouble: dartsAtDouble,
+      ),
+    );
   }
 
   /// Enters the next dart of the active player's visit. The visit ends by
