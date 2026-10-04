@@ -14,4 +14,4 @@ Both are stored inside `game_started`, as optional keys of a player (`members`, 
 - A team's stats are not split between its members: who threw which visit is not recorded, only derived from the round. Teams and virtual opponents are left out of the per-player stats.
 - The thrower is derived from the number of visits played, which assumes sides throw in strict rotation. In games that skip eliminated players (Killer, Bob's 27) the member announced can drift once someone is out.
 - A virtual opponent only plays games entered as a total: the app enters its visits through the same command a person's total goes through.
-- The setup pairs picked players in order (1 and 2, 3 and 4) and flattens a team back into its members when it is reopened.
+- The setup asks for a number of teams and lets each picked player choose theirs, so teams can be uneven (two against three); someone alone in a team is stored as themselves, not as a team of one. A team is flattened back into its members when the setup is reopened.

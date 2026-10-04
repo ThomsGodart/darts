@@ -92,53 +92,93 @@ void main() {
   });
 
   group('teams', () {
-    testWidgets('pairs share a score and take turns to throw', (tester) async {
-      await pumpApp(tester, await fourPlayers());
+    Future<void> pickPlayers(WidgetTester tester, int count) async {
       await tester.tap(find.text('Nouvelle session'));
       await tester.pumpAndSettle();
-      for (var i = 1; i <= 4; i++) {
+      for (var i = 1; i <= count; i++) {
         await tester.tap(find.widgetWithText(CheckboxListTile, 'Joueur $i'));
         await tester.pump();
       }
-      await tapInSetup(tester, 'Équipes de 2');
+    }
+
+    String summary(WidgetTester tester) =>
+        tester.widget<Text>(find.byKey(const Key('teams-summary'))).data!;
+
+    testWidgets('a team shares a score; a banner says whose throw it is', (
+      tester,
+    ) async {
+      await pumpApp(tester, await fourPlayers());
+      await pickPlayers(tester, 4);
+      await tapInSetup(tester, '2 équipes');
       expect(
-        find.text('Joueur 1 & Joueur 2  ·  Joueur 3 & Joueur 4'),
-        findsOneWidget,
+        summary(tester),
+        'Équipe 1 : Joueur 1 & Joueur 3\nÉquipe 2 : Joueur 2 & Joueur 4',
       );
       await tester.tap(find.text('Lancer la partie'));
       await tester.pumpAndSettle();
 
-      expect(activeName(tester), 'Joueur 1 & Joueur 2');
-      expect(find.textContaining('Joueur 1 lance'), findsOneWidget);
+      final banner = find.byKey(const Key('thrower-banner'));
+      expect(activeName(tester), 'Joueur 1 & Joueur 3');
+      expect(
+        find.descendant(of: banner, matching: find.text('Joueur 1 lance')),
+        findsOneWidget,
+      );
 
       await quickScore(tester, 60);
-      expect(find.text('À toi, Joueur 3 !'), findsOneWidget);
       await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: banner, matching: find.text('Joueur 2 lance')),
+        findsOneWidget,
+      );
       await quickScore(tester, 45);
-      expect(find.text('À toi, Joueur 2 !'), findsOneWidget);
       await tester.pumpAndSettle();
 
-      // One score for the pair.
-      expect(activeName(tester), 'Joueur 1 & Joueur 2');
+      // Back to the first team: its other member, on the shared score.
+      expect(
+        find.descendant(of: banner, matching: find.text('Joueur 3 lance')),
+        findsOneWidget,
+      );
       expect(activeRemaining(tester), '441');
     });
 
-    testWidgets('an odd number of players cannot make teams', (tester) async {
+    testWidgets('players choose their team: three against one', (tester) async {
       await pumpApp(tester, await fourPlayers());
-      await tester.tap(find.text('Nouvelle session'));
-      await tester.pumpAndSettle();
-      for (var i = 1; i <= 3; i++) {
-        await tester.tap(find.widgetWithText(CheckboxListTile, 'Joueur $i'));
-        await tester.pump();
-      }
-      await tapInSetup(tester, 'Équipes de 2');
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('setup-problem')),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
+      await pickPlayers(tester, 4);
+      await tapInSetup(tester, '2 équipes');
 
-      expect(find.byKey(const Key('setup-problem')), findsOneWidget);
+      // Joueur 2 joins team 1, leaving Joueur 4 alone in team 2.
+      final team = find.byWidgetPredicate(
+        (w) =>
+            w.key is ValueKey<String> &&
+            (w.key! as ValueKey<String>).value.startsWith('team-of-'),
+      );
+      await tester.ensureVisible(team.at(1));
+      await tester.tap(
+        find.descendant(of: team.at(1), matching: find.text('1')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        summary(tester),
+        'Équipe 1 : Joueur 1 & Joueur 2 & Joueur 3\nÉquipe 2 : Joueur 4',
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Lancer la partie'),
+            )
+            .onPressed,
+        isNotNull,
+      );
+    });
+
+    testWidgets('no banner when everyone plays for themselves', (tester) async {
+      await pumpApp(tester, await fourPlayers());
+      await pickPlayers(tester, 2);
+      await tester.tap(find.text('Lancer la partie'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('thrower-banner')), findsNothing);
     });
   });
 }

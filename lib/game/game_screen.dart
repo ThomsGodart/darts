@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/darts_space.dart';
+import '../theme/darts_tokens.dart';
 import '../session/session.dart';
 import '../session_controller.dart';
 import '../session_launcher.dart';
@@ -306,11 +307,15 @@ class _GameScreenState extends State<GameScreen> {
                             '${matchScoreLabel(match, controller.state.matchPlayers)}',
                       null => configLabel(game.config),
                     },
-                    // A team's score has one name on it: say who is up.
-                    if (game.activePlayer.isTeam && !game.isFinished)
-                      '${game.thrower.name} lance',
                   ].join('  ·  '),
                 ),
+                // A team's score has one name on it, and a session has
+                // distractions: say in full view whose throw it is.
+                if (game.activePlayer.isTeam && !game.isFinished)
+                  _ThrowerBanner(
+                    team: game.activePlayer,
+                    thrower: game.thrower,
+                  ),
                 Expanded(
                   child: GameShell(statePane: statePane, inputPane: inputPane),
                 ),
@@ -446,6 +451,52 @@ Future<int?> _askDoubleDarts(BuildContext context, List<int> counts) {
       ],
     ),
   );
+}
+
+/// Who of which team is at the oche, for as long as it is their visit.
+class _ThrowerBanner extends StatelessWidget {
+  const _ThrowerBanner({required this.team, required this.thrower});
+
+  final Player team;
+  final Player thrower;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = Theme.of(context).extension<DartsTokens>()!;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      key: const Key('thrower-banner'),
+      width: double.infinity,
+      color: tokens.activePlayer,
+      padding: const EdgeInsets.symmetric(
+        horizontal: DartsSpace.lg,
+        vertical: DartsSpace.sm,
+      ),
+      child: Column(
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '${thrower.name} lance',
+              style: textTheme.headlineMedium?.copyWith(
+                color: tokens.onActivePlayer,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'Équipe ${team.name}',
+              style: textTheme.titleMedium?.copyWith(
+                color: tokens.onActivePlayer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Slim bar over the game: the way back to the menu, and what is played.

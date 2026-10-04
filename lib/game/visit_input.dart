@@ -84,7 +84,8 @@ class _VisitInputState extends State<VisitInput> {
               child: const Text('0 / raté'),
             ),
       children: _inDartMode
-          ? [DartPicker(onDart: widget.onDart)]
+          // Without totals (cricket), a miss changes nothing: no key.
+          ? [DartPicker(onDart: widget.onDart, showMiss: _takesTotals)]
           : _totalPad(Theme.of(context).textTheme),
     );
   }

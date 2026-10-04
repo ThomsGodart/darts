@@ -119,4 +119,25 @@ void main() {
     expect(find.byKey(const Key('cricket-board')), findsOneWidget);
     expect(find.text('MPR'), findsOneWidget);
   });
+
+  testWidgets('no miss key: ending the visit says the rest missed', (
+    tester,
+  ) async {
+    await launchCricket(tester);
+    expect(find.text('Raté'), findsNothing);
+    expect(find.text('Fin de tour'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('leave-game')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nouvelle session'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Terminer et commencer'));
+    await tester.pumpAndSettle();
+    await tapInSetup(tester, 'Clavier fléchettes');
+    await tester.tap(find.text('Lancer la partie'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Triple'), findsOneWidget);
+    expect(find.text('Raté'), findsNothing);
+  });
 }

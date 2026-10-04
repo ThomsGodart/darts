@@ -55,61 +55,110 @@ void main() {
   });
 
   group('teams', () {
-    test('picked players pair up in order', () async {
-      final setup = await setupWith(['Ana', 'Bob', 'Cléo', 'Dan']);
+    Future<SetupController> allPicked(List<String> names) async {
+      final setup = await setupWith(names);
       for (final player in setup.players) {
         setup.toggle(player);
       }
-      setup.teams = true;
+      return setup;
+    }
 
-      expect(
-        [for (final side in setup.result.players) side.name],
-        ['Ana & Bob', 'Cléo & Dan'],
-      );
+    List<String> sideNames(SetupController setup) => [
+      for (final side in setup.result.players) side.name,
+    ];
+
+    test('without teams, everyone plays for themselves', () async {
+      final setup = await allPicked(['Ana', 'Bob', 'Cléo']);
+      expect(setup.teamCount, 0);
+      expect(sideNames(setup), ['Ana', 'Bob', 'Cléo']);
+    });
+
+    test('asking for teams deals the players out in turn', () async {
+      final setup = await allPicked(['Ana', 'Bob', 'Cléo', 'Dan']);
+      setup.teamCount = 2;
+
+      expect(sideNames(setup), ['Ana & Cléo', 'Bob & Dan']);
       expect(setup.canStart, isTrue);
     });
 
-    test('teams need an even number of players, four at least', () async {
-      final setup = await setupWith(['Ana', 'Bob', 'Cléo']);
-      for (final player in setup.players) {
-        setup.toggle(player);
-      }
-      setup.teams = true;
-      expect(setup.canStart, isFalse);
-      expect(setup.problem, SetupProblem.teamsNeedPairs);
+    test('teams need not be even: five players, two against three', () async {
+      final setup = await allPicked(['Ana', 'Bob', 'Cléo', 'Dan', 'Eve']);
+      setup.teamCount = 2;
+      expect(sideNames(setup), ['Ana & Cléo & Eve', 'Bob & Dan']);
+      expect(setup.canStart, isTrue);
+    });
 
-      setup.toggle(setup.players.last);
+    test('players choose who is with whom', () async {
+      final setup = await allPicked(['Ana', 'Bob', 'Cléo', 'Dan', 'Eve']);
+      setup.teamCount = 2;
+      final byName = {for (final p in setup.players) p.name: p};
+      setup
+        ..assign(byName['Bob']!, 0)
+        ..assign(byName['Cléo']!, 1)
+        ..assign(byName['Eve']!, 1);
+
+      expect(setup.teamOf(byName['Bob']!), 0);
+      expect(sideNames(setup), ['Ana & Bob', 'Cléo & Dan & Eve']);
+    });
+
+    test('three teams, and a player alone is no team', () async {
+      final setup = await allPicked(['Ana', 'Bob', 'Cléo', 'Dan']);
+      setup.teamCount = 3;
+
+      expect(sideNames(setup), ['Ana & Dan', 'Bob', 'Cléo']);
+      expect(setup.result.players[1].isTeam, isFalse);
+    });
+
+    test('a team left without anyone keeps the game from starting', () async {
+      final setup = await allPicked(['Ana', 'Bob', 'Cléo']);
+      setup.teamCount = 2;
+      setup.assign(setup.players[1], 0);
+
+      expect(setup.problem, SetupProblem.emptyTeam);
       expect(setup.canStart, isFalse);
     });
 
-    test('no bot in a team', () async {
+    test('a player picked later joins the smallest team', () async {
       final setup = await setupWith(['Ana', 'Bob', 'Cléo']);
-      for (final player in setup.players) {
-        setup.toggle(player);
-      }
+      setup
+        ..toggle(setup.players[0])
+        ..toggle(setup.players[1])
+        ..teamCount = 2
+        ..assign(setup.players[1], 0)
+        ..toggle(setup.players[2]);
+
+      expect(sideNames(setup), ['Ana & Bob', 'Cléo']);
+    });
+
+    test('a bot may be a side of its own, not a team mate', () async {
+      final setup = await allPicked(['Ana', 'Bob']);
       setup
         ..toggle(Player.bot(60))
-        ..teams = true;
+        ..teamCount = 2;
+      // Dealt out: Ana and the bot together.
       expect(setup.problem, SetupProblem.botInTeam);
+
+      setup
+        ..assign(setup.players[1], 0)
+        ..assign(Player.bot(60), 1);
+      expect(setup.problem, isNull);
+      expect(sideNames(setup), ['Ana & Bob', 'Bot 60']);
     });
 
-    test('a setup prefilled with teams opens on their members', () async {
+    test('a setup prefilled with teams opens on the same teams', () async {
       final setup = await setupWith(
-        ['Ana', 'Bob', 'Cléo', 'Dan'],
+        ['Ana', 'Bob', 'Cléo', 'Dan', 'Eve'],
         from: (p) => (
           players: [
-            Player.team([p[2], p[0]]),
+            Player.team([p[2], p[0], p[4]]),
             Player.team([p[1], p[3]]),
           ],
           config: const X01Config(),
         ),
       );
 
-      expect(setup.teams, isTrue);
-      expect(
-        [for (final p in setup.picked) p.name],
-        ['Cléo', 'Ana', 'Bob', 'Dan'],
-      );
+      expect(setup.teamCount, 2);
+      expect(sideNames(setup), ['Cléo & Ana & Eve', 'Bob & Dan']);
     });
   });
 }

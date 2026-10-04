@@ -35,7 +35,7 @@ in French.
 | **Round** | In Count-Up, Shanghai, Halve-It, Golf and Bob's 27: one visit by every player on the same target. (Cricket's MPR counts a player's own visits as their rounds.) | manche |
 | **Inning** | A round of Baseball. | manche |
 | **Run** | What a dart on the inning's number scores in Baseball. | run |
-| **Team** | Two people sharing one score: one side of a game. Its members take turns to throw, round after round. Stored as a player with **members**. | équipe |
+| **Team** | Several people sharing one score: one side of a game. Teams need not be the same size. Its members take turns to throw, round after round. Stored as a player with **members**. | équipe |
 | **Thrower** | Who is at the oche: the active player, or the member of the active team whose turn it is. | — |
 | **Virtual opponent** | A player the app throws for, to a chosen three-dart average. Plays the games entered as totals (X01, Count-Up); in no catalog and no stats. Also "bot" in code. | adversaire virtuel |
 | **Player catalog** | The players known to the app across sessions; players who played are archived, not deleted. | joueurs |

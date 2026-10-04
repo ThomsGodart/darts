@@ -4,10 +4,10 @@ import '../session/session.dart';
 
 /// Why a setup cannot start although enough players are picked.
 enum SetupProblem {
-  /// Teams are pairs: an even number of players, four at least.
-  teamsNeedPairs,
+  /// One of the teams asked for has nobody in it.
+  emptyTeam,
 
-  /// A virtual opponent plays alone, not in a team.
+  /// A virtual opponent plays alone, not with team mates.
   botInTeam,
 
   /// A virtual opponent only plays games entered as totals.
@@ -22,14 +22,21 @@ class SetupController extends ChangeNotifier {
   /// A blank setup, or one starting from the players and rules of [from].
   SetupController(this._catalog, {GameSetup? from})
     : _picked = [
-        // Teams open on their members: they are paired again on the way
-        // out.
+        // Teams open on their members: they are put back together on the
+        // way out.
         for (final side in from?.players ?? const <Player>[])
           if (side.isTeam) ...side.members else side,
       ],
-      _teams = from?.players.any((side) => side.isTeam) ?? false,
       _kind = from?.config.kind ?? GameKind.x01 {
-    if (from != null) _configs[from.config.kind] = from.config;
+    if (from == null) return;
+    _configs[from.config.kind] = from.config;
+    if (!from.players.any((side) => side.isTeam)) return;
+    _teamCount = from.players.length;
+    for (final (team, side) in from.players.indexed) {
+      for (final member in side.isTeam ? side.members : [side]) {
+        _teamOf[member.id] = team;
+      }
+    }
   }
 
   final PlayerCatalog _catalog;
@@ -39,8 +46,13 @@ class SetupController extends ChangeNotifier {
   bool _loading = true;
   String? _loadError;
   final List<Player> _picked;
-  bool _teams;
   GameKind _kind;
+
+  /// Teams asked for; 0 when everyone plays for themselves.
+  int _teamCount = 0;
+
+  /// Team of each picked player, by player id, from 0.
+  final Map<String, int> _teamOf = {};
 
   /// The rules last chosen for each game, so switching games and back
   /// loses nothing.
@@ -77,33 +89,59 @@ class SetupController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Whether the picked players pair up into teams of two, in order.
-  bool get teams => _teams;
+  /// Teams asked for; 0 when everyone plays for themselves.
+  int get teamCount => _teamCount;
 
-  set teams(bool value) {
-    _teams = value;
+  /// Asks for [value] teams and deals the picked players out in turn;
+  /// they then choose who is with whom through [assign].
+  set teamCount(int value) {
+    _teamCount = value;
+    _teamOf.clear();
+    for (final (i, player) in _picked.indexed) {
+      if (value > 0) _teamOf[player.id] = i % value;
+    }
     notifyListeners();
   }
 
+  /// The team [player] is in, from 0.
+  int teamOf(Player player) => _teamOf[player.id] ?? 0;
+
+  /// Puts [player] in [team].
+  void assign(Player player, int team) {
+    _teamOf[player.id] = team;
+    notifyListeners();
+  }
+
+  /// Members of each team asked for, in throwing order.
+  List<List<Player>> get _teams => [
+    for (var team = 0; team < _teamCount; team++)
+      [
+        for (final player in _picked)
+          if (teamOf(player) == team) player,
+      ],
+  ];
+
   /// Who holds a score in the game: the picked players, or their teams.
-  List<Player> get sides => !_teams || problem == SetupProblem.teamsNeedPairs
+  /// Someone alone in a team is just themselves.
+  List<Player> get sides => _teamCount == 0
       ? picked
       : [
-          for (var i = 0; i + 1 < _picked.length; i += 2)
-            Player.team([_picked[i], _picked[i + 1]]),
+          for (final members in _teams)
+            if (members.length == 1)
+              members.single
+            else if (members.isNotEmpty)
+              Player.team(members),
         ];
 
   /// What keeps the game from starting besides a lack of players; null
   /// when nothing does.
   SetupProblem? get problem {
-    final hasBot = _picked.any((p) => p.isBot);
-    if (_teams) {
-      if (hasBot) return SetupProblem.botInTeam;
-      if (_picked.length < 4 || _picked.length.isOdd) {
-        return SetupProblem.teamsNeedPairs;
-      }
+    final teams = _teams;
+    if (teams.any((members) => members.isEmpty)) return SetupProblem.emptyTeam;
+    if (teams.any((m) => m.length > 1 && m.any((p) => p.isBot))) {
+      return SetupProblem.botInTeam;
     }
-    if (hasBot && !botGameKinds.contains(_kind)) {
+    if (_picked.any((p) => p.isBot) && !botGameKinds.contains(_kind)) {
       return SetupProblem.botCannotPlay;
     }
     return null;
@@ -157,12 +195,27 @@ class SetupController extends ChangeNotifier {
   void toggle(Player player) {
     if (isPicked(player)) {
       _picked.removeWhere((p) => p.id == player.id);
+      _teamOf.remove(player.id);
     } else if (canPick(player)) {
-      _picked.add(player);
+      _pick(player);
     } else {
       return;
     }
     notifyListeners();
+  }
+
+  /// Picks [player] last; with teams, into the one with the fewest
+  /// players.
+  void _pick(Player player) {
+    if (_teamCount > 0) {
+      final teams = _teams;
+      var smallest = 0;
+      for (var team = 1; team < teams.length; team++) {
+        if (teams[team].length < teams[smallest].length) smallest = team;
+      }
+      _teamOf[player.id] = smallest;
+    }
+    _picked.add(player);
   }
 
   /// Moves the picked player at [from] to [to] (indices before the move).
@@ -183,7 +236,7 @@ class SetupController extends ChangeNotifier {
       return PlayerNameProblem.taken;
     }
     _players = await _catalog.active();
-    if (canPick(player)) _picked.add(player);
+    if (canPick(player)) _pick(player);
     _notify();
     return null;
   }

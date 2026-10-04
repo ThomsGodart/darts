@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../session/session.dart';
 import '../theme/darts_space.dart';
 import '../ui/game_labels.dart';
+import '../ui/game_rules.dart';
 import 'setup_controller.dart';
 
 /// Picks who plays, in which order, and the rules; pops a [GameSetup].
@@ -222,17 +223,58 @@ class _SetupScreenState extends State<SetupScreen> {
                 ],
               ),
             ],
-            SwitchListTile(
-              key: const Key('teams-switch'),
-              title: const Text('Équipes de 2'),
-              subtitle: Text(
-                setup.teams && setup.problem == null
-                    ? setup.sides.map((side) => side.name).join('  ·  ')
-                    : 'Dans l’ordre de jeu : 1 et 2 ensemble, 3 et 4 ensemble',
+            if (setup.picked.length > 1) ...[
+              const SizedBox(height: DartsSpace.xl),
+              Text('Équipes', style: textTheme.titleLarge),
+              const SizedBox(height: DartsSpace.sm),
+              SegmentedButton<int>(
+                key: const Key('team-count'),
+                segments: [
+                  const ButtonSegment(value: 0, label: Text('Sans')),
+                  for (final count in teamCounts)
+                    // No more teams than there are players to fill them.
+                    ButtonSegment(
+                      value: count,
+                      enabled: count <= setup.picked.length,
+                      label: Text('$count équipes'),
+                    ),
+                ],
+                selected: {setup.teamCount},
+                showSelectedIcon: false,
+                onSelectionChanged: (s) => setup.teamCount = s.single,
               ),
-              value: setup.teams,
-              onChanged: (value) => setup.teams = value,
-            ),
+              if (setup.teamCount > 0) ...[
+                for (final player in setup.picked)
+                  ListTile(
+                    title: Text(player.name),
+                    trailing: SegmentedButton<int>(
+                      key: ValueKey('team-of-${player.id}'),
+                      segments: [
+                        for (var team = 0; team < setup.teamCount; team++)
+                          ButtonSegment(
+                            value: team,
+                            label: Text('${team + 1}'),
+                            tooltip: 'Équipe ${team + 1}',
+                          ),
+                      ],
+                      selected: {setup.teamOf(player)},
+                      showSelectedIcon: false,
+                      onSelectionChanged: (s) => setup.assign(player, s.single),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(top: DartsSpace.xs),
+                  child: Text(
+                    [
+                      for (final (i, side) in setup.sides.indexed)
+                        'Équipe ${i + 1} : ${side.name}',
+                    ].join('\n'),
+                    key: const Key('teams-summary'),
+                    style: textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ],
             const SizedBox(height: DartsSpace.xl),
             Text('Partie', style: textTheme.titleLarge),
             const SizedBox(height: DartsSpace.sm),
@@ -453,14 +495,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
                 ),
               ],
-              HalveItConfig() => [
-                Text(
-                  'Cibles : ${halveItTargets.map((t) => t.label).join(' · ')}. '
-                  'Une volée sans touche divise le score par 2 ; '
-                  'le plus de points gagne.',
-                  style: textTheme.bodyMedium,
-                ),
-              ],
+              HalveItConfig() => [],
               GolfConfig(:final holes) => [
                 SegmentedButton<int>(
                   segments: [
@@ -472,20 +507,8 @@ class _SetupScreenState extends State<SetupScreen> {
                   onSelectionChanged: (s) =>
                       setup.config = GolfConfig(holes: s.single),
                 ),
-                const SizedBox(height: DartsSpace.sm),
-                Text(
-                  'Le trou n est le numéro n. Jusqu’à 3 fléchettes, la '
-                  'dernière compte : double 1, triple 2, simple 3, raté '
-                  '$golfMissStrokes. Le moins de coups gagne.',
-                  style: textTheme.bodyMedium,
-                ),
               ],
               AroundTheClockConfig(:final finishOnBull) => [
-                Text(
-                  'De 1 à 20 dans l’ordre, n’importe quel anneau compte. '
-                  'Le premier arrivé gagne.',
-                  style: textTheme.bodyMedium,
-                ),
                 SwitchListTile(
                   title: const Text('Finir par le bull'),
                   value: finishOnBull,
@@ -493,15 +516,7 @@ class _SetupScreenState extends State<SetupScreen> {
                       setup.config = AroundTheClockConfig(finishOnBull: value),
                 ),
               ],
-              Bobs27Config() => [
-                Text(
-                  'Départ à $bobs27StartScore. Trois fléchettes sur chaque '
-                  'double, de D1 à D20 puis le bull : chaque touche ajoute sa '
-                  'valeur, une volée sans touche la retire. À zéro ou moins, '
-                  'on est éliminé.',
-                  style: textTheme.bodyMedium,
-                ),
-              ],
+              Bobs27Config() => [],
               CountUpConfig(:final rounds) => [
                 SegmentedButton<int>(
                   segments: [
@@ -516,31 +531,18 @@ class _SetupScreenState extends State<SetupScreen> {
                   onSelectionChanged: (s) =>
                       setup.config = CountUpConfig(rounds: s.single),
                 ),
-                const SizedBox(height: DartsSpace.sm),
-                Text(
-                  'Chaque fléchette compte sa valeur ; le plus gros total '
-                  'gagne.',
-                  style: textTheme.bodyMedium,
-                ),
               ],
-              BaseballConfig() => [
-                Text(
-                  '$baseballInnings manches : la manche n se joue sur le '
-                  'numéro n. Simple 1 run, double 2, triple 3. En cas '
-                  'd’égalité en tête, on joue des prolongations.',
-                  style: textTheme.bodyMedium,
-                ),
-              ],
+              BaseballConfig() => [],
             },
             if (setup.problem case final problem?)
               Padding(
                 padding: const EdgeInsets.only(top: DartsSpace.sm),
                 child: Text(
                   switch (problem) {
-                    SetupProblem.teamsNeedPairs =>
-                      'Équipes : un nombre pair de joueurs, 4 au minimum',
+                    SetupProblem.emptyTeam =>
+                      'Chaque équipe doit avoir au moins un joueur',
                     SetupProblem.botInTeam =>
-                      'Pas d’adversaire virtuel en équipes',
+                      'L’adversaire virtuel joue seul, sans coéquipier',
                     SetupProblem.botCannotPlay =>
                       'L’adversaire virtuel ne joue qu’au X01 et au Count-Up',
                   },
@@ -570,11 +572,23 @@ class _SetupScreenState extends State<SetupScreen> {
           padding: const EdgeInsets.all(DartsSpace.lg),
           child: ListenableBuilder(
             listenable: setup,
-            builder: (context, _) => FilledButton(
-              onPressed: setup.canStart
-                  ? () => Navigator.of(context).pop(setup.result)
-                  : null,
-              child: const Text('Lancer la partie'),
+            builder: (context, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextButton.icon(
+                  key: const Key('rules-button'),
+                  onPressed: () => _showRules(context, setup.config),
+                  icon: const Icon(Icons.menu_book_outlined),
+                  label: const Text('Règles'),
+                ),
+                FilledButton(
+                  onPressed: setup.canStart
+                      ? () => Navigator.of(context).pop(setup.result)
+                      : null,
+                  child: const Text('Lancer la partie'),
+                ),
+              ],
             ),
           ),
         ),
@@ -667,3 +681,41 @@ Future<int?> _askStartScore(BuildContext context) async {
 
 /// The levels a virtual opponent is offered at: three-dart averages.
 const botAverages = [30, 40, 50, 60, 70, 80, 90];
+
+/// How many teams a game can be asked to be played in.
+const teamCounts = [2, 3, 4];
+
+/// Spells out the rules of the game about to start, as set up.
+Future<void> _showRules(BuildContext context, GameConfig config) {
+  return showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      key: const Key('rules-dialog'),
+      title: Text('Règles · ${configLabel(config)}'),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final rule in gameRules(config))
+              Padding(
+                padding: const EdgeInsets.only(bottom: DartsSpace.sm),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('•  '),
+                    Expanded(child: Text(rule)),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Compris'),
+        ),
+      ],
+    ),
+  );
+}

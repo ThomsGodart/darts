@@ -6,9 +6,12 @@ import 'input_pane.dart';
 
 /// Enters one dart: pick single, double or treble, then the sector.
 class DartPicker extends StatefulWidget {
-  const DartPicker({super.key, required this.onDart});
+  const DartPicker({super.key, required this.onDart, this.showMiss = true});
 
   final ValueChanged<Dart> onDart;
+
+  /// Whether a miss has its key; false where ending the visit says it.
+  final bool showMiss;
 
   @override
   State<DartPicker> createState() => _DartPickerState();
@@ -53,7 +56,8 @@ class _DartPickerState extends State<DartPicker> {
           children: [
             PadKey(label: '25', onTap: () => _throw(Dart.outerBull)),
             PadKey(label: 'Bull', onTap: () => _throw(Dart.bull)),
-            PadKey(label: 'Raté', onTap: () => _throw(Dart.miss)),
+            if (widget.showMiss)
+              PadKey(label: 'Raté', onTap: () => _throw(Dart.miss)),
           ],
         ),
       ],

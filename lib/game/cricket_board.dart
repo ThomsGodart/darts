@@ -230,8 +230,8 @@ class _NumberKeys extends StatelessWidget {
   }
 }
 
-/// Input pane of a cricket game entered on the board: what the keys of
-/// the board cannot say.
+/// Input pane of a cricket game entered on the board: the visit so far,
+/// taking a dart back and ending the visit.
 class CricketBoardInput extends StatelessWidget {
   const CricketBoardInput({
     super.key,
@@ -253,11 +253,8 @@ class CricketBoardInput extends StatelessWidget {
     dartsInVisit: dartsInVisit,
     onUndo: onUndo,
     onEndVisit: onEndVisit,
-    children: [
-      Row(
-        children: [PadKey(label: 'Raté', onTap: () => onDart(Dart.miss))],
-      ),
-    ],
+    // A miss needs no key: ending the visit says the rest missed.
+    children: const [],
   );
 }
 
