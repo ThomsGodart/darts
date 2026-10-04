@@ -31,6 +31,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Lancer la partie'));
       await tester.pumpAndSettle();
+      await switchToTotals(tester);
     }
 
     testWidgets('it throws by itself, then hands the phone back', (
@@ -116,6 +117,7 @@ void main() {
       );
       await tester.tap(find.text('Lancer la partie'));
       await tester.pumpAndSettle();
+      await switchToTotals(tester);
 
       final banner = find.byKey(const Key('thrower-banner'));
       expect(activeName(tester), 'Joueur 1 & Joueur 3');

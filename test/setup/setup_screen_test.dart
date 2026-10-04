@@ -156,4 +156,37 @@ void main() {
 
     expect(find.text('Autre score…'), findsOneWidget);
   });
+
+  testWidgets('the throwing order shows it can be dragged, and is', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await tester.tap(find.text('Nouvelle session'));
+    await tester.pumpAndSettle();
+    for (final name in ['Joueur 1', 'Joueur 2']) {
+      await tester.tap(find.widgetWithText(CheckboxListTile, name));
+      await tester.pump();
+    }
+
+    expect(find.byKey(const Key('reorder-hint')), findsOneWidget);
+    expect(find.byIcon(Icons.drag_handle), findsNWidgets(2));
+
+    // Drag the first handle below the second player: no long press.
+    final handle = find.byIcon(Icons.drag_handle).first;
+    await tester.ensureVisible(handle);
+    await tester.pumpAndSettle();
+    await tester.timedDrag(
+      handle,
+      const Offset(0, 140),
+      const Duration(milliseconds: 800),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Lancer la partie'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('active-name'))).data,
+      'Joueur 2',
+    );
+  });
 }

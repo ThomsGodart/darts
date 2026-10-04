@@ -137,7 +137,51 @@ void main() {
     expect(activeRemaining(tester), '475');
   });
 
-  testWidgets('a visit entered dart by dart, then back to total mode', (
+  testWidgets('X01 opens dart by dart', (tester) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await launchGame(
+      tester,
+      const ['Joueur 1', 'Joueur 2'],
+      null,
+      const [],
+      false,
+    );
+
+    expect(find.byKey(const Key('darts-in-visit')), findsOneWidget);
+    expect(find.text('Triple'), findsOneWidget);
+    // No quick-scores until the players ask for totals.
+    expect(find.widgetWithText(FilledButton, '60'), findsNothing);
+
+    await tester.tap(find.text('Triple'));
+    await tester.pump();
+    await tester.tap(find.text('T20'));
+    await tester.pump();
+    expect(activeRemaining(tester), '441');
+  });
+
+  testWidgets('the players’ choice of totals sticks for the visits after', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await launchGame(
+      tester,
+      const ['Joueur 1', 'Joueur 2'],
+      null,
+      const [],
+      false,
+    );
+
+    await tester.tap(find.text('Total'));
+    await tester.pump();
+    await quickScore(tester, 60);
+    await tester.pumpAndSettle();
+
+    // The next visit opens on the totals too.
+    expect(find.widgetWithText(FilledButton, '60'), findsOneWidget);
+    expect(find.byKey(const Key('darts-in-visit')), findsNothing);
+  });
+
+  testWidgets('a visit entered dart by dart, and the next one too', (
     tester,
   ) async {
     await startGame(tester);
@@ -160,7 +204,9 @@ void main() {
 
     expect(find.text('Joueur 2'), findsOneWidget);
     expect(find.text('386'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, '60'), findsOneWidget);
+    // Chosen once, darts stay the way visits open.
+    expect(find.byKey(const Key('darts-in-visit')), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, '60'), findsNothing);
   });
 
   testWidgets('a dart-by-dart visit cannot switch back to total', (

@@ -28,6 +28,7 @@ Future<void> launchOn40(WidgetTester tester, {required bool tracking}) async {
   if (tracking) await tapInSetup(tester, 'Pourcentage de checkout');
   await tester.tap(find.text('Lancer la partie'));
   await tester.pumpAndSettle();
+  await switchToTotals(tester);
 }
 
 void main() {

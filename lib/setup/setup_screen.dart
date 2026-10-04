@@ -209,9 +209,19 @@ class _SetupScreenState extends State<SetupScreen> {
             if (setup.picked.length > 1) ...[
               const SizedBox(height: DartsSpace.xl),
               Text('Ordre de jeu', style: textTheme.titleLarge),
+              Text(
+                'Faites glisser la poignée pour changer l’ordre',
+                key: const Key('reorder-hint'),
+                style: textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
               ReorderableListView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
+                // A visible handle, dragged at once: holding the row down
+                // to move it is not something anyone guesses.
+                buildDefaultDragHandles: false,
                 onReorderItem: setup.reorder,
                 children: [
                   for (final (i, player) in setup.picked.indexed)
@@ -219,6 +229,17 @@ class _SetupScreenState extends State<SetupScreen> {
                       key: ValueKey(player.id),
                       leading: Text('${i + 1}', style: textTheme.titleMedium),
                       title: Text(player.name),
+                      trailing: ReorderableDragStartListener(
+                        index: i,
+                        child: Tooltip(
+                          message: 'Déplacer ${player.name}',
+                          child: const SizedBox(
+                            width: DartsSpace.tap,
+                            height: DartsSpace.tap,
+                            child: Icon(Icons.drag_handle),
+                          ),
+                        ),
+                      ),
                     ),
                 ],
               ),

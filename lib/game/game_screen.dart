@@ -80,6 +80,11 @@ class _GameScreenState extends State<GameScreen> {
   /// Name shown by the turn banner; null when no banner shows.
   String? _bannerPlayerName;
 
+  /// Whether visits that take totals open dart by dart, per game: X01
+  /// does, Count-Up opens on totals. Once the players switch, the visits
+  /// that follow open the way they chose.
+  final Map<GameKind, bool> _dartByDart = {GameKind.x01: true};
+
   /// Set while Back is being handled: blocks a second one.
   bool _cancelling = false;
 
@@ -273,6 +278,9 @@ class _GameScreenState extends State<GameScreen> {
                 ),
                 final CountUpGame game => VisitInput(
                   key: ValueKey(game.visitsPlayed),
+                  dartByDart: _dartByDart[GameKind.countUp] ?? false,
+                  onDartByDartChanged: (value) =>
+                      _dartByDart[GameKind.countUp] = value,
                   onSubmit: (score) => _submitTotal(context, score),
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
@@ -306,6 +314,9 @@ class _GameScreenState extends State<GameScreen> {
                 ),
                 final X01Game game => VisitInput(
                   key: ValueKey(game.visitsPlayed),
+                  dartByDart: _dartByDart[GameKind.x01] ?? false,
+                  onDartByDartChanged: (value) =>
+                      _dartByDart[GameKind.x01] = value,
                   onSubmit: (score) => _submit(context, game, score),
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,

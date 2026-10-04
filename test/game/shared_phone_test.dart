@@ -6,6 +6,8 @@ import 'package:darts_points_counter/theme/app_themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../app_test_harness.dart' show switchToTotals;
+
 const alice = Player(id: 'alice', name: 'Alice');
 const bob = Player(id: 'bob', name: 'Bob');
 
@@ -53,6 +55,7 @@ Future<SessionController> pumpGame(
   );
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();
+  await switchToTotals(tester);
   return controller;
 }
 

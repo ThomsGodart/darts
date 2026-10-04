@@ -8,9 +8,9 @@ import 'input_pane.dart';
 /// Visit totals players hit most often, entered in a single tap.
 const quickScores = [26, 41, 45, 60, 81, 85, 100, 140, 180];
 
-/// Bottom drawer to enter a visit: quick-scores or a typed total, or dart
-/// by dart for this visit only. Give it a new key on each visit so the
-/// next one starts back in total mode. Without [onSubmit] (cricket), only
+/// Bottom drawer to enter a visit: dart by dart, or as quick-scores or a
+/// typed total. Give it a new key on each visit; [dartByDart] says which
+/// way it opens. Without [onSubmit] (cricket), only
 /// darts can be entered.
 class VisitInput extends StatefulWidget {
   const VisitInput({
@@ -20,6 +20,8 @@ class VisitInput extends StatefulWidget {
     required this.onUndo,
     this.onEndVisit,
     this.dartsInVisit = const [],
+    this.dartByDart = false,
+    this.onDartByDartChanged,
   });
 
   /// Takes a visit total; null when the game only takes darts.
@@ -37,13 +39,21 @@ class VisitInput extends StatefulWidget {
   /// the option.
   final VoidCallback? onEndVisit;
 
+  /// Whether a visit that takes totals opens dart by dart rather than on
+  /// the totals.
+  final bool dartByDart;
+
+  /// Told when the players switch between totals and darts, so the next
+  /// visit can open the way they left this one.
+  final ValueChanged<bool>? onDartByDartChanged;
+
   @override
   State<VisitInput> createState() => _VisitInputState();
 }
 
 class _VisitInputState extends State<VisitInput> {
   String _typed = '';
-  bool _dartByDart = false;
+  late bool _dartByDart = widget.dartByDart;
 
   bool get _takesTotals => widget.onSubmit != null;
 
@@ -71,7 +81,10 @@ class _VisitInputState extends State<VisitInput> {
               // Once a dart is in, the visit is finished dart by dart.
               onChanged: widget.dartsInVisit.isNotEmpty
                   ? null
-                  : (value) => setState(() => _dartByDart = value),
+                  : (value) {
+                      setState(() => _dartByDart = value);
+                      widget.onDartByDartChanged?.call(value);
+                    },
             )
           : null,
       dartsInVisit: _inDartMode ? widget.dartsInVisit : null,
@@ -161,8 +174,8 @@ class _ModeSwitch extends StatelessWidget {
     final onChanged = this.onChanged;
     return SegmentedButton<bool>(
       segments: const [
-        ButtonSegment(value: false, label: Text('Total')),
         ButtonSegment(value: true, label: Text('Fléchettes')),
+        ButtonSegment(value: false, label: Text('Total')),
       ],
       selected: {dartByDart},
       showSelectedIcon: false,

@@ -40,12 +40,14 @@ Future<void> pumpApp(
 }
 
 /// From the home screen: a new session with [players], in that order,
-/// playing [game] with the setup [options] tapped.
+/// playing [game] with the setup [options] tapped. With [totals], a game
+/// that opens dart by dart is switched to totals.
 Future<void> launchGame(
   WidgetTester tester, [
   List<String> players = const ['Joueur 1', 'Joueur 2'],
   String? game,
   List<String> options = const [],
+  bool totals = true,
 ]) async {
   await tester.tap(find.text('Nouvelle session'));
   await tester.pumpAndSettle();
@@ -58,6 +60,16 @@ Future<void> launchGame(
   }
   await tester.tap(find.text('Lancer la partie'));
   await tester.pumpAndSettle();
+  if (totals) await switchToTotals(tester);
+}
+
+/// X01 opens dart by dart; most tests enter totals. Switches once: the
+/// screen then keeps opening visits on the totals.
+Future<void> switchToTotals(WidgetTester tester) async {
+  final onDarts = find.byKey(const Key('darts-in-visit')).evaluate().isNotEmpty;
+  if (!onDarts || find.text('Total').evaluate().isEmpty) return;
+  await tester.tap(find.text('Total'));
+  await tester.pump();
 }
 
 /// Taps [text] on the setup screen, scrolling it clear of the edges
