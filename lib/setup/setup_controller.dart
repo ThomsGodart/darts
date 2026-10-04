@@ -7,9 +7,6 @@ enum SetupProblem {
   /// One of the teams asked for has nobody in it.
   emptyTeam,
 
-  /// A virtual opponent plays alone, not with team mates.
-  botInTeam,
-
   /// A virtual opponent only plays games entered as totals.
   botCannotPlay,
 }
@@ -138,9 +135,6 @@ class SetupController extends ChangeNotifier {
   SetupProblem? get problem {
     final teams = _teams;
     if (teams.any((members) => members.isEmpty)) return SetupProblem.emptyTeam;
-    if (teams.any((m) => m.length > 1 && m.any((p) => p.isBot))) {
-      return SetupProblem.botInTeam;
-    }
     if (_picked.any((p) => p.isBot) && !botGameKinds.contains(_kind)) {
       return SetupProblem.botCannotPlay;
     }

@@ -182,5 +182,52 @@ void main() {
 
       expect(find.byKey(const Key('thrower-banner')), findsNothing);
     });
+
+    testWidgets('a bot in a team throws on its turn, for the shared score', (
+      tester,
+    ) async {
+      await pumpApp(tester, await AppStorage.withTwoPlayers());
+      await pickPlayers(tester, 2);
+      for (final level in ['Moyenne 60', 'Moyenne 40']) {
+        await tester.tap(find.byKey(const Key('add-bot')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(level));
+        await tester.pumpAndSettle();
+      }
+      await tapInSetup(tester, '2 équipes');
+      expect(
+        summary(tester),
+        'Équipe 1 : Joueur 1 & Bot 60\nÉquipe 2 : Joueur 2 & Bot 40',
+      );
+      expect(find.byKey(const Key('setup-problem')), findsNothing);
+      await tester.tap(find.text('Lancer la partie'));
+      await tester.pumpAndSettle();
+      await switchToTotals(tester);
+
+      final banner = find.byKey(const Key('thrower-banner'));
+      await quickScore(tester, 60); // Joueur 1
+      await tester.pumpAndSettle();
+      await quickScore(tester, 45); // Joueur 2
+      // Not settling: the bot would have thrown by then.
+      await tester.pump();
+
+      // Bot 60 is up for the first team: it throws by itself.
+      expect(
+        find.descendant(of: banner, matching: find.text('Bot 60 lance')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('bot-playing')), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      // Then Bot 40 for the second, and the phone is back with Joueur 1.
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(of: banner, matching: find.text('Joueur 1 lance')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('bot-playing')), findsNothing);
+    });
   });
 }

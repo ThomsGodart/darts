@@ -17,11 +17,12 @@ int botCountUpVisit(int average, Random random) {
   return _possibleAtMost(score);
 }
 
-/// The visit the active player of [game], a virtual opponent, enters:
+/// The visit the thrower of [game], a virtual opponent, enters:
 /// scores around its average, and takes a finish in reach with a chance
 /// that grows with its level.
 BotVisit botVisit(X01Game game, Random random) {
-  final average = game.activePlayer.botAverage ?? 40;
+  // In a team, the member at the oche is the one throwing.
+  final average = game.thrower.botAverage ?? 40;
   final remaining = game.activeScore.remaining;
   final outRule = game.config.outRule;
 

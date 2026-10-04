@@ -159,10 +159,11 @@ class _GameScreenState extends State<GameScreen> {
     _botTimer?.cancel();
     final state = controller.state;
     final game = state.game;
+    // In a team, the bot throws when its turn comes among the members.
     if (game == null ||
         game.isFinished ||
         state.isEnded ||
-        !game.activePlayer.isBot) {
+        !game.thrower.isBot) {
       return;
     }
     final games = state.games.length;
@@ -185,7 +186,7 @@ class _GameScreenState extends State<GameScreen> {
           );
         case CountUpGame():
           controller.submitVisitTotal(
-            botCountUpVisit(now.activePlayer.botAverage!, _botRandom),
+            botCountUpVisit(now.thrower.botAverage!, _botRandom),
           );
         default:
           // The setup only lets a virtual opponent into these two games.
@@ -200,7 +201,7 @@ class _GameScreenState extends State<GameScreen> {
     controller.undo();
     while (controller.canUndo &&
         !controller.state.game!.isFinished &&
-        controller.state.game!.activePlayer.isBot) {
+        controller.state.game!.thrower.isBot) {
       controller.undo();
     }
   }
@@ -249,13 +250,13 @@ class _GameScreenState extends State<GameScreen> {
                 onEnd: () => _endSession(context),
               )
             : switch (game) {
-                _ when game.activePlayer.isBot => InputPane(
+                _ when game.thrower.isBot => InputPane(
                   onUndo: onUndo,
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(DartsSpace.lg),
                       child: Text(
-                        '${game.activePlayer.name} joue…',
+                        '${game.thrower.name} joue…',
                         key: const Key('bot-playing'),
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),

@@ -50,5 +50,6 @@ class Player {
 /// members rather than their team, and no virtual opponent.
 List<Player> peopleOf(Iterable<Player> players) => [
   for (final player in players)
-    if (player.isTeam) ...player.members else if (!player.isBot) player,
+    for (final person in player.isTeam ? player.members : [player])
+      if (!person.isBot) person,
 ];

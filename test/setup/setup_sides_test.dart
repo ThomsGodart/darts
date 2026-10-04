@@ -130,19 +130,27 @@ void main() {
       expect(sideNames(setup), ['Ana & Bob', 'Cléo']);
     });
 
-    test('a bot may be a side of its own, not a team mate', () async {
+    test('a bot can be anyone’s team mate', () async {
       final setup = await allPicked(['Ana', 'Bob']);
       setup
         ..toggle(Player.bot(60))
+        ..toggle(Player.bot(40))
         ..teamCount = 2;
-      // Dealt out: Ana and the bot together.
-      expect(setup.problem, SetupProblem.botInTeam);
 
-      setup
-        ..assign(setup.players[1], 0)
-        ..assign(Player.bot(60), 1);
+      // Dealt out in turn: each person with a bot.
+      expect(sideNames(setup), ['Ana & Bot 60', 'Bob & Bot 40']);
       expect(setup.problem, isNull);
-      expect(sideNames(setup), ['Ana & Bob', 'Bot 60']);
+      expect(setup.canStart, isTrue);
+    });
+
+    test('a team with a bot still needs a game bots can play', () async {
+      final setup = await allPicked(['Ana', 'Bob']);
+      setup
+        ..toggle(Player.bot(60))
+        ..toggle(Player.bot(40))
+        ..teamCount = 2
+        ..kind = GameKind.cricket;
+      expect(setup.problem, SetupProblem.botCannotPlay);
     });
 
     test('a setup prefilled with teams opens on the same teams', () async {

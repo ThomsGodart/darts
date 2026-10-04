@@ -142,5 +142,28 @@ void main() {
       play(session, [60, 60]);
       expect(playerStats([session.state]), isEmpty);
     });
+
+    test('a bot in a team throws to its own level on its turns', () {
+      final team = Player.team([alice, Player.bot(90)]);
+      final session = newSession()..startGame([team, bob]);
+      expect(session.state.game!.thrower, alice);
+      session
+        ..submitVisitTotal(60) // Alice
+        ..submitVisitTotal(60); // Bob
+
+      final game = session.state.x01!;
+      expect(game.thrower.isBot, isTrue);
+      final random = Random(7);
+      var total = 0;
+      for (var i = 0; i < 2000; i++) {
+        total += botVisit(game, random).score;
+      }
+      expect(total / 2000, closeTo(90, 6));
+    });
+
+    test('only people are kept in the catalog, team mates of bots too', () {
+      final team = Player.team([alice, Player.bot(60)]);
+      expect(peopleOf([team, bob, Player.bot(40)]), [alice, bob]);
+    });
   });
 }

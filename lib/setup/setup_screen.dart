@@ -566,8 +566,6 @@ class _SetupScreenState extends State<SetupScreen> {
                   switch (problem) {
                     SetupProblem.emptyTeam =>
                       'Chaque équipe doit avoir au moins un joueur',
-                    SetupProblem.botInTeam =>
-                      'L’adversaire virtuel joue seul, sans coéquipier',
                     SetupProblem.botCannotPlay =>
                       'L’adversaire virtuel ne joue qu’au X01 et au Count-Up',
                   },
