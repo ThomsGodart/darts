@@ -19,24 +19,34 @@ final Set<int> singleDartScores = {
 
 final Set<int> _doubles = {for (var n = 1; n <= 20; n++) 2 * n, 50};
 
+final Set<int> _doublesAndTrebles = {
+  ..._doubles,
+  for (var n = 1; n <= 20; n++) 3 * n,
+};
+
 /// How a player is allowed to finish a leg.
 enum OutRule {
   /// Any dart that brings the remaining score to exactly 0 wins.
   straight,
 
   /// The finishing dart must be a double (the bull counts as one).
-  double;
+  double,
+
+  /// The finishing dart must be a double or a treble.
+  master;
 
   /// Scores the finishing dart may make.
   Set<int> get finishingDartScores => switch (this) {
     straight => singleDartScores,
     double => _doubles,
+    master => _doublesAndTrebles,
   };
 
   /// Whether [dart] may be the one that brings the remaining score to 0.
   bool allowsFinishOn(Dart dart) => switch (this) {
     straight => dart != Dart.miss,
     double => dart.isDouble,
+    master => dart.isDouble || dart.multiplier == 3,
   };
 
   /// Whether a visit leaving [remaining] busts, whatever the last dart.
@@ -78,12 +88,13 @@ final class X01Config extends GameConfig {
   const X01Config({
     this.startScore = 501,
     this.outRule = OutRule.double,
+    this.doubleIn = false,
     this.legsToWin = 1,
     this.setsToWin = 1,
   });
 
   /// Start scores the setup offers; any score above 1 can be played.
-  static const offeredStartScores = [501, 301];
+  static const offeredStartScores = [170, 301, 501, 701];
 
   /// Legs to win the setup offers: a single leg, or first to 2, 3 or 5.
   static const offeredLegsToWin = [1, 2, 3, 5];
@@ -93,6 +104,9 @@ final class X01Config extends GameConfig {
 
   final int startScore;
   final OutRule outRule;
+
+  /// Whether a player scores nothing until they hit a double.
+  final bool doubleIn;
 
   /// Legs a player must win to take a set (the match, without sets).
   final int legsToWin;
@@ -106,11 +120,13 @@ final class X01Config extends GameConfig {
   X01Config copyWith({
     int? startScore,
     OutRule? outRule,
+    bool? doubleIn,
     int? legsToWin,
     int? setsToWin,
   }) => X01Config(
     startScore: startScore ?? this.startScore,
     outRule: outRule ?? this.outRule,
+    doubleIn: doubleIn ?? this.doubleIn,
     legsToWin: legsToWin ?? this.legsToWin,
     setsToWin: setsToWin ?? this.setsToWin,
   );
@@ -126,11 +142,13 @@ final class X01Config extends GameConfig {
       other is X01Config &&
       other.startScore == startScore &&
       other.outRule == outRule &&
+      other.doubleIn == doubleIn &&
       other.legsToWin == legsToWin &&
       other.setsToWin == setsToWin;
 
   @override
-  int get hashCode => Object.hash(startScore, outRule, legsToWin, setsToWin);
+  int get hashCode =>
+      Object.hash(startScore, outRule, doubleIn, legsToWin, setsToWin);
 }
 
 /// Numbers that count in cricket, as a board lists them; 25 is the bull.

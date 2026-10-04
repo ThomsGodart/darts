@@ -102,4 +102,47 @@ void main() {
     await tester.pump();
     expect(find.text('Killer : au moins 3 joueurs'), findsOneWidget);
   });
+
+  testWidgets('X01: a typed start score, master-out and double-in', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await tester.tap(find.text('Nouvelle session'));
+    await tester.pumpAndSettle();
+    for (final name in ['Joueur 1', 'Joueur 2']) {
+      await tester.tap(find.widgetWithText(CheckboxListTile, name));
+      await tester.pump();
+    }
+
+    await tapInSetup(tester, 'Autre score…');
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('start-score-field')), '1001');
+    await tester.tap(find.text('Valider'));
+    await tester.pumpAndSettle();
+    expect(find.text('Score de départ : 1001'), findsOneWidget);
+
+    await tapInSetup(tester, 'Master-out');
+    await tapInSetup(tester, 'Double-in');
+    await tester.tap(find.text('Lancer la partie'));
+    await tester.pumpAndSettle();
+
+    expect(activeRemaining(tester), '1001');
+    expect(find.text('1001 Double-in Master-out'), findsOneWidget);
+  });
+
+  testWidgets('X01: a start score that cannot be played is ignored', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await tester.tap(find.text('Nouvelle session'));
+    await tester.pumpAndSettle();
+
+    await tapInSetup(tester, 'Autre score…');
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('start-score-field')), '1');
+    await tester.tap(find.text('Valider'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Autre score…'), findsOneWidget);
+  });
 }

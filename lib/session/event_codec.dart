@@ -21,12 +21,14 @@ Map<String, Object?> _encodeConfig(GameConfig config) => {
     X01Config(
       :final startScore,
       :final outRule,
+      :final doubleIn,
       :final legsToWin,
       :final setsToWin,
     ) =>
       {
         'startScore': startScore,
         'outRule': outRule.name,
+        'doubleIn': doubleIn,
         'legsToWin': legsToWin,
         'setsToWin': setsToWin,
       },
@@ -57,6 +59,7 @@ GameConfig _decodeConfig(Map<String, Object?> payload) =>
       GameKind.x01 => X01Config(
         startScore: payload['startScore']! as int,
         outRule: OutRule.values.byName(payload['outRule']! as String),
+        doubleIn: payload['doubleIn'] as bool? ?? false,
         // Games recorded before matches existed were single legs.
         legsToWin: payload['legsToWin'] as int? ?? 1,
         setsToWin: payload['setsToWin'] as int? ?? 1,

@@ -10,7 +10,8 @@ String variantLabel(CricketVariant variant) => switch (variant) {
 String configLabel(GameConfig config) => switch (config) {
   final X01Config config => [
     '${config.startScore} '
-        '${config.outRule == OutRule.double ? 'Double-out' : 'Straight-out'}',
+        '${config.doubleIn ? 'Double-in ' : ''}'
+        '${outRuleLabel(config.outRule)}',
     if (config.legsToWin > 1) '1er à ${config.legsToWin}',
     if (config.setsToWin > 1) '${config.setsToWin} sets',
   ].join(' · '),
@@ -61,3 +62,10 @@ String matchScoreLabel(MatchScore match, List<Player> players) => [
 /// "Manches" or, with sets, "Sets (manches)": what a match score counts.
 String matchScoreHeading(MatchScore match) =>
     match.config.setsToWin > 1 ? 'Sets (manches)' : 'Manches';
+
+/// "Double-out", "Master-out", "Straight-out".
+String outRuleLabel(OutRule rule) => switch (rule) {
+  OutRule.straight => 'Straight-out',
+  OutRule.double => 'Double-out',
+  OutRule.master => 'Master-out',
+};

@@ -41,7 +41,11 @@ Game _newGame(List<Player> players, GameConfig config) => switch (config) {
     config: config,
     scores: [
       for (final player in players)
-        PlayerScore(player: player, remaining: config.startScore),
+        PlayerScore(
+          player: player,
+          remaining: config.startScore,
+          isIn: !config.doubleIn,
+        ),
     ],
     activeIndex: 0,
   ),
@@ -249,13 +253,16 @@ X01Game _visitTotal(X01Game game, int score, int darts) {
       darts: darts,
       isBust: game.config.outRule.bustsOn(after),
     ),
+    // A total says nothing of the darts: scoring is taken as being in.
+    isIn: game.activeScore.isIn || score > 0,
   );
 }
 
 /// The X01 visit ends on a bust, a checkout or the last dart.
 X01Game _x01Dart(X01Game game, Dart dart) {
   final darts = [...game.dartsInVisit, dart];
-  final after = game.activeRemaining - dart.score;
+  final visitScore = game.countedScoreOf(darts);
+  final after = game.activeScore.remaining - visitScore;
   final outRule = game.config.outRule;
   final isBust =
       outRule.bustsOn(after) || (after == 0 && !outRule.allowsFinishOn(dart));
@@ -264,17 +271,14 @@ X01Game _x01Dart(X01Game game, Dart dart) {
   }
   return _x01CompleteVisit(
     game,
-    Visit(
-      score: game.dartsInVisitScore + dart.score,
-      darts: darts.length,
-      isBust: isBust,
-    ),
+    Visit(score: visitScore, darts: darts.length, isBust: isBust),
+    isIn: game.activeScore.isIn || darts.any((d) => d.isDouble),
   );
 }
 
-X01Game _x01CompleteVisit(X01Game game, Visit visit) {
+X01Game _x01CompleteVisit(X01Game game, Visit visit, {required bool isIn}) {
   final current = game.activeScore;
-  final updated = current.after(visit);
+  final updated = current.after(visit, isIn: isIn);
   final won = updated.remaining == 0;
   return game._next(
     scores: [...game.scores]..[game.activeIndex] = updated,

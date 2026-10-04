@@ -205,17 +205,57 @@ class _SetupScreenState extends State<SetupScreen> {
                     for (final score in X01Config.offeredStartScores)
                       ButtonSegment(value: score, label: Text('$score')),
                   ],
-                  selected: {x01.startScore},
+                  // A score typed in is none of the offered ones.
+                  emptySelectionAllowed: true,
+                  selected: {
+                    if (X01Config.offeredStartScores.contains(x01.startScore))
+                      x01.startScore,
+                  },
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) {
+                    if (s.isEmpty) return;
+                    setup.config = x01.copyWith(startScore: s.single);
+                  },
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    key: const Key('custom-start-score'),
+                    onPressed: () async {
+                      final score = await _askStartScore(context);
+                      if (score == null) return;
+                      setup.config = x01.copyWith(startScore: score);
+                    },
+                    icon: const Icon(Icons.edit_outlined),
+                    label: Text(
+                      X01Config.offeredStartScores.contains(x01.startScore)
+                          ? 'Autre score…'
+                          : 'Score de départ : ${x01.startScore}',
+                    ),
+                  ),
+                ),
+                SegmentedButton<OutRule>(
+                  key: const Key('out-rule'),
+                  segments: [
+                    for (final rule in OutRule.values)
+                      ButtonSegment(
+                        value: rule,
+                        label: Text(outRuleLabel(rule)),
+                      ),
+                  ],
+                  selected: {x01.outRule},
                   showSelectedIcon: false,
                   onSelectionChanged: (s) =>
-                      setup.config = x01.copyWith(startScore: s.single),
+                      setup.config = x01.copyWith(outRule: s.single),
                 ),
                 SwitchListTile(
-                  title: const Text('Double-out'),
-                  value: x01.outRule == OutRule.double,
-                  onChanged: (value) => setup.config = x01.copyWith(
-                    outRule: value ? OutRule.double : OutRule.straight,
+                  title: const Text('Double-in'),
+                  subtitle: const Text(
+                    'Rien ne compte avant le premier double',
                   ),
+                  value: x01.doubleIn,
+                  onChanged: (value) =>
+                      setup.config = x01.copyWith(doubleIn: value),
                 ),
                 SegmentedButton<int>(
                   key: const Key('legs-to-win'),
@@ -510,4 +550,39 @@ class _RenameDialogState extends State<_RenameDialog> {
       ],
     );
   }
+}
+
+/// Asks for an X01 start score; null if dismissed or not a score.
+Future<int?> _askStartScore(BuildContext context) async {
+  final typed = await showDialog<String>(
+    context: context,
+    builder: (context) {
+      var text = '';
+      return AlertDialog(
+        title: const Text('Score de départ'),
+        content: TextField(
+          key: const Key('start-score-field'),
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(hintText: 'Par exemple 1001'),
+          onChanged: (value) => text = value,
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(text),
+            child: const Text('Valider'),
+          ),
+        ],
+      );
+    },
+  );
+  final score = int.tryParse(typed?.trim() ?? '');
+  if (score == null || !X01Config(startScore: score).isValid) return null;
+  // Past this the scoreboard and the stats stop making sense.
+  return score > 9999 ? null : score;
 }

@@ -124,10 +124,15 @@ class PlayerScore {
     this.visits = const [],
     this.pointsScored = 0,
     this.dartsThrown = 0,
+    this.isIn = true,
   });
 
   final Player player;
   final int remaining;
+
+  /// Whether the player's darts score: false in a double-in game until
+  /// they hit a double.
+  final bool isIn;
 
   /// Every visit the player completed in the game, in order.
   final List<Visit> visits;
@@ -142,8 +147,11 @@ class PlayerScore {
   /// Points per three darts, null before the first dart.
   double? get threeDartAverage => averagePerVisit(pointsScored, dartsThrown);
 
-  PlayerScore after(Visit visit) => PlayerScore(
+  /// The score after [visit]; [isIn] says whether the player is in by
+  /// the end of it.
+  PlayerScore after(Visit visit, {required bool isIn}) => PlayerScore(
     player: player,
+    isIn: isIn,
     remaining: remaining - visit.points,
     visits: List.unmodifiable([...visits, visit]),
     pointsScored: pointsScored + visit.points,
@@ -224,8 +232,20 @@ final class X01Game extends Game {
           config.outRule,
         );
 
-  /// Points of the darts already thrown in the visit in progress.
-  int get dartsInVisitScore => dartsInVisit.fold(0, (sum, d) => sum + d.score);
+  /// Points of the darts already thrown in the visit in progress: in a
+  /// double-in game, none before the player's first double.
+  int get dartsInVisitScore => countedScoreOf(dartsInVisit);
+
+  /// What [darts] thrown by the active player in one visit count for.
+  int countedScoreOf(List<Dart> darts) {
+    var isIn = activeScore.isIn;
+    var points = 0;
+    for (final dart in darts) {
+      isIn = isIn || dart.isDouble;
+      if (isIn) points += dart.score;
+    }
+    return points;
+  }
 
   /// Everyone but the active player, in the order they will throw next.
   List<PlayerScore> get waitingInTurnOrder => [
