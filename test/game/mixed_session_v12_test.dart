@@ -22,9 +22,7 @@ void main() {
 
     await tester.tap(find.text('Partie suivante'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Shanghai'));
-    await tester.tap(find.text('Shanghai'));
-    await tester.pump();
+    await tapInSetup(tester, 'Shanghai');
     await tester.tap(find.text('Lancer la partie'));
     await tester.pumpAndSettle();
 
@@ -50,9 +48,7 @@ void main() {
 
     await tester.tap(find.text('Partie suivante'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Killer'));
-    await tester.tap(find.text('Killer'));
-    await tester.pump();
+    await tapInSetup(tester, 'Killer');
     await tester.tap(find.text('Lancer la partie'));
     await tester.pumpAndSettle();
 

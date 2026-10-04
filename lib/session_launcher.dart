@@ -69,7 +69,7 @@ class SessionLauncher extends ChangeNotifier {
       throw StateError('The setup was refused: ${started.reason}');
     }
     // Only now do these players have a game to their name.
-    await _catalog.markPlayed(setup.players);
+    await _catalog.markPlayed(peopleOf(setup.players));
   }
 
   /// Past and open sessions, newest first.

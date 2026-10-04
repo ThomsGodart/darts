@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -29,6 +32,8 @@ class GameScreen extends StatefulWidget {
     this.launcher,
     this.onChangeSetup,
     this.screenAwake = const WakelockScreenAwake(),
+    this.botDelay = const Duration(milliseconds: 900),
+    this.botRandom,
   });
 
   final SessionController controller;
@@ -40,6 +45,13 @@ class GameScreen extends StatefulWidget {
   /// change, then starts the next game. Null hides the option.
   final Future<void> Function()? onChangeSetup;
   final ScreenAwake screenAwake;
+
+  /// How long a virtual opponent takes to throw.
+  final Duration botDelay;
+
+  /// What a virtual opponent's visits are drawn from; a fresh one by
+  /// default.
+  final Random? botRandom;
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -56,6 +68,10 @@ class _GameScreenState extends State<GameScreen> {
   /// Name shown by the turn banner; null when no banner shows.
   String? _bannerPlayerName;
 
+  /// Pending visit of a virtual opponent, if it is its turn.
+  Timer? _botTimer;
+  late final Random _botRandom = widget.botRandom ?? Random();
+
   @override
   void initState() {
     super.initState();
@@ -70,10 +86,12 @@ class _GameScreenState extends State<GameScreen> {
       DeviceOrientation.landscapeRight,
     ]);
     _syncScreenAwake();
+    _scheduleBot();
   }
 
   @override
   void dispose() {
+    _botTimer?.cancel();
     controller.removeListener(_onGameChanged);
     if (_screenKeptOn) widget.screenAwake.release();
     SystemChrome.setPreferredOrientations(const [DeviceOrientation.portraitUp]);
@@ -90,13 +108,61 @@ class _GameScreenState extends State<GameScreen> {
     } else if (game.visitsPlayed > _visitsSeen && !game.isFinished) {
       // Only a completed visit passes the phone on; an undo does not.
       HapticFeedback.mediumImpact();
-      setState(() => _bannerPlayerName = game.activePlayer.name);
+      // In a team, whoever of its members is up.
+      setState(() => _bannerPlayerName = game.thrower.name);
     } else if (game.visitsPlayed < _visitsSeen) {
       setState(() => _bannerPlayerName = null);
     }
     _gamesSeen = state.games.length;
     _visitsSeen = game.visitsPlayed;
     _syncScreenAwake();
+    _scheduleBot();
+  }
+
+  /// When a virtual opponent is up, has it throw after [GameScreen.botDelay].
+  void _scheduleBot() {
+    _botTimer?.cancel();
+    final state = controller.state;
+    final game = state.game!;
+    if (game.isFinished || state.isEnded || !game.activePlayer.isBot) return;
+    final games = state.games.length;
+    final visits = game.visitsPlayed;
+    _botTimer = Timer(widget.botDelay, () {
+      final now = controller.state.game!;
+      // Undone or replaced meanwhile: this visit is no longer due.
+      if (!mounted ||
+          controller.state.games.length != games ||
+          now.visitsPlayed != visits ||
+          now.isFinished) {
+        return;
+      }
+      switch (now) {
+        case X01Game():
+          final visit = botVisit(now, _botRandom);
+          controller.submitVisitTotal(
+            visit.score,
+            dartsAtCheckout: visit.dartsAtCheckout,
+          );
+        case CountUpGame():
+          controller.submitVisitTotal(
+            botCountUpVisit(now.activePlayer.botAverage!, _botRandom),
+          );
+        default:
+          // The setup only lets a virtual opponent into these two games.
+          break;
+      }
+    });
+  }
+
+  /// Takes the latest input back, and with it whatever a virtual opponent
+  /// threw since: undoing must hand the phone back to a person.
+  void _undo() {
+    controller.undo();
+    while (controller.canUndo &&
+        !controller.state.game!.isFinished &&
+        controller.state.game!.activePlayer.isBot) {
+      controller.undo();
+    }
   }
 
   void _syncScreenAwake() {
@@ -114,7 +180,7 @@ class _GameScreenState extends State<GameScreen> {
       builder: (context, _) {
         final game = controller.state.game!;
         final bannerPlayerName = _bannerPlayerName;
-        final onUndo = controller.canUndo ? controller.undo : null;
+        final onUndo = controller.canUndo ? _undo : null;
         final statePane = switch (game) {
           final X01Game game => Scoreboard(game: game),
           final CricketGame game => CricketBoard(
@@ -136,11 +202,24 @@ class _GameScreenState extends State<GameScreen> {
             ? _GameOverPanel(
                 session: controller.state,
                 onRematch: controller.rematch,
-                onUndo: controller.undo,
+                onUndo: _undo,
                 onChangeSetup: widget.onChangeSetup,
                 onEnd: () => _endSession(context),
               )
             : switch (game) {
+                _ when game.activePlayer.isBot => InputPane(
+                  onUndo: onUndo,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(DartsSpace.lg),
+                      child: Text(
+                        '${game.activePlayer.name} joue…',
+                        key: const Key('bot-playing'),
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                    ),
+                  ],
+                ),
                 final KillerGame game
                     when game.phase == KillerPhase.assigning =>
                   KillerAssignInput(
@@ -219,13 +298,18 @@ class _GameScreenState extends State<GameScreen> {
             Column(
               children: [
                 _GameBar(
-                  // In a match, the score matters more than the rules.
-                  label: switch (controller.state.match) {
-                    final match? =>
-                      '${matchScoreHeading(match)} : '
-                          '${matchScoreLabel(match, controller.state.matchPlayers)}',
-                    null => configLabel(game.config),
-                  },
+                  label: [
+                    // In a match, the score matters more than the rules.
+                    switch (controller.state.match) {
+                      final match? =>
+                        '${matchScoreHeading(match)} : '
+                            '${matchScoreLabel(match, controller.state.matchPlayers)}',
+                      null => configLabel(game.config),
+                    },
+                    // A team's score has one name on it: say who is up.
+                    if (game.activePlayer.isTeam && !game.isFinished)
+                      '${game.thrower.name} lance',
+                  ].join('  ·  '),
                 ),
                 Expanded(
                   child: GameShell(statePane: statePane, inputPane: inputPane),
@@ -296,7 +380,7 @@ class _GameScreenState extends State<GameScreen> {
     dartsInVisit: game.dartsInVisit,
     onDart: controller.throwDart,
     onEndVisit: controller.endVisit,
-    onUndo: controller.canUndo ? controller.undo : null,
+    onUndo: controller.canUndo ? _undo : null,
   );
 
   /// A visit total of a game without checkouts.

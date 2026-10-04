@@ -2,11 +2,32 @@ import 'package:flutter/foundation.dart';
 
 import '../session/session.dart';
 
+/// Why a setup cannot start although enough players are picked.
+enum SetupProblem {
+  /// Teams are pairs: an even number of players, four at least.
+  teamsNeedPairs,
+
+  /// A virtual opponent plays alone, not in a team.
+  botInTeam,
+
+  /// A virtual opponent only plays games entered as totals.
+  botCannotPlay,
+}
+
+/// The games a virtual opponent can play: those entered as a total.
+const botGameKinds = {GameKind.x01, GameKind.countUp};
+
 /// State of the session setup screen, over the player catalog.
 class SetupController extends ChangeNotifier {
   /// A blank setup, or one starting from the players and rules of [from].
   SetupController(this._catalog, {GameSetup? from})
-    : _picked = [...?from?.players],
+    : _picked = [
+        // Teams open on their members: they are paired again on the way
+        // out.
+        for (final side in from?.players ?? const <Player>[])
+          if (side.isTeam) ...side.members else side,
+      ],
+      _teams = from?.players.any((side) => side.isTeam) ?? false,
       _kind = from?.config.kind ?? GameKind.x01 {
     if (from != null) _configs[from.config.kind] = from.config;
   }
@@ -18,6 +39,7 @@ class SetupController extends ChangeNotifier {
   bool _loading = true;
   String? _loadError;
   final List<Player> _picked;
+  bool _teams;
   GameKind _kind;
 
   /// The rules last chosen for each game, so switching games and back
@@ -55,9 +77,41 @@ class SetupController extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool get canStart => _picked.length >= config.minPlayers;
+  /// Whether the picked players pair up into teams of two, in order.
+  bool get teams => _teams;
 
-  GameSetup get result => (players: picked, config: config);
+  set teams(bool value) {
+    _teams = value;
+    notifyListeners();
+  }
+
+  /// Who holds a score in the game: the picked players, or their teams.
+  List<Player> get sides => !_teams || problem == SetupProblem.teamsNeedPairs
+      ? picked
+      : [
+          for (var i = 0; i + 1 < _picked.length; i += 2)
+            Player.team([_picked[i], _picked[i + 1]]),
+        ];
+
+  /// What keeps the game from starting besides a lack of players; null
+  /// when nothing does.
+  SetupProblem? get problem {
+    final hasBot = _picked.any((p) => p.isBot);
+    if (_teams) {
+      if (hasBot) return SetupProblem.botInTeam;
+      if (_picked.length < 4 || _picked.length.isOdd) {
+        return SetupProblem.teamsNeedPairs;
+      }
+    }
+    if (hasBot && !botGameKinds.contains(_kind)) {
+      return SetupProblem.botCannotPlay;
+    }
+    return null;
+  }
+
+  bool get canStart => problem == null && sides.length >= config.minPlayers;
+
+  GameSetup get result => (players: sides, config: config);
 
   Future<void> load() async {
     _loading = true;
@@ -68,7 +122,11 @@ class SetupController extends ChangeNotifier {
       // A prefilled setup may carry names changed since, or players
       // removed since: take the catalog's word for both.
       final current = {for (final player in _players) player.id: player};
-      final stillThere = [for (final picked in _picked) ?current[picked.id]];
+      final stillThere = [
+        for (final picked in _picked)
+          // A virtual opponent is in no catalog.
+          if (picked.isBot) picked else ?current[picked.id],
+      ];
       _picked
         ..clear()
         ..addAll(stillThere);

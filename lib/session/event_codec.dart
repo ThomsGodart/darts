@@ -98,6 +98,25 @@ GameKind _decodeKind(Object? stored) => switch (stored) {
   _ => throw FormatException('Unknown game kind "$stored"'),
 };
 
+Map<String, Object?> _encodePlayer(Player player) => {
+  'id': player.id,
+  'name': player.name,
+  if (player.isTeam)
+    'members': [for (final m in player.members) _encodePlayer(m)],
+  'botAverage': ?player.botAverage,
+};
+
+/// Players stored before teams and virtual opponents hold neither key.
+Player _decodePlayer(Map<Object?, Object?> stored) => Player(
+  id: stored['id']! as String,
+  name: stored['name']! as String,
+  members: [
+    for (final m in stored['members'] as List? ?? const [])
+      _decodePlayer(m as Map),
+  ],
+  botAverage: stored['botAverage'] as int?,
+);
+
 /// A storable form of an event: a type tag and a JSON-compatible payload.
 typedef EncodedEvent = ({String type, Map<String, Object?> payload});
 
@@ -105,9 +124,7 @@ EncodedEvent encodeEvent(SessionEvent event) => switch (event) {
   GameStarted(:final players, :final config) => (
     type: EventTypes.gameStarted,
     payload: {
-      'players': [
-        for (final p in players) {'id': p.id, 'name': p.name},
-      ],
+      'players': [for (final p in players) _encodePlayer(p)],
       ..._encodeConfig(config),
     },
   ),
@@ -131,8 +148,7 @@ SessionEvent decodeEvent(String type, Map<String, Object?> payload) =>
     switch (type) {
       EventTypes.gameStarted => GameStarted(
         players: [
-          for (final p in payload['players']! as List)
-            Player(id: p['id'] as String, name: p['name'] as String),
+          for (final p in payload['players']! as List) _decodePlayer(p as Map),
         ],
         config: _decodeConfig(payload),
       ),

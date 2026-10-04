@@ -54,6 +54,8 @@ List<PlayerStats> playerStats(Iterable<SessionState> sessions) {
   for (final session in sessions) {
     for (final game in session.games) {
       for (final player in game.players) {
+        // A person's stats: not a team's shared score, not a bot's.
+        if (player.isTeam || player.isBot) continue;
         final tally = tallies.putIfAbsent(player.id, _Tally.new)
           ..player = player;
         if (game.isFinished) {

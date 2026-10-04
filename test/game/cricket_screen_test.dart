@@ -92,12 +92,8 @@ void main() {
       await tester.tap(find.widgetWithText(CheckboxListTile, name));
       await tester.pump();
     }
-    await tester.ensureVisible(find.text('Cricket'));
-    await tester.tap(find.text('Cricket'));
-    await tester.pump();
-    await tester.ensureVisible(find.text('Cut-Throat'));
-    await tester.tap(find.text('Cut-Throat'));
-    await tester.pump();
+    await tapInSetup(tester, 'Cricket');
+    await tapInSetup(tester, 'Cut-Throat');
     await tester.tap(find.text('Lancer la partie'));
     await tester.pumpAndSettle();
 
@@ -116,9 +112,7 @@ void main() {
 
     await tester.tap(find.text('Partie suivante'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Cricket'));
-    await tester.tap(find.text('Cricket'));
-    await tester.pump();
+    await tapInSetup(tester, 'Cricket');
     await tester.tap(find.text('Lancer la partie'));
     await tester.pumpAndSettle();
 

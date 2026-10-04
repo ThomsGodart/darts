@@ -181,6 +181,15 @@ sealed class Game {
 
   Player get activePlayer => players[activeIndex];
 
+  /// Who is at the oche: the active player, or in a team whichever of its
+  /// members' turn it is. A team's members alternate round after round.
+  Player get thrower {
+    final side = activePlayer;
+    if (!side.isTeam) return side;
+    final round = visitsPlayed ~/ players.length;
+    return side.members[round % side.members.length];
+  }
+
   /// Whoever throws after the active player, in throwing order.
   int get nextIndex => (activeIndex + 1) % players.length;
 

@@ -82,6 +82,26 @@ class _SetupScreenState extends State<SetupScreen> {
     if (confirmed == true) await setup.removePlayer(player);
   }
 
+  /// Asks for a level, then picks a virtual opponent of that level.
+  Future<void> _addBot() async {
+    final average = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Niveau de l’adversaire'),
+        children: [
+          for (final average in botAverages)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(average),
+              child: Text('Moyenne $average'),
+            ),
+        ],
+      ),
+    );
+    if (average == null) return;
+    final bot = Player.bot(average);
+    if (!setup.isPicked(bot)) setup.toggle(bot);
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -165,6 +185,26 @@ class _SetupScreenState extends State<SetupScreen> {
               ),
               onSubmitted: (_) => _addPlayer(),
             ),
+            const SizedBox(height: DartsSpace.sm),
+            Wrap(
+              spacing: DartsSpace.sm,
+              runSpacing: DartsSpace.sm,
+              children: [
+                for (final bot in setup.picked.where((p) => p.isBot))
+                  InputChip(
+                    avatar: const Icon(Icons.smart_toy_outlined),
+                    label: Text(bot.name),
+                    deleteButtonTooltipMessage: 'Retirer ${bot.name}',
+                    onDeleted: () => setup.toggle(bot),
+                  ),
+                ActionChip(
+                  key: const Key('add-bot'),
+                  avatar: const Icon(Icons.add),
+                  label: const Text('Adversaire virtuel'),
+                  onPressed: _addBot,
+                ),
+              ],
+            ),
             if (setup.picked.length > 1) ...[
               const SizedBox(height: DartsSpace.xl),
               Text('Ordre de jeu', style: textTheme.titleLarge),
@@ -182,6 +222,17 @@ class _SetupScreenState extends State<SetupScreen> {
                 ],
               ),
             ],
+            SwitchListTile(
+              key: const Key('teams-switch'),
+              title: const Text('Équipes de 2'),
+              subtitle: Text(
+                setup.teams && setup.problem == null
+                    ? setup.sides.map((side) => side.name).join('  ·  ')
+                    : 'Dans l’ordre de jeu : 1 et 2 ensemble, 3 et 4 ensemble',
+              ),
+              value: setup.teams,
+              onChanged: (value) => setup.teams = value,
+            ),
             const SizedBox(height: DartsSpace.xl),
             Text('Partie', style: textTheme.titleLarge),
             const SizedBox(height: DartsSpace.sm),
@@ -472,6 +523,24 @@ class _SetupScreenState extends State<SetupScreen> {
                 ),
               ],
             },
+            if (setup.problem case final problem?)
+              Padding(
+                padding: const EdgeInsets.only(top: DartsSpace.sm),
+                child: Text(
+                  switch (problem) {
+                    SetupProblem.teamsNeedPairs =>
+                      'Équipes : un nombre pair de joueurs, 4 au minimum',
+                    SetupProblem.botInTeam =>
+                      'Pas d’adversaire virtuel en équipes',
+                    SetupProblem.botCannotPlay =>
+                      'L’adversaire virtuel ne joue qu’au X01 et au Count-Up',
+                  },
+                  key: const Key('setup-problem'),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
             if (setup.config.minPlayers > 1 &&
                 setup.picked.length < setup.config.minPlayers)
               Padding(
@@ -586,3 +655,6 @@ Future<int?> _askStartScore(BuildContext context) async {
   // Past this the scoreboard and the stats stop making sense.
   return score > 9999 ? null : score;
 }
+
+/// The levels a virtual opponent is offered at: three-dart averages.
+const botAverages = [30, 40, 50, 60, 70, 80, 90];

@@ -93,13 +93,18 @@ void main() {
     await tester.tap(find.text('Nouvelle session'));
     await tester.pumpAndSettle();
 
+    Future<void> scrollToEnd() async {
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -2000));
+      await tester.pumpAndSettle();
+    }
+
     for (final game in ['X01', 'Cricket', 'Shanghai']) {
-      await tester.tap(find.text(game));
-      await tester.pump();
+      await tapInSetup(tester, game);
+      await scrollToEnd();
       expect(find.textContaining('au moins'), findsNothing, reason: game);
     }
-    await tester.tap(find.text('Killer'));
-    await tester.pump();
+    await tapInSetup(tester, 'Killer');
+    await scrollToEnd();
     expect(find.text('Killer : au moins 3 joueurs'), findsOneWidget);
   });
 

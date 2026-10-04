@@ -4,6 +4,7 @@
 /// everything else exported here is its vocabulary.
 library;
 
+export 'bot.dart';
 export 'checkout.dart' show maxCheckoutSuggestion;
 export 'commands.dart';
 export 'dart.dart';
@@ -17,3 +18,4 @@ export 'repository.dart';
 export 'session_facade.dart';
 export 'state.dart';
 export 'game_config.dart';
+export 'x01_rules.dart' show isPossibleVisitTotal;
