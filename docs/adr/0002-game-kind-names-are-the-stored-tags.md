@@ -6,5 +6,5 @@ The kind used to exist three times: the sealed `GameConfig` type, a `GameKind` e
 
 ## Consequences
 
-- Renaming a `GameKind` value silently breaks every stored journal. Treat the names as a storage format: add values, never rename them. `test/session/event_codec_test.dart` pins the stored names.
+- Renaming a `GameKind` value silently breaks every stored journal. Treat the names as a storage format: add values, never rename them. `test/session/stored_journal_test.dart` pins the stored names and replays a journal as stored.
 - A `game_started` event with no `kind` is an X01 game: journals written before kinds existed hold nothing else.
