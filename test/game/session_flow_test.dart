@@ -12,6 +12,41 @@ Future<void> joueur1Wins(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('a new session starts from the last players and game', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await launchGame(
+      tester,
+      const ['Joueur 2', 'Joueur 1'],
+      'Cricket',
+      const ['Cut-Throat'],
+    );
+    await tester.tap(find.byKey(const Key('leave-game')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Nouvelle session'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Terminer et commencer'));
+    await tester.pumpAndSettle();
+    // Nothing to pick again: same players, same order, same rules.
+    await tester.tap(find.text('Lancer la partie'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('cricket-variant'))).data,
+      startsWith('Cut-Throat'),
+    );
+    final board = find.byKey(const Key('cricket-board'));
+    final names = [
+      for (final name in ['Joueur 2', 'Joueur 1'])
+        tester
+            .getCenter(find.descendant(of: board, matching: find.text(name)))
+            .dx,
+    ];
+    expect(names.first, lessThan(names.last));
+  });
+
   testWidgets('the game-over panel; Rejouer starts a fresh game', (
     tester,
   ) async {
@@ -113,10 +148,7 @@ Future<void> launchGameAfterConfirm(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(find.text('Terminer et commencer'));
   await tester.pumpAndSettle();
-  for (final name in ['Joueur 1', 'Joueur 2']) {
-    await tester.tap(find.widgetWithText(CheckboxListTile, name));
-    await tester.pump();
-  }
+  // The players of the session being ended are picked already.
   await tester.tap(find.text('Lancer la partie'));
   await tester.pumpAndSettle();
 }

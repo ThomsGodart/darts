@@ -164,4 +164,18 @@ void main() {
     setup.kind = GameKind.killer;
     expect(setup.config, const KillerConfig(lives: 5));
   });
+
+  test('a prefilled setup drops players no longer in the catalog', () async {
+    final catalog = InMemoryPlayerCatalog();
+    final ana = await catalog.add('Ana');
+    final bob = await catalog.add('Bob');
+    await catalog.remove(bob);
+    final setup = SetupController(
+      catalog,
+      from: (players: [bob, ana], config: const X01Config()),
+    );
+    await setup.load();
+
+    expect(setup.picked, [ana]);
+  });
 }

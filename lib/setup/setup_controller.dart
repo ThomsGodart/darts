@@ -65,11 +65,13 @@ class SetupController extends ChangeNotifier {
     _notify();
     try {
       _players = await _catalog.active();
-      // A prefilled setup may carry names changed since: take the catalog's.
-      for (final (i, picked) in _picked.indexed) {
-        final current = _players.where((p) => p.id == picked.id).firstOrNull;
-        if (current != null) _picked[i] = current;
-      }
+      // A prefilled setup may carry names changed since, or players
+      // removed since: take the catalog's word for both.
+      final current = {for (final player in _players) player.id: player};
+      final stillThere = [for (final picked in _picked) ?current[picked.id]];
+      _picked
+        ..clear()
+        ..addAll(stillThere);
     } catch (_) {
       _loadError = 'Impossible de charger les joueurs.';
     }

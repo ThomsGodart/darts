@@ -69,7 +69,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted || !await _confirmAbandon()) return;
     }
     if (!mounted) return;
-    final setup = await _askSetup();
+    // Same players, same game as last time: one tap to play again.
+    final last = await widget.launcher.lastSetup();
+    if (!mounted) return;
+    final setup = await _askSetup(from: last);
     if (setup == null || !mounted) return;
     final controller = await widget.launcher.newGame(setup);
     if (!mounted) return controller.dispose();

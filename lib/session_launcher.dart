@@ -25,6 +25,13 @@ class SessionLauncher extends ChangeNotifier {
     return session == null ? null : SessionController(session);
   }
 
+  /// Who played the latest game, in its throwing order, and its rules:
+  /// what a new session is offered to start from. Null before any game.
+  Future<GameSetup?> lastSetup() async {
+    final game = (await _repository.latest())?.state.game;
+    return game == null ? null : (players: game.players, config: game.config);
+  }
+
   /// State for the setup screen: blank for a new session, or starting from
   /// [from] for the next game of one.
   SetupController newSetup({GameSetup? from}) =>
