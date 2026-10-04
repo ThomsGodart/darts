@@ -19,30 +19,34 @@ void main() {
     await launchGame(
       tester,
       const ['Joueur 2', 'Joueur 1'],
-      'Cricket',
-      const ['Cut-Throat'],
+      'Golf',
+      const ['18 trous'],
     );
-    await tester.tap(find.byKey(const Key('leave-game')));
+    for (var visit = 0; visit < 36; visit++) {
+      await tester.tap(find.text('Fin de tour'));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('Terminer la session'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Terminer'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Nouvelle session'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Terminer et commencer'));
     await tester.pumpAndSettle();
     // Nothing to pick again: same players, same order, same rules.
     await tester.tap(find.text('Lancer la partie'));
     await tester.pumpAndSettle();
 
     expect(
-      tester.widget<Text>(find.byKey(const Key('cricket-variant'))).data,
-      startsWith('Cut-Throat'),
+      tester.widget<Text>(find.byKey(const Key('score-list-title'))).data,
+      'Trou 1 / 18',
     );
-    final board = find.byKey(const Key('cricket-board'));
+    final board = find.byKey(const Key('golf-board'));
     final names = [
       for (final name in ['Joueur 2', 'Joueur 1'])
         tester
             .getCenter(find.descendant(of: board, matching: find.text(name)))
-            .dx,
+            .dy,
     ];
     expect(names.first, lessThan(names.last));
   });
@@ -120,9 +124,9 @@ void main() {
     final storage = await AppStorage.withTwoPlayers();
     await pumpApp(tester, storage);
     await launchGame(tester);
-    await tester.tap(find.widgetWithText(FilledButton, '60'));
-    await tester.pump();
-    // Leave the game mid-way with the system back gesture.
+    await joueur1Wins(tester);
+    // Leave between two games with the system back gesture: the session
+    // stays open.
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
 

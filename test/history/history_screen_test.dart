@@ -55,10 +55,13 @@ void main() {
   testWidgets('the open session is not listed: it is resumed instead', (
     tester,
   ) async {
-    await pumpApp(tester, await AppStorage.withTwoPlayers());
-    await launchGame(tester);
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
+    final storage = await AppStorage.withTwoPlayers();
+    final players = await InMemoryPlayerCatalog(storage.players).active();
+    (await InMemorySessionRepository(storage.sessions).create())
+      ..startGame(players)
+      ..submitVisitTotal(60);
+    await pumpApp(tester, storage);
+    expect(find.text('Reprendre la session'), findsOneWidget);
 
     await openHistory(tester);
     expect(find.text('Aucune session pour l’instant'), findsOneWidget);

@@ -126,24 +126,33 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openSettings() => Navigator.of(context)
       .push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
 
-  /// Between games: the setup screen, starting from the last game.
-  Future<void> _changeSetup(SessionController controller) async {
-    if (_changingSetup) return;
+  /// The setup screen for the next game of [controller]'s session,
+  /// starting from [from], or from the last game with its order turned.
+  /// Says whether a game was started.
+  Future<bool> _changeSetup(
+    SessionController controller, {
+    GameSetup? from,
+    String title = 'Partie suivante',
+  }) async {
+    if (_changingSetup) return false;
     _changingSetup = true;
     try {
       final setup = await _askSetup(
-        from: controller.nextSetup,
-        title: 'Partie suivante',
+        from: from ?? controller.nextSetup,
+        title: title,
       );
-      if (setup == null || !mounted) return;
+      if (setup == null || !mounted) return false;
       await widget.launcher.nextGame(controller, setup);
+      return true;
     } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossible de lancer la partie. Réessayez.'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de lancer la partie. Réessayez.'),
+          ),
+        );
+      }
+      return false;
     } finally {
       _changingSetup = false;
     }
@@ -156,6 +165,11 @@ class _HomeScreenState extends State<HomeScreen> {
           controller: controller,
           launcher: widget.launcher,
           onChangeSetup: () => _changeSetup(controller),
+          onCancelGame: (cancelled) => _changeSetup(
+            controller,
+            from: cancelled,
+            title: 'Nouvelle partie',
+          ),
         ),
       ),
     );

@@ -221,18 +221,81 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('the game bar leads back to the menu, the session kept', (
-    tester,
-  ) async {
-    await startGame(tester);
-    await quickScore(tester, 60);
-    await tester.tap(find.byKey(const Key('leave-game')));
-    await tester.pumpAndSettle();
+  group('Back during a game', () {
+    testWidgets('asks before cancelling what was played', (tester) async {
+      await startGame(tester);
+      await quickScore(tester, 60);
+      await tester.tap(find.byKey(const Key('leave-game')));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Reprendre la session'), findsOneWidget);
-    await tester.tap(find.text('Reprendre la session'));
-    await tester.pumpAndSettle();
-    expect(activeRemaining(tester), '501');
-    expect(find.text('441'), findsOneWidget);
+      expect(find.text('Annuler la partie ?'), findsOneWidget);
+      await tester.tap(find.text('Continuer la partie'));
+      await tester.pumpAndSettle();
+      expect(activeRemaining(tester), '501');
+      expect(find.text('441'), findsOneWidget);
+    });
+
+    testWidgets('once confirmed, reopens the setup as the game was set up', (
+      tester,
+    ) async {
+      await startGame(tester);
+      await quickScore(tester, 60);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Annuler la partie'));
+      await tester.pumpAndSettle();
+
+      // The setup: same players already picked.
+      expect(find.text('Nouvelle partie'), findsOneWidget);
+      await tester.tap(find.text('Lancer la partie'));
+      await tester.pumpAndSettle();
+
+      // A fresh game: the 60 is gone.
+      expect(
+        tester.widget<Text>(find.byKey(const Key('active-name'))).data,
+        'Joueur 1',
+      );
+      expect(activeRemaining(tester), '501');
+      expect(find.text('441'), findsNothing);
+    });
+
+    testWidgets('backing out of the setup too leads to the menu', (
+      tester,
+    ) async {
+      await startGame(tester);
+      await quickScore(tester, 60);
+      await tester.tap(find.byKey(const Key('leave-game')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Annuler la partie'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nouvelle session'), findsOneWidget);
+      // The only game was cancelled: nothing is left to resume.
+      expect(find.text('Reprendre la session'), findsNothing);
+    });
+
+    testWidgets('does not ask when nothing was played yet', (tester) async {
+      await startGame(tester);
+      await tester.tap(find.byKey(const Key('leave-game')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Annuler la partie ?'), findsNothing);
+      expect(find.text('Nouvelle partie'), findsOneWidget);
+    });
+
+    testWidgets('between two games, leaves to the menu, the session kept', (
+      tester,
+    ) async {
+      await startGame(tester);
+      await playVisits(tester, [180, 26, 180, 26, 141]);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('leave-game')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Annuler la partie ?'), findsNothing);
+      expect(find.text('Reprendre la session'), findsOneWidget);
+    });
   });
 }

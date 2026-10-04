@@ -60,6 +60,22 @@ void repositoryContract(
       expect(scoreboardOf(rebuilt!), before);
     });
 
+    test('a cancelled game is gone after a relaunch', () async {
+      final repository = open();
+      final session = await repository.create();
+      session.startGame([alice, bob], config: const X01Config(startScore: 40));
+      session.submitVisitTotal(40, dartsAtCheckout: 1);
+      session.rematch();
+      session
+        ..submitVisitTotal(20)
+        ..throwDart(const Dart.single(5))
+        ..cancelGame();
+
+      final rebuilt = (await (await relaunch(repository)).latest())!;
+      expect(rebuilt.state.games, hasLength(1));
+      expect(rebuilt.state.game!.winner, alice);
+    });
+
     test('an undo is persisted', () async {
       final repository = open();
       final session = await repository.create();

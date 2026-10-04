@@ -58,6 +58,21 @@ class Session {
     return startGame(game.rematchOrder, config: config ?? game.config);
   }
 
+  /// Drops the game in progress, with everything entered in it, as if it
+  /// had never started. A finished game stays: it was played.
+  CommandResult cancelGame() {
+    final game = _state.game;
+    if (game == null || game.isFinished || _state.isEnded) {
+      return _notInProgress(game);
+    }
+    while (_journal.events.last is! GameStarted) {
+      _journal.removeLast();
+    }
+    _journal.removeLast();
+    _state = foldEvents(_journal.events);
+    return const Accepted();
+  }
+
   /// Ends the session: normally between two games; a game in progress, if
   /// the session is abandoned, stays unfinished.
   CommandResult endSession() {

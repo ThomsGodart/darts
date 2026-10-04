@@ -32,6 +32,7 @@ class GameScreen extends StatefulWidget {
     required this.controller,
     this.launcher,
     this.onChangeSetup,
+    this.onCancelGame,
     this.screenAwake = const WakelockScreenAwake(),
     this.botDelay = const Duration(milliseconds: 900),
     this.botRandom,
@@ -45,6 +46,11 @@ class GameScreen extends StatefulWidget {
   /// Between games: lets players join, leave or reorder, or the rules
   /// change, then starts the next game. Null hides the option.
   final Future<void> Function()? onChangeSetup;
+
+  /// Back during a game: once the game is cancelled, reopens the setup
+  /// on what it was started with, and says whether another game started.
+  /// Null makes Back simply leave the screen.
+  final Future<bool> Function(GameSetup cancelled)? onCancelGame;
   final ScreenAwake screenAwake;
 
   /// How long a virtual opponent takes to throw.
@@ -68,6 +74,9 @@ class _GameScreenState extends State<GameScreen> {
 
   /// Name shown by the turn banner; null when no banner shows.
   String? _bannerPlayerName;
+
+  /// Set while Back is being handled: blocks a second one.
+  bool _cancelling = false;
 
   /// Pending visit of a virtual opponent, if it is its turn.
   Timer? _botTimer;
@@ -101,7 +110,16 @@ class _GameScreenState extends State<GameScreen> {
 
   void _onGameChanged() {
     final state = controller.state;
-    final game = state.game!;
+    final game = state.game;
+    if (game == null) {
+      // The only game was cancelled: nothing to show until the next one.
+      _botTimer?.cancel();
+      _gamesSeen = 0;
+      _visitsSeen = 0;
+      _syncScreenAwake();
+      setState(() => _bannerPlayerName = null);
+      return;
+    }
     final isNewGame = state.games.length != _gamesSeen;
     if (isNewGame) {
       // A new game: nothing to announce yet.
@@ -124,8 +142,13 @@ class _GameScreenState extends State<GameScreen> {
   void _scheduleBot() {
     _botTimer?.cancel();
     final state = controller.state;
-    final game = state.game!;
-    if (game.isFinished || state.isEnded || !game.activePlayer.isBot) return;
+    final game = state.game;
+    if (game == null ||
+        game.isFinished ||
+        state.isEnded ||
+        !game.activePlayer.isBot) {
+      return;
+    }
     final games = state.games.length;
     final visits = game.visitsPlayed;
     _botTimer = Timer(widget.botDelay, () {
@@ -167,7 +190,7 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _syncScreenAwake() {
-    final inProgress = !controller.state.game!.isFinished;
+    final inProgress = !(controller.state.game?.isFinished ?? true);
     if (inProgress == _screenKeptOn) return;
     _screenKeptOn = inProgress;
     inProgress ? widget.screenAwake.keepOn() : widget.screenAwake.release();
@@ -179,7 +202,9 @@ class _GameScreenState extends State<GameScreen> {
     final gameBody = ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        final game = controller.state.game!;
+        final game = controller.state.game;
+        // Cancelled, the setup of the next one is open over this screen.
+        if (game == null) return const SizedBox.shrink();
         final bannerPlayerName = _bannerPlayerName;
         final onUndo = controller.canUndo ? _undo : null;
         final statePane = switch (game) {
@@ -337,6 +362,17 @@ class _GameScreenState extends State<GameScreen> {
       },
     );
 
+    return PopScope(
+      // Back during a game cancels it rather than leaving it behind.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBack();
+      },
+      child: _scaffold(launcher, gameBody),
+    );
+  }
+
+  Widget _scaffold(SessionLauncher? launcher, Widget gameBody) {
     return Scaffold(
       body: SafeArea(
         child: launcher == null
@@ -353,6 +389,55 @@ class _GameScreenState extends State<GameScreen> {
               ),
       ),
     );
+  }
+
+  /// Back: between games, leaves to the menu, the session staying open.
+  /// During a game, cancels it — after asking, if anything was entered —
+  /// and reopens the setup it was started with.
+  Future<void> _onBack() async {
+    final game = controller.state.game;
+    final onCancelGame = widget.onCancelGame;
+    if (game == null ||
+        game.isFinished ||
+        controller.state.isEnded ||
+        onCancelGame == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    if (_cancelling) return;
+    _cancelling = true;
+    try {
+      if (controller.canUndo) {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Annuler la partie ?'),
+            content: const Text(
+              'Ce qui a été joué dans cette partie sera effacé. Vous '
+              'revenez au choix des joueurs et du jeu.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Continuer la partie'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Annuler la partie'),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true || !mounted) return;
+      }
+      final cancelled = (players: game.players, config: game.config);
+      controller.cancelGame();
+      final started = await onCancelGame(cancelled);
+      // Backing out of the setup too: nothing is left to play here.
+      if (!started && mounted) Navigator.of(context).pop();
+    } finally {
+      _cancelling = false;
+    }
   }
 
   Future<void> _endSession(BuildContext context) async {

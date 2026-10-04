@@ -127,11 +127,8 @@ void main() {
     expect(find.text('Raté'), findsNothing);
     expect(find.text('Fin de tour'), findsOneWidget);
 
+    // Nothing was thrown: Back reopens the setup without asking.
     await tester.tap(find.byKey(const Key('leave-game')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Nouvelle session'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Terminer et commencer'));
     await tester.pumpAndSettle();
     await tapInSetup(tester, 'Clavier fléchettes');
     await tester.tap(find.text('Lancer la partie'));

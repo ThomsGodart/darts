@@ -39,6 +39,8 @@ class SessionController extends ChangeNotifier {
   CommandResult rematch({GameConfig? config}) =>
       _notifyIfAccepted(_session.rematch(config: config));
 
+  CommandResult cancelGame() => _notifyIfAccepted(_session.cancelGame());
+
   CommandResult endSession() => _notifyIfAccepted(_session.endSession());
 
   /// Setup of the next game: same rules, the rotated throwing order.
