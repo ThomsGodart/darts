@@ -3,15 +3,28 @@ import 'package:flutter/material.dart';
 import '../session/session.dart';
 import '../theme/darts_space.dart';
 import 'dart_picker.dart';
+import 'dartboard.dart';
 import 'input_pane.dart';
 
 /// Visit totals players hit most often, entered in a single tap.
 const quickScores = [26, 41, 45, 60, 81, 85, 100, 140, 180];
 
-/// Bottom drawer to enter a visit: dart by dart, or as quick-scores or a
-/// typed total. Give it a new key on each visit; [dartByDart] says which
-/// way it opens. Without [onSubmit] (cricket), only
-/// darts can be entered.
+/// How a visit is being entered.
+enum VisitEntry {
+  /// Dart by dart, on the keypad of numbers.
+  keypad,
+
+  /// Dart by dart, by touching a drawn board where each dart landed.
+  target,
+
+  /// As its total, in one go.
+  total,
+}
+
+/// Bottom drawer to enter a visit: dart by dart on a keypad or a drawn
+/// board, or as quick-scores or a typed total. Give it a new key on each
+/// visit; [entry] says which way it opens. Without [onSubmit] (cricket),
+/// only darts can be entered.
 class VisitInput extends StatefulWidget {
   const VisitInput({
     super.key,
@@ -20,16 +33,16 @@ class VisitInput extends StatefulWidget {
     required this.onUndo,
     this.onEndVisit,
     this.dartsInVisit = const [],
-    this.dartByDart = false,
-    this.onDartByDartChanged,
+    this.entry = VisitEntry.keypad,
+    this.onEntryChanged,
   });
 
   /// Takes a visit total; null when the game only takes darts.
   final ValueChanged<int>? onSubmit;
   final ValueChanged<Dart> onDart;
 
-  /// Darts already entered in this visit; the visit stays in dart mode
-  /// until it ends.
+  /// Darts already entered in this visit: until it ends, it cannot be
+  /// entered as a total any more.
   final List<Dart> dartsInVisit;
 
   /// Takes back the latest input; null when there is nothing to undo.
@@ -39,13 +52,13 @@ class VisitInput extends StatefulWidget {
   /// the option.
   final VoidCallback? onEndVisit;
 
-  /// Whether a visit that takes totals opens dart by dart rather than on
-  /// the totals.
-  final bool dartByDart;
+  /// The way the visit opens. [VisitEntry.total] only applies to a game
+  /// that takes totals, and to a visit without a dart yet.
+  final VisitEntry entry;
 
-  /// Told when the players switch between totals and darts, so the next
-  /// visit can open the way they left this one.
-  final ValueChanged<bool>? onDartByDartChanged;
+  /// Told when the players change the way they enter, so the next visit
+  /// can open the way they left this one.
+  final ValueChanged<VisitEntry>? onEntryChanged;
 
   @override
   State<VisitInput> createState() => _VisitInputState();
@@ -53,12 +66,20 @@ class VisitInput extends StatefulWidget {
 
 class _VisitInputState extends State<VisitInput> {
   String _typed = '';
-  late bool _dartByDart = widget.dartByDart;
+  late VisitEntry _chosen = widget.entry;
 
   bool get _takesTotals => widget.onSubmit != null;
 
-  bool get _inDartMode =>
-      !_takesTotals || _dartByDart || widget.dartsInVisit.isNotEmpty;
+  /// A total needs a game that takes them, and a visit with no dart in.
+  bool get _totalsAllowed => _takesTotals && widget.dartsInVisit.isEmpty;
+
+  /// The way the visit is entered right now: what was chosen, unless a
+  /// total cannot be entered.
+  VisitEntry get _entry => _chosen == VisitEntry.total && !_totalsAllowed
+      ? VisitEntry.keypad
+      : _chosen;
+
+  bool get _inDartMode => _entry != VisitEntry.total;
 
   void _appendDigit(int digit) {
     if (_typed.length >= 3) return;
@@ -75,18 +96,20 @@ class _VisitInputState extends State<VisitInput> {
   @override
   Widget build(BuildContext context) {
     return InputPane(
-      header: _takesTotals
-          ? _ModeSwitch(
-              dartByDart: _inDartMode,
-              // Once a dart is in, the visit is finished dart by dart.
-              onChanged: widget.dartsInVisit.isNotEmpty
-                  ? null
-                  : (value) {
-                      setState(() => _dartByDart = value);
-                      widget.onDartByDartChanged?.call(value);
-                    },
-            )
-          : null,
+      header: _EntrySwitch(
+        entry: _entry,
+        // Once a dart is in, the visit is finished dart by dart.
+        offered: [
+          VisitEntry.keypad,
+          VisitEntry.target,
+          if (_takesTotals) VisitEntry.total,
+        ],
+        totalsAllowed: _totalsAllowed,
+        onChanged: (entry) {
+          setState(() => _chosen = entry);
+          widget.onEntryChanged?.call(entry);
+        },
+      ),
       dartsInVisit: _inDartMode ? widget.dartsInVisit : null,
       onUndo: widget.onUndo,
       onEndVisit: _inDartMode ? widget.onEndVisit : null,
@@ -96,10 +119,22 @@ class _VisitInputState extends State<VisitInput> {
               onPressed: () => _submit(0),
               child: const Text('0 / raté'),
             ),
-      children: _inDartMode
-          // Without totals (cricket), a miss changes nothing: no key.
-          ? [DartPicker(onDart: widget.onDart, showMiss: _takesTotals)]
-          : _totalPad(Theme.of(context).textTheme),
+      children: switch (_entry) {
+        // Without totals (cricket), a miss changes nothing: no key.
+        VisitEntry.keypad => [
+          DartPicker(onDart: widget.onDart, showMiss: _takesTotals),
+        ],
+        VisitEntry.target => [
+          Dartboard(onDart: widget.onDart),
+          if (_takesTotals)
+            Row(
+              children: [
+                PadKey(label: 'Raté', onTap: () => widget.onDart(Dart.miss)),
+              ],
+            ),
+        ],
+        VisitEntry.total => _totalPad(Theme.of(context).textTheme),
+      },
     );
   }
 
@@ -163,25 +198,39 @@ class _VisitInputState extends State<VisitInput> {
   ];
 }
 
-class _ModeSwitch extends StatelessWidget {
-  const _ModeSwitch({required this.dartByDart, required this.onChanged});
+class _EntrySwitch extends StatelessWidget {
+  const _EntrySwitch({
+    required this.entry,
+    required this.offered,
+    required this.totalsAllowed,
+    required this.onChanged,
+  });
 
-  final bool dartByDart;
-  final ValueChanged<bool>? onChanged;
+  final VisitEntry entry;
+  final List<VisitEntry> offered;
+
+  /// Whether the visit can still be entered as a total.
+  final bool totalsAllowed;
+  final ValueChanged<VisitEntry> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final onChanged = this.onChanged;
-    return SegmentedButton<bool>(
-      segments: const [
-        ButtonSegment(value: true, label: Text('Fléchettes')),
-        ButtonSegment(value: false, label: Text('Total')),
+    return SegmentedButton<VisitEntry>(
+      segments: [
+        for (final entry in offered)
+          ButtonSegment(
+            value: entry,
+            enabled: entry != VisitEntry.total || totalsAllowed,
+            label: Text(switch (entry) {
+              VisitEntry.keypad => 'Fléchettes',
+              VisitEntry.target => 'Cible',
+              VisitEntry.total => 'Total',
+            }),
+          ),
       ],
-      selected: {dartByDart},
+      selected: {entry},
       showSelectedIcon: false,
-      onSelectionChanged: onChanged == null
-          ? null
-          : (selection) => onChanged(selection.single),
+      onSelectionChanged: (selection) => onChanged(selection.single),
     );
   }
 }

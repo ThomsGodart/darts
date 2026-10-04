@@ -80,10 +80,11 @@ class _GameScreenState extends State<GameScreen> {
   /// Name shown by the turn banner; null when no banner shows.
   String? _bannerPlayerName;
 
-  /// Whether visits that take totals open dart by dart, per game: X01
-  /// does, Count-Up opens on totals. Once the players switch, the visits
-  /// that follow open the way they chose.
-  final Map<GameKind, bool> _dartByDart = {GameKind.x01: true};
+  /// The way visits open, per game: X01 and cricket on the keypad of
+  /// darts, Count-Up on the totals. Once the players choose another way,
+  /// the visits that follow open on it — and so does the same visit when
+  /// turning the phone rebuilds its pane.
+  final Map<GameKind, VisitEntry> _entry = {GameKind.countUp: VisitEntry.total};
 
   /// Set while Back is being handled: blocks a second one.
   bool _cancelling = false;
@@ -278,9 +279,9 @@ class _GameScreenState extends State<GameScreen> {
                 ),
                 final CountUpGame game => VisitInput(
                   key: ValueKey(game.visitsPlayed),
-                  dartByDart: _dartByDart[GameKind.countUp] ?? false,
-                  onDartByDartChanged: (value) =>
-                      _dartByDart[GameKind.countUp] = value,
+                  entry: _entry[GameKind.countUp] ?? VisitEntry.keypad,
+                  onEntryChanged: (entry) =>
+                      setState(() => _entry[GameKind.countUp] = entry),
                   onSubmit: (score) => _submitTotal(context, score),
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
@@ -314,9 +315,9 @@ class _GameScreenState extends State<GameScreen> {
                 ),
                 final X01Game game => VisitInput(
                   key: ValueKey(game.visitsPlayed),
-                  dartByDart: _dartByDart[GameKind.x01] ?? false,
-                  onDartByDartChanged: (value) =>
-                      _dartByDart[GameKind.x01] = value,
+                  entry: _entry[GameKind.x01] ?? VisitEntry.keypad,
+                  onEntryChanged: (entry) =>
+                      setState(() => _entry[GameKind.x01] = entry),
                   onSubmit: (score) => _submit(context, game, score),
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
@@ -333,6 +334,9 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 CricketGame() => VisitInput(
                   key: ValueKey(game.visitsPlayed),
+                  entry: _entry[GameKind.cricket] ?? VisitEntry.keypad,
+                  onEntryChanged: (entry) =>
+                      setState(() => _entry[GameKind.cricket] = entry),
                   onSubmit: null,
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
