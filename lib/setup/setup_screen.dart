@@ -210,7 +210,8 @@ class _SetupScreenState extends State<SetupScreen> {
               const SizedBox(height: DartsSpace.xl),
               Text('Ordre de jeu', style: textTheme.titleLarge),
               Text(
-                'Faites glisser la poignée pour changer l’ordre',
+                'Faites glisser la poignée, ou maintenez une ligne appuyée, '
+                'pour changer l’ordre',
                 key: const Key('reorder-hint'),
                 style: textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -219,24 +220,27 @@ class _SetupScreenState extends State<SetupScreen> {
               ReorderableListView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                // A visible handle, dragged at once: holding the row down
-                // to move it is not something anyone guesses.
+                // The handle moves a row at once; the rest of the row moves
+                // it after a hold, so that sliding over it still scrolls.
                 buildDefaultDragHandles: false,
                 onReorderItem: setup.reorder,
                 children: [
                   for (final (i, player) in setup.picked.indexed)
-                    ListTile(
+                    ReorderableDelayedDragStartListener(
                       key: ValueKey(player.id),
-                      leading: Text('${i + 1}', style: textTheme.titleMedium),
-                      title: Text(player.name),
-                      trailing: ReorderableDragStartListener(
-                        index: i,
-                        child: Tooltip(
-                          message: 'Déplacer ${player.name}',
-                          child: const SizedBox(
-                            width: DartsSpace.tap,
-                            height: DartsSpace.tap,
-                            child: Icon(Icons.drag_handle),
+                      index: i,
+                      child: ListTile(
+                        leading: Text('${i + 1}', style: textTheme.titleMedium),
+                        title: Text(player.name),
+                        trailing: ReorderableDragStartListener(
+                          index: i,
+                          child: Tooltip(
+                            message: 'Déplacer ${player.name}',
+                            child: const SizedBox(
+                              width: DartsSpace.tap,
+                              height: DartsSpace.tap,
+                              child: Icon(Icons.drag_handle),
+                            ),
                           ),
                         ),
                       ),

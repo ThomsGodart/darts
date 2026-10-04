@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -180,6 +181,41 @@ void main() {
       const Offset(0, 140),
       const Duration(milliseconds: 800),
     );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Lancer la partie'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('active-name'))).data,
+      'Joueur 2',
+    );
+  });
+
+  testWidgets('holding a row of the throwing order moves it too', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await tester.tap(find.text('Nouvelle session'));
+    await tester.pumpAndSettle();
+    for (final name in ['Joueur 1', 'Joueur 2']) {
+      await tester.tap(find.widgetWithText(CheckboxListTile, name));
+      await tester.pump();
+    }
+
+    // The name in the order list, not its checkbox above.
+    final row = find.descendant(
+      of: find.byType(ReorderableListView),
+      matching: find.text('Joueur 1'),
+    );
+    await tester.ensureVisible(row);
+    await tester.pumpAndSettle();
+    final gesture = await tester.startGesture(tester.getCenter(row));
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 100));
+    for (var step = 0; step < 7; step++) {
+      await gesture.moveBy(const Offset(0, 20));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await gesture.up();
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Lancer la partie'));
