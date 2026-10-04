@@ -24,10 +24,10 @@ void main() {
     expect(const GolfConfig(holes: 12).isValid, isFalse);
   });
 
-  test('strokes: double 1, treble 2, single 3, anything else 5', () {
+  test('strokes: double 1, treble 3, single 4, anything else 5', () {
     expect(golfStrokes(const Dart.double(4), hole: 4), 1);
-    expect(golfStrokes(const Dart.treble(4), hole: 4), 2);
-    expect(golfStrokes(const Dart.single(4), hole: 4), 3);
+    expect(golfStrokes(const Dart.treble(4), hole: 4), 3);
+    expect(golfStrokes(const Dart.single(4), hole: 4), 4);
     expect(golfStrokes(const Dart.double(5), hole: 4), 5);
     expect(golfStrokes(miss, hole: 4), 5);
     expect(golfStrokes(null, hole: 4), 5);
@@ -85,7 +85,7 @@ void main() {
     }
 
     final game = golfOf(session);
-    expect(game.scoreOf(alice).strokes, 27);
+    expect(game.scoreOf(alice).strokes, 36);
     expect(game.scoreOf(bob).strokes, 9);
     expect(game.winner, bob);
     expect(session.throwDart(miss), isA<Rejected>());

@@ -53,13 +53,22 @@ void main() {
 
   test('a visit without a hit halves the score, rounding up', () {
     final session = newSession()..startGame([alice], config: halveIt);
+    visit(session, [const Dart.single(20)]);
     final seen = <int>[];
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < 3; i++) {
       visit(session);
       seen.add(halveItOf(session).scoreOf(alice).points);
     }
 
-    expect(seen, [20, 10, 5, 3]);
+    // 20, then halved three times: 10, 5, and 2.5 rounded up.
+    expect(seen, [10, 5, 3]);
+    expect(halveItOf(session).scoreOf(alice).wasHalved, isTrue);
+  });
+
+  test('halving nothing leaves nothing', () {
+    final session = newSession()..startGame([alice], config: halveIt);
+    visit(session);
+    expect(halveItOf(session).scoreOf(alice).points, 0);
     expect(halveItOf(session).scoreOf(alice).wasHalved, isTrue);
   });
 
@@ -82,16 +91,16 @@ void main() {
 
   test('on D7 and T10 only that ring counts', () {
     final session = newSession()..startGame([alice], config: halveIt);
-    visit(session, [const Dart.single(20)]); // 60
-    visit(session, [const Dart.single(16)]); // 76
+    visit(session, [const Dart.single(20)]); // 20
+    visit(session, [const Dart.single(16)]); // 36
     expect(halveItOf(session).currentTarget.label, 'D7');
     visit(session, [const Dart.single(7), const Dart.treble(7)]); // halved
-    expect(halveItOf(session).scoreOf(alice).points, 38);
+    expect(halveItOf(session).scoreOf(alice).points, 18);
 
-    visit(session, [const Dart.single(14)]); // 52
+    visit(session, [const Dart.single(14)]); // 32
     expect(halveItOf(session).currentTarget.label, 'T10');
     visit(session, [const Dart.treble(10), const Dart.double(10)]); // +30
-    expect(halveItOf(session).scoreOf(alice).points, 82);
+    expect(halveItOf(session).scoreOf(alice).points, 62);
   });
 
   test('both bulls count on the last target; the highest score wins', () {
@@ -106,8 +115,8 @@ void main() {
     visit(session, [Dart.outerBull]);
 
     final game = halveItOf(session);
-    expect(game.scoreOf(alice).points, 1 + 75);
-    expect(game.scoreOf(bob).points, 1 + 25);
+    expect(game.scoreOf(alice).points, 75);
+    expect(game.scoreOf(bob).points, 25);
     expect(game.winner, alice);
   });
 
@@ -122,6 +131,8 @@ void main() {
 
   test('undo takes a dart back, even the one that halved', () {
     final session = newSession()..startGame([alice, bob], config: halveIt);
+    visit(session, [const Dart.double(20)]); // Alice 40
+    visit(session); // Bob
     session
       ..throwDart(miss)
       ..throwDart(miss);
@@ -131,5 +142,6 @@ void main() {
 
     session.undo();
     expect(scoreboardOf(session), before);
+    expect(halveItOf(session).scoreOf(alice).points, 40);
   });
 }

@@ -16,6 +16,37 @@ void main() {
     }
   });
 
+  test('the rules state the numbers the game is scored with', () {
+    String all(GameConfig config) => gameRules(config).join(' ');
+
+    // Golf: what the last dart costs.
+    for (final (dart, strokes) in [
+      (const Dart.double(3), 1),
+      (const Dart.treble(3), 3),
+      (const Dart.single(3), 4),
+      (Dart.miss, 5),
+    ]) {
+      expect(golfStrokes(dart, hole: 3), strokes);
+    }
+    expect(all(const GolfConfig()), contains('double du numéro, 1 coup'));
+    expect(all(const GolfConfig()), contains('triple, 3 coups'));
+    expect(all(const GolfConfig()), contains('simple, 4 coups'));
+    expect(all(const GolfConfig()), contains('$golfMissStrokes coups'));
+
+    expect(all(const HalveItConfig()), contains('part de $halveItStartScore.'));
+    expect(
+      all(const HalveItConfig()),
+      contains('20, 16, double 7, 14, triple 10, 17, puis le centre'),
+    );
+    expect(
+      [for (final target in halveItTargets) target.label],
+      ['20', '16', 'D7', '14', 'T10', '17', 'Bull'],
+    );
+    expect(all(const Bobs27Config()), contains('part de $bobs27StartScore'));
+    expect(all(const CountUpConfig()), contains('8 manches'));
+    expect(all(const BaseballConfig()), contains('$baseballInnings manches'));
+  });
+
   test('the rules follow what was set up', () {
     String all(GameConfig config) => gameRules(config).join(' ');
 
@@ -24,17 +55,28 @@ void main() {
       all(const X01Config(outRule: OutRule.master)),
       contains('un double ou un triple'),
     );
+    expect(
+      all(const X01Config(outRule: OutRule.straight)),
+      contains('n’importe quelle fléchette'),
+    );
     expect(all(const X01Config()), isNot(contains('Double-in')));
     expect(all(const X01Config(doubleIn: true)), contains('Double-in'));
     expect(all(const X01Config(legsToWin: 3)), contains('premier à 3 manches'));
     expect(
       all(const CricketConfig(variant: CricketVariant.cutThroat)),
-      contains('aux adversaires'),
+      contains('Les points sont une pénalité'),
     );
     expect(all(const GolfConfig(holes: 18)), contains('18 trous'));
+    expect(all(const AroundTheClockConfig()), contains('puis le centre'));
     expect(
-      all(const AroundTheClockConfig(finishOnBull: true)),
-      contains('puis le bull'),
+      all(const AroundTheClockConfig(finishOnBull: false)),
+      isNot(contains('puis le centre')),
+    );
+    expect(all(const KillerConfig(lives: 5)), contains('5 vies'));
+    expect(all(const KillerConfig(doublesToKiller: 3)), contains('3 fois'));
+    expect(
+      all(const ShanghaiConfig(length: ShanghaiLength.fourteenToTwenty)),
+      contains('du 14 au 20'),
     );
     expect(
       all(const ShanghaiConfig(instantShanghai: false)),
@@ -51,9 +93,9 @@ void main() {
 
     for (final (game, title, words) in [
       ('X01', 'Règles · 501 Double-out', 'exactement à 0'),
-      ('Cricket', 'Règles · Cricket', 'Trois marques ferment'),
-      ('Killer', 'Règles · Killer 3v', 'dernier en vie'),
-      ('Halve-It', 'Règles · Halve-It', 'divise le score par 2'),
+      ('Cricket', 'Règles · Cricket', 'fermé quand un joueur y a 3 marques'),
+      ('Killer', 'Règles · Killer 3v', 'Le dernier en vie gagne'),
+      ('Halve-It', 'Règles · Halve-It', 'est divisé par 2'),
     ]) {
       await tapInSetup(tester, game);
       await tester.tap(find.byKey(const Key('rules-button')));
@@ -82,6 +124,6 @@ void main() {
     await tester.pumpAndSettle();
     await tapInSetup(tester, 'Halve-It');
 
-    expect(find.textContaining('divise le score'), findsNothing);
+    expect(find.textContaining('divisé par 2'), findsNothing);
   });
 }

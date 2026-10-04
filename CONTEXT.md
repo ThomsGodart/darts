@@ -25,10 +25,10 @@ in French.
 | **MPR** | Marks per round (visit) in Cricket. | MPR |
 | **Killer** | Party game: claim a number, become Killer on its double, remove lives on others’ doubles. | Killer |
 | **Shanghai** | Fixed number sequence; score S/D/T on that number; optional instant win on S+D+T in one visit. | Shanghai |
-| **Halve-It** | Fixed targets (20, 16, D7, 14, T10, 17, bull), everyone starting on 40; hits on the target add up, a visit without one halves the score, rounding up. Highest score wins. | Halve-It |
-| **Golf** | Hole n is the number n, over 9 or 18 holes. Up to three darts, the last one thrown counts: double 1 **stroke**, treble 2, single 3, anything else 5. Fewest strokes win. | Golf |
+| **Halve-It** | Fixed targets (20, 16, D7, 14, T10, 17, bull), everyone starting on 0; hits on the target add up, a visit without one halves the score, rounding up. Highest score wins. | Halve-It |
+| **Golf** | Hole n is the number n, over 9 or 18 holes. Up to three darts, the last one thrown counts: double 1 **stroke**, treble 3, single 4, anything else 5. Fewest strokes win. | Golf |
 | **Stroke** | What a Golf hole costs a player. | coup |
-| **Around the Clock** | Hit 1 to 20 in order, any ring counting, optionally finishing on the bull. The first to finish wins at once. | Tour de l'horloge |
+| **Around the Clock** | Hit 1 to 20 in order, any ring counting, then the bull unless the players leave it out. The first to finish wins at once. | Tour de l'horloge |
 | **Bob's 27** | Everyone starts on 27 and throws three darts at each double from D1 to D20, then the bull. Each hit adds the target's value, a visit without one takes it away; at zero or less a player is out. Highest score wins. | Bob's 27 |
 | **Count-Up** | Every dart scores what it is worth, over 8 or 10 rounds. Highest total wins. | Count-Up |
 | **Baseball** | Nine **innings**: inning n is thrown at the number n, a single scoring 1 run, a double 2, a treble 3. Most runs win; a tie for the lead plays extra innings. | Baseball |

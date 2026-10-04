@@ -27,7 +27,7 @@ void main() {
 
       expect(titleOf(tester), 'Cible 20');
       await tapKey(tester, 'T20');
-      expect(find.text('100'), findsOneWidget);
+      expect(find.text('60'), findsOneWidget);
 
       await tester.tap(find.text('Fin de tour'));
       await tester.pumpAndSettle();
@@ -37,7 +37,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(titleOf(tester), 'Cible 16');
-      expect(find.text('÷2  20'), findsOneWidget);
+      expect(find.text('÷2  0'), findsOneWidget);
     });
 
     testWidgets('only the ring that counts is offered', (tester) async {
@@ -70,7 +70,7 @@ void main() {
 
       expect(titleOf(tester), 'Trou 1 / 9');
       await tapKey(tester, 'S1');
-      expect(hintOf(tester), 'S’arrêter maintenant : 3 coups');
+      expect(hintOf(tester), 'S’arrêter maintenant : 4 coups');
       await tapKey(tester, 'D1');
       expect(hintOf(tester), 'S’arrêter maintenant : 1 coup');
 

@@ -368,8 +368,9 @@ const halveItTargets = [
   HalveItTarget(Dart.bullSector),
 ];
 
-/// What every Halve-It player starts on, so that the first miss costs.
-const halveItStartScore = 40;
+/// What every Halve-It player starts on: nothing. The first target sets
+/// the score the misses then halve.
+const halveItStartScore = 0;
 
 /// Rules of a Halve-It game: there is nothing to choose.
 final class HalveItConfig extends GameConfig {
@@ -391,14 +392,15 @@ final class HalveItConfig extends GameConfig {
 /// Strokes a missed hole costs in Golf.
 const golfMissStrokes = 5;
 
-/// Strokes the [last] dart of a visit costs on [hole]: a double 1, a
-/// treble 2, a single 3; anything else, or no dart at all, a miss.
+/// Strokes the [last] dart of a visit costs on [hole]: a double is a hole
+/// in one, a treble 3, a single 4; anything else, or no dart at all, a
+/// miss.
 int golfStrokes(Dart? last, {required int hole}) {
   if (last == null || last.sector != hole) return golfMissStrokes;
   return switch (last.multiplier) {
     2 => 1,
-    3 => 2,
-    1 => 3,
+    3 => 3,
+    1 => 4,
     _ => golfMissStrokes,
   };
 }
@@ -427,7 +429,7 @@ final class GolfConfig extends GameConfig {
 
 /// Rules of an Around the Clock game.
 final class AroundTheClockConfig extends GameConfig {
-  const AroundTheClockConfig({this.finishOnBull = false});
+  const AroundTheClockConfig({this.finishOnBull = true});
 
   /// Whether the bull comes after 20, as the last target.
   final bool finishOnBull;

@@ -30,7 +30,7 @@ void main() {
     await tapKey(tester, '1');
     expect(titleOf(tester), 'Cible 2');
     await tapKey(tester, '2');
-    expect(find.text('2 / 20'), findsOneWidget);
+    expect(find.text('2 / 21'), findsOneWidget);
 
     await endVisit(tester);
     expect(titleOf(tester), 'Cible 1');
@@ -112,11 +112,14 @@ void main() {
     for (var n = 1; n <= 20; n++) {
       await tapKey(tester, '$n');
     }
+    // After 20, the bull.
+    expect(titleOf(tester), 'Cible Bull');
+    await tapKey(tester, 'Bull');
     await tester.pumpAndSettle();
 
     expect(find.text('Joueur 1 gagne !'), findsOneWidget);
     expect(titleOf(tester), 'Tour bouclé');
-    expect(find.text('20 / 20'), findsOneWidget);
+    expect(find.text('21 / 21'), findsOneWidget);
   });
 
   testWidgets("Bob's 27 shows who is out, then the game over panel", (

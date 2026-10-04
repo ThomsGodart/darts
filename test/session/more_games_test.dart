@@ -22,7 +22,10 @@ void main() {
 
     test('everyone starts on 1; any ring of the number moves on', () {
       final session = newSession()
-        ..startGame([alice, bob], config: const AroundTheClockConfig());
+        ..startGame([
+          alice,
+          bob,
+        ], config: const AroundTheClockConfig(finishOnBull: false));
       expect(gameOf(session).activeTarget, 1);
 
       visit(session, [
@@ -39,14 +42,19 @@ void main() {
 
     test('a dart on another number does not move on', () {
       final session = newSession()
-        ..startGame([alice], config: const AroundTheClockConfig());
+        ..startGame([
+          alice,
+        ], config: const AroundTheClockConfig(finishOnBull: false));
       visit(session, [const Dart.single(2), miss, const Dart.single(20)]);
       expect(gameOf(session).scoreOf(alice).hits, 0);
     });
 
-    test('the first to hit 20 wins at once', () {
+    test('without the bull, the first to hit 20 wins at once', () {
       final session = newSession()
-        ..startGame([alice, bob], config: const AroundTheClockConfig());
+        ..startGame([
+          alice,
+          bob,
+        ], config: const AroundTheClockConfig(finishOnBull: false));
       for (var n = 1; n <= 18; n += 3) {
         visit(session, [for (var k = n; k < n + 3; k++) Dart.single(k)]);
         visit(session);
@@ -61,7 +69,10 @@ void main() {
 
     test('the second player can win, on their first dart', () {
       final session = newSession()
-        ..startGame([alice, bob], config: const AroundTheClockConfig());
+        ..startGame([
+          alice,
+          bob,
+        ], config: const AroundTheClockConfig(finishOnBull: false));
       for (var n = 1; n <= 19; n++) {
         if (session.state.game!.activePlayer == alice) visit(session);
         session.throwDart(Dart.single(n));
@@ -77,6 +88,11 @@ void main() {
       expect(gameOf(session).winner, bob);
       session.undo();
       expect(gameOf(session).isFinished, isFalse);
+    });
+
+    test('the bull finishes the round unless asked otherwise', () {
+      expect(const AroundTheClockConfig().finishOnBull, isTrue);
+      expect(const AroundTheClockConfig().targets, 21);
     });
 
     test('with the bull to finish, 20 is not the end', () {

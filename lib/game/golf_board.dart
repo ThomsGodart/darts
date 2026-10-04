@@ -14,7 +14,7 @@ class GolfBoard extends StatelessWidget {
     key: const Key('golf-board'),
     title: 'Trou ${game.currentHole} / ${game.config.holes}',
     hint: game.dartsInVisit.isEmpty
-        ? 'La dernière fléchette compte : D 1 · T 2 · S 3 · raté 5'
+        ? 'La dernière fléchette compte : D 1 · T 3 · S 4 · à côté 5'
         : 'S’arrêter maintenant : ${strokesLabel(game.strokesIfStopped)}',
     lines: [
       for (final (i, score) in game.scores.indexed)
