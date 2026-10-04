@@ -60,6 +60,19 @@ Game _newGame(List<Player> players, GameConfig config) => switch (config) {
     ],
     activeIndex: 0,
   ),
+  HalveItConfig() => HalveItGame(
+    config: config,
+    scores: [
+      for (final player in players)
+        HalveItScore(player: player, points: halveItStartScore),
+    ],
+    activeIndex: 0,
+  ),
+  GolfConfig() => GolfGame(
+    config: config,
+    scores: [for (final player in players) GolfScore(player: player)],
+    activeIndex: 0,
+  ),
 };
 
 /// Adds [dart] to the active player's visit: what it scores is each
@@ -69,10 +82,14 @@ Game _dartThrown(Game game, Dart dart) => switch (game) {
   CricketGame() => _cricketDart(game, dart),
   ShanghaiGame() => _shanghaiDart(game, dart),
   KillerGame() => _killerDart(game, dart),
+  HalveItGame() => _halveItDart(game, dart),
+  GolfGame() => _golfDart(game, dart),
 };
 
-/// Fills the visit with misses until the turn passes (or the game ends).
+/// Ends the visit early. In Golf the last dart thrown stands; everywhere
+/// else the darts left count as misses.
 Game _visitEnded(Game game) {
+  if (game is GolfGame) return _golfCompleteVisit(game, game.dartsInVisit);
   final visits = game.visitsPlayed;
   var next = game;
   while (!next.isFinished && next.visitsPlayed == visits) {
@@ -149,6 +166,44 @@ extension on KillerGame {
     scores: List.unmodifiable(scores ?? this.scores),
     activeIndex: activeIndex ?? this.activeIndex,
     phase: phase ?? this.phase,
+    visitsPlayed: visitsPlayed ?? this.visitsPlayed,
+    dartsInVisit: List.unmodifiable(dartsInVisit),
+    winner: winner,
+  );
+}
+
+extension on HalveItGame {
+  HalveItGame _next({
+    List<HalveItScore>? scores,
+    int? activeIndex,
+    int? targetIndex,
+    int? visitsPlayed,
+    List<Dart> dartsInVisit = const [],
+    Player? winner,
+  }) => HalveItGame(
+    config: config,
+    scores: List.unmodifiable(scores ?? this.scores),
+    activeIndex: activeIndex ?? this.activeIndex,
+    targetIndex: targetIndex ?? this.targetIndex,
+    visitsPlayed: visitsPlayed ?? this.visitsPlayed,
+    dartsInVisit: List.unmodifiable(dartsInVisit),
+    winner: winner,
+  );
+}
+
+extension on GolfGame {
+  GolfGame _next({
+    List<GolfScore>? scores,
+    int? activeIndex,
+    int? holeIndex,
+    int? visitsPlayed,
+    List<Dart> dartsInVisit = const [],
+    Player? winner,
+  }) => GolfGame(
+    config: config,
+    scores: List.unmodifiable(scores ?? this.scores),
+    activeIndex: activeIndex ?? this.activeIndex,
+    holeIndex: holeIndex ?? this.holeIndex,
     visitsPlayed: visitsPlayed ?? this.visitsPlayed,
     dartsInVisit: List.unmodifiable(dartsInVisit),
     winner: winner,
@@ -284,7 +339,7 @@ ShanghaiGame _shanghaiCompleteVisit(ShanghaiGame game) {
   if (roundIsOver && wasLastNumber) {
     return game._next(
       visitsPlayed: game.visitsPlayed + 1,
-      winner: _shanghaiLeader(game.scores),
+      winner: _firstBest(game.scores, (a, b) => a.points > b.points).player,
     );
   }
   return game._next(
@@ -292,14 +347,6 @@ ShanghaiGame _shanghaiCompleteVisit(ShanghaiGame game) {
     numberIndex: game.numberIndex + (roundIsOver ? 1 : 0),
     visitsPlayed: game.visitsPlayed + 1,
   );
-}
-
-Player _shanghaiLeader(List<ShanghaiScore> scores) {
-  var best = scores.first;
-  for (final s in scores.skip(1)) {
-    if (s.points > best.points) best = s;
-  }
-  return best.player;
 }
 
 KillerGame _assignNumber(KillerGame game, int sector) {
@@ -392,4 +439,86 @@ KillerGame _killerCompleteVisit(KillerGame game) {
     next = (next + 1) % n;
   }
   return game._next(activeIndex: next, visitsPlayed: game.visitsPlayed + 1);
+}
+
+/// The Halve-It visit always runs to its third dart: its hits add up, and
+/// a visit without one halves the score, rounding up.
+HalveItGame _halveItDart(HalveItGame game, Dart dart) {
+  final darts = [...game.dartsInVisit, dart];
+  if (!_isFull(darts)) return game._next(dartsInVisit: darts);
+
+  final target = game.currentTarget;
+  final hit = darts.fold(0, (sum, d) => sum + target.scoreOf(d));
+  final before = game.activeScore;
+  final scores = [...game.scores];
+  scores[game.activeIndex] = HalveItScore(
+    player: before.player,
+    points: hit == 0 ? (before.points / 2).ceil() : before.points + hit,
+    wasHalved: hit == 0,
+  );
+
+  final roundIsOver = game.nextIndex == 0;
+  final wasLastTarget = game.targetIndex + 1 >= halveItTargets.length;
+  if (roundIsOver && wasLastTarget) {
+    return game._next(
+      scores: scores,
+      visitsPlayed: game.visitsPlayed + 1,
+      winner: _firstBest(scores, (a, b) => a.points > b.points).player,
+    );
+  }
+  return game._next(
+    scores: scores,
+    activeIndex: game.nextIndex,
+    targetIndex: game.targetIndex + (roundIsOver ? 1 : 0),
+    visitsPlayed: game.visitsPlayed + 1,
+  );
+}
+
+/// The Golf visit ends on its third dart, or earlier when the player
+/// stops (see [_visitEnded]).
+GolfGame _golfDart(GolfGame game, Dart dart) {
+  final darts = [...game.dartsInVisit, dart];
+  return _isFull(darts)
+      ? _golfCompleteVisit(game, darts)
+      : game._next(dartsInVisit: darts);
+}
+
+/// Writes the hole on the active player's card from the last of [darts],
+/// then passes the turn; once everyone has played the hole, moves on to
+/// the next one, or ends the game on the last.
+GolfGame _golfCompleteVisit(GolfGame game, List<Dart> darts) {
+  final before = game.activeScore;
+  final scores = [...game.scores];
+  scores[game.activeIndex] = GolfScore(
+    player: before.player,
+    holeStrokes: List.unmodifiable([
+      ...before.holeStrokes,
+      golfStrokes(darts.lastOrNull, hole: game.currentHole),
+    ]),
+  );
+
+  final roundIsOver = game.nextIndex == 0;
+  final wasLastHole = game.currentHole >= game.config.holes;
+  if (roundIsOver && wasLastHole) {
+    return game._next(
+      scores: scores,
+      visitsPlayed: game.visitsPlayed + 1,
+      winner: _firstBest(scores, (a, b) => a.strokes < b.strokes).player,
+    );
+  }
+  return game._next(
+    scores: scores,
+    activeIndex: game.nextIndex,
+    holeIndex: game.holeIndex + (roundIsOver ? 1 : 0),
+    visitsPlayed: game.visitsPlayed + 1,
+  );
+}
+
+/// The best of [scores] by [beats]; on a tie, whoever threw first.
+T _firstBest<T>(List<T> scores, bool Function(T a, T b) beats) {
+  var best = scores.first;
+  for (final score in scores.skip(1)) {
+    if (beats(score, best)) best = score;
+  }
+  return best;
 }

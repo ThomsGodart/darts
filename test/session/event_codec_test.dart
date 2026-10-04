@@ -46,6 +46,8 @@ void main() {
       CricketConfig(variant: CricketVariant.cutThroat),
       ShanghaiConfig(length: ShanghaiLength.oneToTwenty),
       KillerConfig(lives: 5, doublesToKiller: 3),
+      HalveItConfig(),
+      GolfConfig(holes: 18),
     ];
     expect({for (final c in configs) c.kind}, GameKind.values.toSet());
     for (final config in configs) {

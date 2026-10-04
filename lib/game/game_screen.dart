@@ -11,6 +11,8 @@ import '../ui/persist_failure_banner.dart';
 import '../ui/stats_table_view.dart';
 import 'cricket_board.dart';
 import 'game_shell.dart';
+import 'golf_board.dart';
+import 'halve_it_board.dart';
 import 'killer_board.dart';
 import 'scoreboard.dart';
 import 'screen_awake.dart';
@@ -121,6 +123,8 @@ class _GameScreenState extends State<GameScreen> {
           ),
           final ShanghaiGame game => ShanghaiBoard(game: game),
           final KillerGame game => KillerBoard(game: game),
+          final HalveItGame game => HalveItBoard(game: game),
+          final GolfGame game => GolfBoard(game: game),
         };
         final inputPane = game.isFinished
             ? _GameOverPanel(
@@ -141,6 +145,22 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 final KillerGame game => KillerPlayInput(
                   key: ValueKey(game.visitsPlayed),
+                  dartsInVisit: game.dartsInVisit,
+                  onDart: controller.throwDart,
+                  onEndVisit: controller.endVisit,
+                  onUndo: onUndo,
+                ),
+                final HalveItGame game => HalveItInput(
+                  key: ValueKey(game.visitsPlayed),
+                  target: game.currentTarget,
+                  dartsInVisit: game.dartsInVisit,
+                  onDart: controller.throwDart,
+                  onEndVisit: controller.endVisit,
+                  onUndo: onUndo,
+                ),
+                final GolfGame game => GolfInput(
+                  key: ValueKey(game.visitsPlayed),
+                  hole: game.currentHole,
                   dartsInVisit: game.dartsInVisit,
                   onDart: controller.throwDart,
                   onEndVisit: controller.endVisit,
@@ -379,7 +399,9 @@ class _GameOverPanel extends StatelessWidget {
                     X01Game() => 'Annuler le checkout',
                     CricketGame() ||
                     ShanghaiGame() ||
-                    KillerGame() => 'Annuler la dernière fléchette',
+                    KillerGame() ||
+                    HalveItGame() ||
+                    GolfGame() => 'Annuler la dernière fléchette',
                   }),
                 ),
                 TextButton.icon(

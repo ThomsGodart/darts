@@ -22,6 +22,8 @@ String configLabel(GameConfig config) => switch (config) {
   KillerConfig(:final lives, :final doublesToKiller) =>
     'Killer ${lives}v'
         '${doublesToKiller == 1 ? '' : ' · ${doublesToKiller}D'}',
+  HalveItConfig() => 'Halve-It',
+  GolfConfig(:final holes) => 'Golf $holes trous',
 };
 
 /// "X01", "Cricket", …: the game as the setup offers it.
@@ -30,4 +32,6 @@ String kindLabel(GameKind kind) => switch (kind) {
   GameKind.cricket => 'Cricket',
   GameKind.shanghai => 'Shanghai',
   GameKind.killer => 'Killer',
+  GameKind.halveIt => 'Halve-It',
+  GameKind.golf => 'Golf',
 };

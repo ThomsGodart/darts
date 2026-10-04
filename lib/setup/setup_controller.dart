@@ -23,10 +23,7 @@ class SetupController extends ChangeNotifier {
   /// The rules last chosen for each game, so switching games and back
   /// loses nothing.
   final Map<GameKind, GameConfig> _configs = {
-    GameKind.x01: const X01Config(),
-    GameKind.cricket: const CricketConfig(),
-    GameKind.shanghai: const ShanghaiConfig(),
-    GameKind.killer: const KillerConfig(),
+    for (final kind in GameKind.values) kind: defaultConfigOf(kind),
   };
 
   /// Players of the catalog, by name.

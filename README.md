@@ -1,6 +1,6 @@
 # Darts
 
-Offline darts scorer for a shared phone: a **session** chains games of X01, Cricket, Shanghai and Killer, with undo, resume and a history. Flutter, Android first. The UI is in French; code and docs are in English.
+Offline darts scorer for a shared phone: a **session** chains games of X01, Cricket, Shanghai, Killer, Halve-It and Golf, with undo, resume and a history. Flutter, Android first. The UI is in French; code and docs are in English.
 
 ## Quick start
 

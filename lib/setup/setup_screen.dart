@@ -322,6 +322,33 @@ class _SetupScreenState extends State<SetupScreen> {
                   ),
                 ),
               ],
+              HalveItConfig() => [
+                Text(
+                  'Cibles : ${halveItTargets.map((t) => t.label).join(' · ')}. '
+                  'Une volée sans touche divise le score par 2 ; '
+                  'le plus de points gagne.',
+                  style: textTheme.bodyMedium,
+                ),
+              ],
+              GolfConfig(:final holes) => [
+                SegmentedButton<int>(
+                  segments: [
+                    for (final holes in GolfConfig.holesOptions)
+                      ButtonSegment(value: holes, label: Text('$holes trous')),
+                  ],
+                  selected: {holes},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) =>
+                      setup.config = GolfConfig(holes: s.single),
+                ),
+                const SizedBox(height: DartsSpace.sm),
+                Text(
+                  'Le trou n est le numéro n. Jusqu’à 3 fléchettes, la '
+                  'dernière compte : double 1, triple 2, simple 3, raté '
+                  '$golfMissStrokes. Le moins de coups gagne.',
+                  style: textTheme.bodyMedium,
+                ),
+              ],
             },
             if (setup.config.minPlayers > 1 &&
                 setup.picked.length < setup.config.minPlayers)

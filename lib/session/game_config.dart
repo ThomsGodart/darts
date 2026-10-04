@@ -43,7 +43,7 @@ enum OutRule {
 
 /// The games that can be played. Their names are stored with every game
 /// started: never rename one.
-enum GameKind { x01, cricket, shanghai, killer }
+enum GameKind { x01, cricket, shanghai, killer, halveIt, golf }
 
 /// Rules of a game, recorded with it so replays stay exact. Its type says
 /// which game is played.
@@ -249,6 +249,110 @@ final class KillerConfig extends GameConfig {
   @override
   int get hashCode => Object.hash(lives, doublesToKiller);
 }
+
+/// What a Halve-It round is thrown at: a number in any ring, or one ring
+/// of it only.
+class HalveItTarget {
+  const HalveItTarget(this.sector, {this.multiplier});
+
+  final int sector;
+
+  /// The only ring that counts; null when the whole number does.
+  final int? multiplier;
+
+  /// What [dart] scores on this target; 0 when it lands elsewhere.
+  int scoreOf(Dart dart) =>
+      dart.sector == sector &&
+          (multiplier == null || dart.multiplier == multiplier)
+      ? dart.score
+      : 0;
+
+  /// "20", "D7", "T10", "Bull".
+  String get label => switch ((sector, multiplier)) {
+    (Dart.bullSector, _) => 'Bull',
+    (_, 2) => 'D$sector',
+    (_, 3) => 'T$sector',
+    _ => '$sector',
+  };
+}
+
+/// The rounds of a Halve-It game, in order.
+const halveItTargets = [
+  HalveItTarget(20),
+  HalveItTarget(16),
+  HalveItTarget(7, multiplier: 2),
+  HalveItTarget(14),
+  HalveItTarget(10, multiplier: 3),
+  HalveItTarget(17),
+  HalveItTarget(Dart.bullSector),
+];
+
+/// What every Halve-It player starts on, so that the first miss costs.
+const halveItStartScore = 40;
+
+/// Rules of a Halve-It game: there is nothing to choose.
+final class HalveItConfig extends GameConfig {
+  const HalveItConfig();
+
+  @override
+  GameKind get kind => GameKind.halveIt;
+
+  @override
+  bool get isValid => true;
+
+  @override
+  bool operator ==(Object other) => other is HalveItConfig;
+
+  @override
+  int get hashCode => (HalveItConfig).hashCode;
+}
+
+/// Strokes a missed hole costs in Golf.
+const golfMissStrokes = 5;
+
+/// Strokes the [last] dart of a visit costs on [hole]: a double 1, a
+/// treble 2, a single 3; anything else, or no dart at all, a miss.
+int golfStrokes(Dart? last, {required int hole}) {
+  if (last == null || last.sector != hole) return golfMissStrokes;
+  return switch (last.multiplier) {
+    2 => 1,
+    3 => 2,
+    1 => 3,
+    _ => golfMissStrokes,
+  };
+}
+
+/// Rules of a Golf game.
+final class GolfConfig extends GameConfig {
+  const GolfConfig({this.holes = 9});
+
+  static const holesOptions = [9, 18];
+
+  /// Holes played, one of [holesOptions]: hole n is the number n.
+  final int holes;
+
+  @override
+  GameKind get kind => GameKind.golf;
+
+  @override
+  bool get isValid => holesOptions.contains(holes);
+
+  @override
+  bool operator ==(Object other) => other is GolfConfig && other.holes == holes;
+
+  @override
+  int get hashCode => holes.hashCode;
+}
+
+/// The rules a game of [kind] is offered with.
+GameConfig defaultConfigOf(GameKind kind) => switch (kind) {
+  GameKind.x01 => const X01Config(),
+  GameKind.cricket => const CricketConfig(),
+  GameKind.shanghai => const ShanghaiConfig(),
+  GameKind.killer => const KillerConfig(),
+  GameKind.halveIt => const HalveItConfig(),
+  GameKind.golf => const GolfConfig(),
+};
 
 /// What a game starts from: who plays, in throwing order, and the rules.
 typedef GameSetup = ({List<Player> players, GameConfig config});

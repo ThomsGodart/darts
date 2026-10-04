@@ -34,6 +34,8 @@ Map<String, Object?> _encodeConfig(GameConfig config) => {
       'lives': lives,
       'doublesToKiller': doublesToKiller,
     },
+    HalveItConfig() => const {},
+    GolfConfig(:final holes) => {'holes': holes},
   },
 };
 
@@ -60,6 +62,8 @@ GameConfig _decodeConfig(Map<String, Object?> payload) =>
         lives: payload['lives']! as int,
         doublesToKiller: payload['doublesToKiller']! as int,
       ),
+      GameKind.halveIt => const HalveItConfig(),
+      GameKind.golf => GolfConfig(holes: payload['holes']! as int),
     };
 
 GameKind _decodeKind(Object? stored) => switch (stored) {

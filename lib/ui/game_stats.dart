@@ -40,6 +40,18 @@ StatsTable gameStats(Game game) => switch (game) {
         (score.player, ['${score.number ?? '–'}', killerLivesLabel(score)]),
     ],
   ),
+  HalveItGame(:final scores) => (
+    headings: const ['pts'],
+    rows: [
+      for (final score in scores) (score.player, ['${score.points}']),
+    ],
+  ),
+  GolfGame(:final scores) => (
+    headings: const ['coups'],
+    rows: [
+      for (final score in scores) (score.player, ['${score.strokes}']),
+    ],
+  ),
 };
 
 /// "3", or "OUT" once the player has no life left.

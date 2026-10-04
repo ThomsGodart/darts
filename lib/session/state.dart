@@ -460,3 +460,127 @@ final class KillerGame extends Game {
       if (!s.isOut) s,
   ];
 }
+
+/// One player's side of a Halve-It game.
+class HalveItScore {
+  const HalveItScore({
+    required this.player,
+    required this.points,
+    this.wasHalved = false,
+  });
+
+  final Player player;
+  final int points;
+
+  /// Whether the player's latest visit missed the target and halved them.
+  final bool wasHalved;
+}
+
+/// A Halve-It game: score on each target in turn; a visit without a hit
+/// halves the score. The highest score after the last target wins.
+final class HalveItGame extends Game {
+  const HalveItGame({
+    required this.config,
+    required this.scores,
+    required this.activeIndex,
+    this.targetIndex = 0,
+    this.visitsPlayed = 0,
+    this.dartsInVisit = const [],
+    this.winner,
+  });
+
+  @override
+  final HalveItConfig config;
+
+  /// One entry per player, in throwing order.
+  final List<HalveItScore> scores;
+  @override
+  final int activeIndex;
+
+  /// Index into [halveItTargets].
+  final int targetIndex;
+  @override
+  final int visitsPlayed;
+  @override
+  final List<Dart> dartsInVisit;
+  @override
+  final Player? winner;
+
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
+
+  /// What everyone is throwing at.
+  HalveItTarget get currentTarget => halveItTargets[targetIndex];
+
+  HalveItScore get activeScore => scores[activeIndex];
+
+  /// Points of the darts already thrown in the visit in progress.
+  int get dartsInVisitScore =>
+      dartsInVisit.fold(0, (sum, d) => sum + currentTarget.scoreOf(d));
+
+  /// The active player's score, counting darts already thrown.
+  int get activeLivePoints => activeScore.points + dartsInVisitScore;
+
+  /// Matched by id: a player renamed between games stays one player.
+  HalveItScore scoreOf(Player player) =>
+      scores.firstWhere((s) => s.player.id == player.id);
+}
+
+/// One player's card in a Golf game.
+class GolfScore {
+  const GolfScore({required this.player, this.holeStrokes = const []});
+
+  final Player player;
+
+  /// Strokes on each hole played so far, in order.
+  final List<int> holeStrokes;
+
+  int get strokes => holeStrokes.fold(0, (sum, s) => sum + s);
+}
+
+/// A Golf game: hole n is the number n; up to three darts, the last one
+/// thrown counts. The fewest strokes after the last hole win.
+final class GolfGame extends Game {
+  const GolfGame({
+    required this.config,
+    required this.scores,
+    required this.activeIndex,
+    this.holeIndex = 0,
+    this.visitsPlayed = 0,
+    this.dartsInVisit = const [],
+    this.winner,
+  });
+
+  @override
+  final GolfConfig config;
+
+  /// One entry per player, in throwing order.
+  final List<GolfScore> scores;
+  @override
+  final int activeIndex;
+
+  /// Holes already played by everyone.
+  final int holeIndex;
+  @override
+  final int visitsPlayed;
+  @override
+  final List<Dart> dartsInVisit;
+  @override
+  final Player? winner;
+
+  @override
+  List<Player> get players => [for (final s in scores) s.player];
+
+  /// The hole being played, which is also the number to hit.
+  int get currentHole => holeIndex + 1;
+
+  GolfScore get activeScore => scores[activeIndex];
+
+  /// Strokes the active player would take by stopping now.
+  int get strokesIfStopped =>
+      golfStrokes(dartsInVisit.lastOrNull, hole: currentHole);
+
+  /// Matched by id: a player renamed between games stays one player.
+  GolfScore scoreOf(Player player) =>
+      scores.firstWhere((s) => s.player.id == player.id);
+}

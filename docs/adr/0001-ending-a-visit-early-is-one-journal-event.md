@@ -1,6 +1,6 @@
 # Ending a visit early is one journal event
 
-A player can end their **visit** before its third dart ("Fin de tour"). We record that as a single `VisitEnded` event, and the fold fills the missing darts with misses. One undo therefore takes the whole end of visit back.
+A player can end their **visit** before its third dart ("Fin de tour"). We record that as a single `VisitEnded` event, and the fold fills the missing darts with misses. One undo therefore takes the whole end of visit back. Golf is the exception to the misses: there a player stops on a dart they like, so `VisitEnded` keeps the last dart thrown.
 
 The first version looped `throwDart(miss)` from the game screen, journaling one or two `DartThrown` events. It needed no new event type, but one undo removed only one of the padded misses and left the next player inside a visit they never started, and the rule lived in a widget where only full-app tests reached it.
 

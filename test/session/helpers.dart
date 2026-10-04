@@ -44,6 +44,14 @@ List<Object?> scoreboardOf(Session session) {
         for (final s in scores)
           (s.player, s.number, s.lives, s.isKiller, s.killerProgress),
       ],
+      HalveItGame(:final scores, :final targetIndex) => [
+        targetIndex,
+        for (final s in scores) (s.player, s.points, s.wasHalved),
+      ],
+      GolfGame(:final scores, :final holeIndex) => [
+        holeIndex,
+        for (final s in scores) (s.player, s.holeStrokes.toString()),
+      ],
     },
     game.activePlayer,
     game.dartsInVisit,
