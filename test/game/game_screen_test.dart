@@ -276,7 +276,8 @@ void main() {
     );
     // Joueur 1 waits, with the darts of the visit just thrown.
     expect(find.text('386'), findsOneWidget);
-    expect(find.textContaining('T20 5 Bull = 115'), findsOneWidget);
+    expect(find.text('T20 5 Bull'), findsOneWidget);
+    expect(find.text('115'), findsOneWidget);
     // Chosen once, darts stay the way visits open.
     expect(find.byKey(const Key('darts-in-visit')), findsOneWidget);
     expect(find.widgetWithText(FilledButton, '60'), findsNothing);
@@ -355,7 +356,8 @@ void main() {
     expect(find.byKey(const Key('visit-over')), findsOneWidget);
     await tester.tap(find.byKey(const Key('end-visit')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('T20 = BUST'), findsOneWidget);
+    expect(find.text('T20'), findsWidgets);
+    expect(find.text('BUST'), findsOneWidget);
   });
 
   testWidgets('eight players: the waiting ones scroll under the active one', (
@@ -395,8 +397,11 @@ void main() {
     // not flagged like a new one.
     expect(find.byKey(const Key('active-bust')), findsNothing);
     expect(
-      tester.widget<Text>(find.byKey(const Key('active-last-visit'))).data,
-      'Dernière volée : BUST',
+      find.descendant(
+        of: find.byKey(const Key('active-last-visit')),
+        matching: find.text('BUST'),
+      ),
+      findsOneWidget,
     );
   });
 

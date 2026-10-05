@@ -120,7 +120,16 @@ void main() {
       await switchToTotals(tester);
 
       final banner = find.byKey(const Key('thrower-banner'));
-      expect(activeName(tester), 'Joueur 1 & Joueur 3');
+      // The team is named in the banner, once: its block is its score.
+      expect(
+        find.descendant(
+          of: banner,
+          matching: find.text('Équipe Joueur 1 & Joueur 3'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('active-name')), findsNothing);
+      expect(find.byKey(const Key('active-summary')), findsNothing);
       expect(
         find.descendant(of: banner, matching: find.text('Joueur 1 lance')),
         findsOneWidget,

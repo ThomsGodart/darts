@@ -99,7 +99,7 @@ class SessionDetailScreen extends StatelessWidget {
             ),
             Text(switch (game.winner) {
               final winner? => [
-                'Gagnant : ${winner.name}',
+                '${winner.isTeam ? 'Vainqueurs' : 'Vainqueur'} : ${winner.name}',
                 ?gameLengthLabel(game),
               ].join(' · '),
               null => 'Non terminée',

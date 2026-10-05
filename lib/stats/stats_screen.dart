@@ -410,10 +410,19 @@ class _PlayersDialogState extends State<_PlayersDialog> {
       ),
     ),
     actions: [
-      TextButton(
-        onPressed: () => setState(_hidden.clear),
-        child: const Text('Tout cocher'),
-      ),
+      // Everyone shown already: the one tap left is to clear them all.
+      if (_hidden.isEmpty)
+        TextButton(
+          onPressed: () => setState(
+            () => _hidden.addAll([for (final p in widget.people) p.id]),
+          ),
+          child: const Text('Tout décocher'),
+        )
+      else
+        TextButton(
+          onPressed: () => setState(_hidden.clear),
+          child: const Text('Tout cocher'),
+        ),
       FilledButton(
         onPressed: () => Navigator.of(context).pop(_hidden),
         child: const Text('Valider'),

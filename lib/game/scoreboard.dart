@@ -54,20 +54,28 @@ class Scoreboard extends StatelessWidget {
 
 /// "T20 20 5 = 85" for a visit entered dart by dart, "85" for a total,
 /// "BUST" in place of the points of a visit that busted.
-String visitLabel(Visit visit) {
-  final total = visit.isBust ? 'BUST' : '${visit.points}';
-  return visit.thrown.isEmpty
-      ? total
-      : '${visit.thrown.map((d) => d.notation).join(' ')} = $total';
-}
+String visitLabel(Visit visit) => [
+  if (visit.thrown.isNotEmpty) visitDarts(visit),
+  visitTotal(visit),
+].join(' = ');
 
-/// "moy. 45.2 · 12 fl."; empty before the first dart.
-String _throwSummary(PlayerScore score, {int dartsInVisit = 0}) => [
-  if (score.threeDartAverage case final average?)
-    'moy. ${averageLabel(average)}',
-  if (score.dartsThrown + dartsInVisit > 0)
-    '${score.dartsThrown + dartsInVisit} fl.',
-].join(' · ');
+/// "T20 20 5"; empty for a visit entered as a total.
+String visitDarts(Visit visit) => visit.thrown.map((d) => d.notation).join(' ');
+
+/// "85", or "BUST".
+String visitTotal(Visit visit) => visit.isBust ? 'BUST' : '${visit.points}';
+
+/// "Manches 2 · moy. 45.2 · 12 fl.": what [score]'s player has won in
+/// [match], if the game is a leg of one, then how they throw; empty
+/// before the first dart of a game played alone.
+String _summary(PlayerScore score, MatchScore? match, {int dartsInVisit = 0}) =>
+    [
+      if (match != null) matchWinsLabel(match, score.player),
+      if (score.threeDartAverage case final average?)
+        'moy. ${averageLabel(average)}',
+      if (score.dartsThrown + dartsInVisit > 0)
+        '${score.dartsThrown + dartsInVisit} fl.',
+    ].join(' · ');
 
 /// "Manches 2", or with sets "Sets 1 · Manches 2": what [player] has won
 /// in [match].
@@ -76,27 +84,51 @@ String matchWinsLabel(MatchScore match, Player player) => [
   'Manches ${match.legsOf(player)}',
 ].join(' · ');
 
-class _MatchWins extends StatelessWidget {
-  const _MatchWins({super.key, required this.label, required this.color});
+/// A player's last visit, next to their remaining score: its darts when
+/// they were entered, over what it scored.
+class _LastVisit extends StatelessWidget {
+  const _LastVisit({
+    super.key,
+    required this.visit,
+    required this.color,
+    required this.dartsStyle,
+    required this.totalStyle,
+    this.heading,
+  });
 
-  final String label;
-  final Color color;
+  final Visit? visit;
+  final Color? color;
+  final TextStyle? dartsStyle;
+  final TextStyle? totalStyle;
+
+  /// Says what the figures are, where they could be taken for the visit
+  /// being entered.
+  final String? heading;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(
-      horizontal: DartsSpace.sm,
-      vertical: DartsSpace.xxs,
-    ),
-    decoration: BoxDecoration(
-      border: Border.all(color: color),
-      borderRadius: BorderRadius.circular(DartsSpace.md),
-    ),
-    child: Text(
-      label,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: color),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final visit = this.visit;
+    final heading = this.heading;
+    if (visit == null) return const SizedBox.shrink();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (heading != null)
+          Text(heading, style: dartsStyle?.copyWith(color: color)),
+        if (visit.thrown.isNotEmpty)
+          Text(
+            visitDarts(visit),
+            maxLines: 1,
+            style: dartsStyle?.copyWith(color: color),
+          ),
+        Text(
+          visitTotal(visit),
+          style: totalStyle?.copyWith(color: color, height: 1.1),
+        ),
+      ],
+    );
+  }
 }
 
 class _ActivePlayer extends StatelessWidget {
@@ -109,18 +141,31 @@ class _ActivePlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<DartsTokens>()!;
     final score = game.activeScore;
-    final match = this.match;
     final checkout = game.checkoutSuggestion;
-    final lastVisit = score.lastVisit;
+    // A team's score has several throwers behind it, named in the banner
+    // over the board: its block is the score to read from the oche, and
+    // nothing that would be one member's.
+    final isTeam = score.player.isTeam;
     // The visit being entered busts: say so before the turn passes.
     final busts = game.visitBusts;
-    final summary = _throwSummary(
+    final summary = _summary(
       score,
+      match,
       dartsInVisit: game.isFinished ? 0 : game.dartsInVisit.length,
     );
     final small = TextStyle(
       fontSize: tokens.visitSummaryFontSize,
       color: tokens.onActivePlayer,
+    );
+    final remaining = Text(
+      '${game.activeRemaining}',
+      key: const Key('active-remaining'),
+      style: TextStyle(
+        fontSize: tokens.remainingFontSize,
+        color: tokens.onActivePlayer,
+        fontWeight: FontWeight.bold,
+        height: 1,
+      ),
     );
     return Container(
       width: double.infinity,
@@ -129,31 +174,41 @@ class _ActivePlayer extends StatelessWidget {
       child: FittedBox(
         child: Column(
           children: [
-            Text(
-              score.player.name,
-              key: const Key('active-name'),
-              style: TextStyle(
-                fontSize: tokens.playerNameFontSize,
-                color: tokens.onActivePlayer,
-                fontWeight: FontWeight.w600,
+            if (!isTeam)
+              Text(
+                score.player.name,
+                key: const Key('active-name'),
+                style: TextStyle(
+                  fontSize: tokens.playerNameFontSize,
+                  color: tokens.onActivePlayer,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            if (match != null)
-              _MatchWins(
-                key: const Key('active-match-wins'),
-                label: matchWinsLabel(match, score.player),
-                color: tokens.onActivePlayer,
+            if (isTeam || score.lastVisit == null)
+              remaining
+            else
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  remaining,
+                  const SizedBox(width: DartsSpace.lg),
+                  // Their visit before this one: a round old with others
+                  // playing, so it says what it is, and an old bust is
+                  // not flagged as if it were this visit's.
+                  _LastVisit(
+                    key: const Key('active-last-visit'),
+                    visit: score.lastVisit,
+                    heading: 'Dernière volée',
+                    color: tokens.onActivePlayer,
+                    dartsStyle: small,
+                    totalStyle: small.copyWith(
+                      fontSize: tokens.visitSummaryFontSize * 2,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            Text(
-              '${game.activeRemaining}',
-              key: const Key('active-remaining'),
-              style: TextStyle(
-                fontSize: tokens.remainingFontSize,
-                color: tokens.onActivePlayer,
-                fontWeight: FontWeight.bold,
-                height: 1,
-              ),
-            ),
             if (busts)
               Container(
                 key: const Key('active-bust'),
@@ -167,16 +222,7 @@ class _ActivePlayer extends StatelessWidget {
                   ),
                 ),
               ),
-            // Their visit before this one: a round old with others
-            // playing, so it says what it is, and an old bust is not
-            // flagged as if it were this visit's.
-            if (lastVisit != null)
-              Text(
-                'Dernière volée : ${visitLabel(lastVisit)}',
-                key: const Key('active-last-visit'),
-                style: small,
-              ),
-            if (summary.isNotEmpty)
+            if (!isTeam && summary.isNotEmpty)
               Text(summary, key: const Key('active-summary'), style: small),
             if (checkout != null)
               Container(
@@ -212,49 +258,62 @@ class _WaitingPlayer extends StatelessWidget {
   final PlayerScore score;
   final MatchScore? match;
 
+  /// Room kept for the last visit, so that the remaining scores line up.
+  static const _visitWidth = 84.0;
+
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<DartsTokens>()!;
     final textTheme = Theme.of(context).textTheme;
-    final colors = Theme.of(context).colorScheme;
-    final match = this.match;
     final lastVisit = score.lastVisit;
     final busted = lastVisit?.isBust ?? false;
     final foreground = busted ? tokens.onBust : null;
-    final summary = [
-      if (lastVisit != null) visitLabel(lastVisit),
-      _throwSummary(score),
-    ].where((part) => part.isNotEmpty).join(' · ');
+    final summary = _summary(score, match);
     return ListTile(
       tileColor: busted ? tokens.bust : null,
       textColor: foreground,
-      title: Row(
-        children: [
-          Flexible(
-            child: Text(
-              score.player.name,
+      title: Text(
+        score.player.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: textTheme.titleLarge,
+      ),
+      subtitle: summary.isEmpty
+          ? null
+          : Text(
+              summary,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: textTheme.titleLarge,
+              style: textTheme.bodySmall?.copyWith(color: foreground),
+            ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${score.remaining}',
+            style: TextStyle(
+              fontSize: tokens.compactRemainingFontSize,
+              fontWeight: FontWeight.bold,
+              color: foreground,
             ),
           ),
-          if (match != null) ...[
-            const SizedBox(width: DartsSpace.sm),
-            _MatchWins(
-              label: matchWinsLabel(match, score.player),
-              color: foreground ?? colors.onSurfaceVariant,
+          const SizedBox(width: DartsSpace.sm),
+          SizedBox(
+            width: _visitWidth,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerEnd,
+              child: _LastVisit(
+                visit: lastVisit,
+                color: foreground,
+                dartsStyle: textTheme.bodyMedium,
+                totalStyle: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ],
+          ),
         ],
-      ),
-      subtitle: summary.isEmpty ? null : Text(summary),
-      trailing: Text(
-        '${score.remaining}',
-        style: TextStyle(
-          fontSize: tokens.compactRemainingFontSize,
-          fontWeight: FontWeight.bold,
-          color: foreground,
-        ),
       ),
     );
   }

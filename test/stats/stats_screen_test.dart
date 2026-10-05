@@ -133,8 +133,13 @@ void main() {
     await openStats(tester);
     await tester.tap(find.byKey(const Key('stats-players')));
     await tester.pumpAndSettle();
+    // Everyone is shown: the one shortcut left is to clear them all.
+    expect(find.text('Tout décocher'), findsOneWidget);
+    expect(find.text('Tout cocher'), findsNothing);
     await tester.tap(find.widgetWithText(CheckboxListTile, 'Joueur 2'));
     await tester.pump();
+    expect(find.text('Tout cocher'), findsOneWidget);
+    expect(find.text('Tout décocher'), findsNothing);
     await tester.tap(find.text('Valider'));
     await tester.pumpAndSettle();
 
