@@ -198,6 +198,8 @@ class _NumberKeys extends StatelessWidget {
   final bool isDead;
   final ValueChanged<Dart>? onDart;
 
+  static const _minKeyHeight = 28.0;
+
   @override
   Widget build(BuildContext context) {
     final onDart = this.onDart;
@@ -221,13 +223,20 @@ class _NumberKeys extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(DartsSpace.xxs),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: DartsSpace.tap),
+              // Shorter than a full tap target when the board is short of
+              // height, as on a phone held sideways: all seven numbers
+              // stay on screen.
+              constraints: const BoxConstraints(minHeight: _minKeyHeight),
               child: SizedBox(
                 width: DartsSpace.tap,
                 child: FilledButton.tonal(
                   key: ValueKey('board-key-${dart.notation}'),
                   onPressed: onDart == null ? null : () => onDart(dart),
-                  style: FilledButton.styleFrom(padding: EdgeInsets.zero),
+                  style: FilledButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
@@ -292,8 +301,9 @@ class CricketBoardInput extends StatelessWidget {
   );
 }
 
-/// The marks of one player on one number: "/", "X", then a full disc
-/// once closed, which nothing else on the board looks like from afar.
+/// The marks of one player on one number: "/", "X", then the X in a ring
+/// once closed — on a tinted disc, so that a closed number is told from
+/// afar from one with two marks.
 class _Mark extends StatelessWidget {
   const _Mark({
     required this.marks,
@@ -316,7 +326,11 @@ class _Mark extends StatelessWidget {
       key: closed ? const Key('mark-closed') : null,
       padding: const EdgeInsets.all(DartsSpace.xs),
       decoration: closed
-          ? BoxDecoration(shape: BoxShape.circle, color: tokens.cricketClosed)
+          ? BoxDecoration(
+              shape: BoxShape.circle,
+              color: tokens.cricketClosed.withValues(alpha: 0.28),
+              border: Border.all(color: tokens.cricketClosed, width: 3),
+            )
           : null,
       child: Text(
         closed ? 'X' : markSymbol(marks),
@@ -327,22 +341,35 @@ class _Mark extends StatelessWidget {
         },
         style: TextStyle(
           fontSize: fontSize,
-          color: closed ? tokens.onCricketClosed : tokens.cricketMark,
+          color: closed ? tokens.cricketClosed : tokens.cricketMark,
           fontWeight: FontWeight.bold,
           height: 1,
         ),
       ),
     );
-    // Grows with the row, up to twice its size at rest.
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: fontSize * 1.2,
-        maxHeight: fontSize * 2.4,
-      ),
-      child: SizedBox.expand(
-        child: FittedBox(
-          child: Opacity(opacity: isDead ? 0.45 : 1, child: mark),
-        ),
+    // Fills the row whatever its height, up to twice its size at rest,
+    // without asking for more than a short row has: only the box under
+    // it counts when the board works out how tall its rows must be.
+    return SizedBox(
+      width: double.infinity,
+      height: double.infinity,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(height: fontSize * 0.7),
+          Positioned.fill(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: fontSize * 2.4),
+                child: SizedBox.expand(
+                  child: FittedBox(
+                    child: Opacity(opacity: isDead ? 0.7 : 1, child: mark),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

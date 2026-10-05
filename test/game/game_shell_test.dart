@@ -44,4 +44,27 @@ void main() {
     final input = tester.getCenter(find.byKey(const Key('game-shell-input')));
     expect(state.dx, lessThan(input.dx));
   });
+
+  testWidgets('in landscape the input takes all the height it is given', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 500));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    for (final height in [350.0, 700.0]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GameShell(
+              statePane: const SizedBox.expand(),
+              // A short pad, then one too tall for the screen.
+              inputPane: SizedBox(height: height, child: const Placeholder()),
+            ),
+          ),
+        ),
+      );
+      final input = tester.getRect(find.byKey(const Key('game-shell-input')));
+      expect(input.height, closeTo(500, 1), reason: '$height');
+      expect(input.width, lessThanOrEqualTo(450.5));
+    }
+  });
 }
