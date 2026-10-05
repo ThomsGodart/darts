@@ -84,7 +84,10 @@ class SessionDetailScreen extends StatelessWidget {
               style: textTheme.titleMedium,
             ),
             Text(switch (game.winner) {
-              final winner? => 'Gagnant : ${winner.name}',
+              final winner? => [
+                'Gagnant : ${winner.name}',
+                ?gameLengthLabel(game),
+              ].join(' · '),
               null => 'Non terminée',
             }, style: textTheme.bodyMedium),
             const SizedBox(height: DartsSpace.xs),

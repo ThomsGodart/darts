@@ -748,6 +748,14 @@ class _GameOverPanel extends StatelessWidget {
                 style: textTheme.titleMedium,
               ),
             ],
+            if (gameLengthLabel(game) case final length?) ...[
+              const SizedBox(height: DartsSpace.xs),
+              Text(
+                length,
+                key: const Key('game-length'),
+                style: textTheme.titleMedium,
+              ),
+            ],
             const SizedBox(height: DartsSpace.sm),
             StatsTableView(
               key: const Key('game-averages'),

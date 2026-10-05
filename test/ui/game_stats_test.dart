@@ -11,13 +11,13 @@ List<String> rowsOf(StatsTable stats) => [
 ];
 
 void main() {
-  test('an X01 game shows each average', () {
+  test('an X01 game shows each average and best visit', () {
     final session = newSession()..startGame([alice, bob]);
-    play(session, [60, 45]);
+    play(session, [60, 45, 100, 45]);
 
     final stats = gameStats(session.state.game!);
-    expect(stats.headings, ['moy.']);
-    expect(rowsOf(stats), ['Alice: 60.0', 'Bob: 45.0']);
+    expect(stats.headings, ['moy.', 'max']);
+    expect(rowsOf(stats), ['Alice: 80.0 100', 'Bob: 45.0 45']);
   });
 
   test('a cricket game shows points and MPR', () {
@@ -71,12 +71,48 @@ void main() {
     final session = newSession()
       ..startGame([alice], config: const X01Config(startScore: 101));
     checkOut(session, 101);
-    expect(gameOverStats(session.state).headings, ['moy.']);
+    expect(gameOverStats(session.state).headings, ['moy.', 'max']);
 
     session.rematch();
     checkOut(session, 101);
     final stats = gameOverStats(session.state);
-    expect(stats.headings, ['moy.', 'moy. session']);
-    expect(rowsOf(stats), ['Alice: 101.0 101.0']);
+    expect(stats.headings, ['moy.', 'max', 'moy. session']);
+    expect(rowsOf(stats), ['Alice: 101.0 101 101.0']);
+  });
+
+  test('game over shows the session stat of its own kind of game only', () {
+    final session = newSession()
+      ..startGame([alice], config: const CricketConfig())
+      ..throwDart(const Dart.treble(20))
+      ..endSession();
+    final mixed = newSession()
+      ..startGame([alice, bob], config: const CricketConfig());
+    for (final number in cricketNumbers) {
+      mixed.throwDart(
+        number == Dart.bullSector ? Dart.bull : Dart.treble(number),
+      );
+      if (number == Dart.bullSector) mixed.throwDart(Dart.outerBull);
+      if (mixed.state.game!.visitIsOver) {
+        mixed
+          ..endVisit()
+          ..endVisit();
+      }
+    }
+    expect(mixed.state.game!.winner, alice);
+    expect(gameLengthLabel(mixed.state.game!), '3 rounds');
+    expect(gameLengthLabel(session.state.game!), isNull);
+
+    mixed.startGame([alice, bob], config: const X01Config(startScore: 101));
+    checkOut(mixed, 101);
+    final stats = gameOverStats(mixed.state);
+    expect(stats.headings, ['moy.', 'max', 'moy. session']);
+    expect(gameLengthLabel(mixed.state.game!), '1 volée · 3 fléchettes');
+
+    mixed.startGame([alice, bob], config: const CountUpConfig(rounds: 8));
+    for (var i = 0; i < 16; i++) {
+      mixed.submitVisitTotal(60);
+    }
+    expect(gameOverStats(mixed.state).headings, ['pts']);
+    expect(gameLengthLabel(mixed.state.game!), '8 manches');
   });
 }

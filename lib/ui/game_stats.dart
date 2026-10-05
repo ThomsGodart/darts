@@ -11,10 +11,16 @@ typedef StatsTable = ({
 /// What [game] says about each of its players.
 StatsTable gameStats(Game game) => switch (game) {
   X01Game(:final scores) => (
-    headings: const ['moy.'],
+    headings: const ['moy.', 'max'],
     rows: [
       for (final score in scores)
-        (score.player, [averageLabel(score.threeDartAverage)]),
+        (
+          score.player,
+          [
+            averageLabel(score.threeDartAverage),
+            '${score.visits.fold(0, (best, v) => v.points > best ? v.points : best)}',
+          ],
+        ),
     ],
   ),
   CricketGame(:final scores) => (
@@ -102,23 +108,55 @@ StatsTable sessionStats(SessionState session) {
   );
 }
 
-/// The end-of-game table: the current game's stats, followed from the
-/// second game on by the session's, so a cricket game still shows the X01
-/// average and the other way round.
+/// The stats of the game just finished and, from the second game of the
+/// session on, the same players' session stat for that kind of game. A
+/// stat of another game played in the session has no business here: an
+/// X01 leg shows no MPR.
 StatsTable gameOverStats(SessionState session) {
-  final game = gameStats(session.game!);
+  final current = session.game!;
+  final game = gameStats(current);
   if (session.games.length < 2) return game;
-  final overall = sessionStats(session);
-  List<String> overallOf(Player player) =>
-      overall.rows.firstWhere((row) => row.$1.id == player.id).$2;
+  final (String heading, String Function(Player) valueOf)? overall =
+      switch (current) {
+        X01Game() => (
+          'moy. session',
+          (player) => averageLabel(session.averageOf(player)),
+        ),
+        CricketGame() => (
+          'MPR session',
+          (player) => averageLabel(session.marksPerRoundOf(player)),
+        ),
+        _ => null,
+      };
+  if (overall == null) return game;
   return (
-    headings: [
-      ...game.headings,
-      for (final heading in overall.headings) '$heading session',
-    ],
+    headings: [...game.headings, overall.$1],
     rows: [
       for (final (player, values) in game.rows)
-        (player, [...values, ...overallOf(player)]),
+        (player, [...values, overall.$2(player)]),
     ],
   );
+}
+
+/// How long a finished game took, in what its players count: "5 volées ·
+/// 13 fléchettes" for the winner of an X01, "12 rounds" of Cricket, "8
+/// manches" of a game by rounds. Null while the game is unfinished, and
+/// for Killer, where players drop out along the way.
+String? gameLengthLabel(Game game) {
+  final winner = game.winner;
+  if (winner == null) return null;
+  String count(int n, String one, String many) => '$n ${n == 1 ? one : many}';
+  return switch (game) {
+    X01Game() => [
+      count(game.scoreOf(winner).visitsPlayed, 'volée', 'volées'),
+      count(game.scoreOf(winner).dartsThrown, 'fléchette', 'fléchettes'),
+    ].join(' · '),
+    CricketGame() => count(game.round, 'round', 'rounds'),
+    KillerGame() => null,
+    _ => count(
+      (game.visitsPlayed / game.players.length).ceil(),
+      'manche',
+      'manches',
+    ),
+  };
 }
