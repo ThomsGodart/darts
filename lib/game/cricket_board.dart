@@ -42,81 +42,114 @@ class CricketBoard extends StatelessWidget {
   /// Column of the numbers: first, or in the middle when they are keys.
   int get _labelColumn => showKeys ? (game.scores.length + 1) ~/ 2 : 0;
 
-  double get _labelWidth =>
-      showKeys ? 3 * (DartsSpace.tap + 2 * DartsSpace.xxs) : 64;
+  /// The least the three keys of a number take, and the most a player's
+  /// column is given when the numbers are keys: marks need little room,
+  /// the rest goes to the keys.
+  static const _minKeysWidth = 3 * (DartsSpace.tap + 2 * DartsSpace.xxs);
+  static const _maxMarksWidth = 76.0;
+  static const _labelWidth = 64.0;
+
+  /// The width of a player's column in a board [width] wide, when the
+  /// numbers are keys.
+  double _marksWidth(double width) {
+    final shared = (width - _minKeysWidth) / game.scores.length;
+    return shared.clamp(0.0, _maxMarksWidth);
+  }
 
   @override
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<DartsTokens>()!;
     final textTheme = Theme.of(context).textTheme;
     return LayoutBuilder(
-      builder: (context, constraints) => SingleChildScrollView(
-        key: const Key('cricket-board'),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: constraints.hasBoundedHeight ? constraints.maxHeight : 0,
-          ),
-          child: IntrinsicHeight(
-            child: Padding(
-              padding: const EdgeInsets.all(DartsSpace.sm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Round ${game.round}',
-                    key: const Key('cricket-round'),
-                    textAlign: TextAlign.center,
-                    style: textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: DartsSpace.xs),
-                  _row(
-                    tokens: tokens,
-                    label: const SizedBox.shrink(),
-                    cellOf: (score) => Text(
-                      score.player.name,
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: TextOverflow.fade,
-                      style: textTheme.titleSmall?.copyWith(
-                        fontWeight: score.player.id == game.activePlayer.id
-                            ? FontWeight.w900
-                            : null,
-                        decoration: score.player.id == game.activePlayer.id
-                            ? TextDecoration.underline
-                            : null,
-                      ),
+      builder: (context, constraints) {
+        final marksWidth = showKeys && constraints.hasBoundedWidth
+            ? _marksWidth(constraints.maxWidth - 2 * DartsSpace.sm)
+            : null;
+        return SingleChildScrollView(
+          key: const Key('cricket-board'),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.hasBoundedHeight
+                  ? constraints.maxHeight
+                  : 0,
+            ),
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.all(DartsSpace.sm),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Round ${game.round}',
+                      key: const Key('cricket-round'),
+                      textAlign: TextAlign.center,
+                      style: textTheme.titleMedium,
                     ),
-                  ),
-                  _row(
-                    tokens: tokens,
-                    label: const SizedBox.shrink(),
-                    cellOf: (score) => FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        '${score.points}',
-                        style: TextStyle(
-                          fontSize: tokens.cricketPointsFontSize,
-                          fontWeight: FontWeight.bold,
-                          height: 1,
+                    const SizedBox(height: DartsSpace.xs),
+                    _row(
+                      tokens: tokens,
+                      marksWidth: marksWidth,
+                      label: const SizedBox.shrink(),
+                      cellOf: (score) => Text(
+                        score.player.name,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.fade,
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: score.player.id == game.activePlayer.id
+                              ? FontWeight.w900
+                              : null,
+                          decoration: score.player.id == game.activePlayer.id
+                              ? TextDecoration.underline
+                              : null,
                         ),
                       ),
                     ),
-                  ),
-                  for (final number in cricketNumbers)
-                    Expanded(child: _numberRow(number, tokens, textTheme)),
-                ],
+                    _row(
+                      tokens: tokens,
+                      marksWidth: marksWidth,
+                      label: const SizedBox.shrink(),
+                      cellOf: (score) => FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '${score.points}',
+                          style: TextStyle(
+                            fontSize: tokens.cricketPointsFontSize,
+                            fontWeight: FontWeight.bold,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                    for (final number in cricketNumbers)
+                      Expanded(
+                        child: _numberRow(
+                          number,
+                          tokens,
+                          textTheme,
+                          marksWidth,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _numberRow(int number, DartsTokens tokens, TextTheme textTheme) {
+  Widget _numberRow(
+    int number,
+    DartsTokens tokens,
+    TextTheme textTheme,
+    double? marksWidth,
+  ) {
     final isDead = game.isDead(number);
     return _row(
       tokens: tokens,
+      marksWidth: marksWidth,
       fillsHeight: true,
       // A number nobody scores on any more: its row goes dark, the marks
       // staying full so that it never reads as not played.
@@ -145,11 +178,18 @@ class CricketBoard extends StatelessWidget {
     required DartsTokens tokens,
     Color? color,
     bool fillsHeight = false,
+    double? marksWidth,
   }) {
+    // With keys, the players' columns are as wide as marks need and the
+    // keys take the rest; without, the players share what the labels
+    // leave.
+    Widget column(Widget child) => marksWidth == null
+        ? Expanded(child: child)
+        : SizedBox(width: marksWidth, child: child);
     final cells = <Widget>[
       for (final (i, score) in game.scores.indexed)
-        Expanded(
-          child: Container(
+        column(
+          Container(
             color: i == game.activeIndex ? tokens.cricketActiveColumn : null,
             padding: const EdgeInsets.symmetric(
               vertical: DartsSpace.xs,
@@ -162,15 +202,15 @@ class CricketBoard extends StatelessWidget {
     ];
     cells.insert(
       _labelColumn,
-      SizedBox(
-        width: _labelWidth,
-        child: Align(
-          alignment: showKeys
-              ? Alignment.center
-              : AlignmentDirectional.centerStart,
-          child: label,
-        ),
-      ),
+      marksWidth == null
+          ? SizedBox(
+              width: _labelWidth,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: label,
+              ),
+            )
+          : Expanded(child: label),
     );
     final row = Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -186,7 +226,7 @@ class CricketBoard extends StatelessWidget {
 
 /// The keys of one cricket number as they sit on a real board's wire,
 /// going out from the middle: double, single, treble. The bull has its
-/// two rings, 50 and 25, and no treble.
+/// two rings, 50 and 25, and no treble: they share the row.
 class _NumberKeys extends StatelessWidget {
   const _NumberKeys({
     required this.number,
@@ -204,7 +244,6 @@ class _NumberKeys extends StatelessWidget {
   Widget build(BuildContext context) {
     final onDart = this.onDart;
     final textTheme = Theme.of(context).textTheme;
-    final tokens = Theme.of(context).extension<DartsTokens>()!;
     final isBull = number == Dart.bullSector;
     final keys = isBull
         ? [
@@ -220,15 +259,17 @@ class _NumberKeys extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final (label, spoken, dart) in keys)
-          Padding(
-            padding: const EdgeInsets.all(DartsSpace.xxs),
-            child: ConstrainedBox(
-              // Shorter than a full tap target when the board is short of
-              // height, as on a phone held sideways: all seven numbers
-              // stay on screen.
-              constraints: const BoxConstraints(minHeight: _minKeyHeight),
-              child: SizedBox(
-                width: DartsSpace.tap,
+          // The keys share the width the marks leave, the number itself —
+          // the key hit most — taking a little more than its rings.
+          Expanded(
+            flex: dart.multiplier == 1 || isBull ? 5 : 4,
+            child: Padding(
+              padding: const EdgeInsets.all(DartsSpace.xxs),
+              child: ConstrainedBox(
+                // Shorter than a full tap target when the board is short
+                // of height, as on a phone held sideways: all seven
+                // numbers stay on screen.
+                constraints: const BoxConstraints(minHeight: _minKeyHeight),
                 child: FilledButton.tonal(
                   key: ValueKey('board-key-${dart.notation}'),
                   onPressed: onDart == null ? null : () => onDart(dart),
@@ -254,19 +295,6 @@ class _NumberKeys extends StatelessWidget {
                               ),
                     ),
                   ),
-                ),
-              ),
-            ),
-          ),
-        if (isBull)
-          SizedBox(
-            width: DartsSpace.tap + 2 * DartsSpace.xxs,
-            child: Center(
-              child: Text(
-                'Bull',
-                style: textTheme.labelLarge?.copyWith(
-                  color: isDead ? tokens.cricketDead : null,
-                  decoration: isDead ? TextDecoration.lineThrough : null,
                 ),
               ),
             ),
