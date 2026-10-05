@@ -225,7 +225,10 @@ class _GameScreenState extends State<GameScreen> {
         final bannerPlayerName = _bannerPlayerName;
         final onUndo = controller.canUndo ? _undo : null;
         final statePane = switch (game) {
-          final X01Game game => Scoreboard(game: game),
+          final X01Game game => Scoreboard(
+            game: game,
+            match: controller.state.match,
+          ),
           final CricketGame game => CricketBoard(
             game: game,
             showKeys: game.config.input == CricketInput.board,

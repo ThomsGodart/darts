@@ -26,6 +26,10 @@ class _DartPickerState extends State<DartPicker> {
     widget.onDart(dart);
   }
 
+  /// The key of a bull, off while a double or a treble is being picked.
+  VoidCallback? _onBull(Dart dart) =>
+      _multiplier == 1 ? () => _throw(dart) : null;
+
   Dart _sector(int sector) => switch (_multiplier) {
     2 => Dart.double(sector),
     3 => Dart.treble(sector),
@@ -37,28 +41,36 @@ class _DartPickerState extends State<DartPicker> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SegmentedButton<int>(
-          segments: const [
-            ButtonSegment(value: 1, label: Text('Simple')),
-            ButtonSegment(value: 2, label: Text('Double')),
-            ButtonSegment(value: 3, label: Text('Triple')),
-          ],
-          selected: {_multiplier},
-          showSelectedIcon: false,
-          onSelectionChanged: (s) => setState(() => _multiplier = s.single),
-        ),
-        const SizedBox(height: DartsSpace.xs),
         SectorGrid(
           labelOf: (sector) => _sector(sector).notation,
           onSector: (sector) => _throw(_sector(sector)),
         ),
         Row(
           children: [
-            PadKey(label: '25', onTap: () => _throw(Dart.outerBull)),
-            PadKey(label: 'Bull', onTap: () => _throw(Dart.bull)),
+            // The bull is the double of 25 already: neither has a ring
+            // to pick.
+            PadKey(label: '25', onTap: _onBull(Dart.outerBull)),
+            PadKey(label: 'Bull 50', onTap: _onBull(Dart.bull)),
             if (widget.showMiss)
               PadKey(label: 'Raté', onTap: () => _throw(Dart.miss)),
           ],
+        ),
+        const SizedBox(height: DartsSpace.xs),
+        // Under the numbers it applies to, away from the switch between
+        // the ways of entering a visit.
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<int>(
+            key: const Key('ring-picker'),
+            segments: const [
+              ButtonSegment(value: 1, label: Text('Simple')),
+              ButtonSegment(value: 2, label: Text('Double')),
+              ButtonSegment(value: 3, label: Text('Triple')),
+            ],
+            selected: {_multiplier},
+            showSelectedIcon: false,
+            onSelectionChanged: (s) => setState(() => _multiplier = s.single),
+          ),
         ),
       ],
     );

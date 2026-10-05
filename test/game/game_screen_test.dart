@@ -264,11 +264,19 @@ void main() {
 
     // Back to single after each dart.
     await tester.tap(find.text('5'));
-    await tester.tap(find.text('Bull'));
+    await tester.tap(find.text('Bull 50'));
     await tester.pump();
+    expect(activeRemaining(tester), '386');
+    await tester.tap(find.byKey(const Key('end-visit')));
+    await tester.pumpAndSettle();
 
-    expect(find.text('Joueur 2'), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('active-name'))).data,
+      'Joueur 2',
+    );
+    // Joueur 1 waits, with the darts of the visit just thrown.
     expect(find.text('386'), findsOneWidget);
+    expect(find.textContaining('T20 5 Bull = 115'), findsOneWidget);
     // Chosen once, darts stay the way visits open.
     expect(find.byKey(const Key('darts-in-visit')), findsOneWidget);
     expect(find.widgetWithText(FilledButton, '60'), findsNothing);
@@ -300,6 +308,79 @@ void main() {
     expect(suggestion, findsOneWidget);
   });
 
+  testWidgets('a double or a treble is picked under the numbers, never on a '
+      'bull', (tester) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await launchGame(
+      tester,
+      const ['Joueur 1', 'Joueur 2'],
+      null,
+      const [],
+      false,
+    );
+
+    // The rings sit under the numbers and the bulls, clear of the switch
+    // between the ways of entering.
+    expect(
+      tester.getTopLeft(find.byKey(const Key('ring-picker'))).dy,
+      greaterThan(tester.getBottomLeft(find.text('Bull 50')).dy),
+    );
+
+    await tester.tap(find.text('Triple'));
+    await tester.pump();
+    for (final label in ['25', 'Bull 50']) {
+      expect(
+        tester
+            .widget<FilledButton>(find.widgetWithText(FilledButton, label))
+            .onPressed,
+        isNull,
+        reason: 'no treble $label',
+      );
+    }
+  });
+
+  testWidgets('a dart that busts shows BUST and waits for Fin de tour', (
+    tester,
+  ) async {
+    await startGame(tester);
+    await playVisits(tester, [180, 26, 180, 26, 101, 26]); // Joueur 1 on 40
+    await tester.tap(find.text('Fléchettes'));
+    await tester.pump();
+    await tester.tap(find.text('Triple'));
+    await tester.pump();
+    await tester.tap(find.text('T20'));
+    await tester.pump();
+
+    expect(find.byKey(const Key('active-bust')), findsOneWidget);
+    expect(find.byKey(const Key('visit-over')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('end-visit')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('T20 = BUST'), findsOneWidget);
+  });
+
+  testWidgets('eight players: the waiting ones scroll under the active one', (
+    tester,
+  ) async {
+    final names = [for (var i = 1; i <= 8; i++) 'Joueur $i'];
+    await pumpApp(tester, await AppStorage.withPlayers(names));
+    await launchGame(tester, names);
+    expect(tester.takeException(), isNull);
+
+    final list = find.byKey(const Key('waiting-players'));
+    final pad = find.byKey(const Key('game-shell-input'));
+    expect(
+      tester.getBottomLeft(list).dy,
+      lessThanOrEqualTo(tester.getTopLeft(pad).dy),
+    );
+    await tester.scrollUntilVisible(
+      find.text('Joueur 8'),
+      50,
+      scrollable: find.descendant(of: list, matching: find.byType(Scrollable)),
+    );
+    expect(find.text('Joueur 8'), findsOneWidget);
+    expect(find.byKey(const Key('active-name')), findsOneWidget);
+  });
+
   testWidgets('a bust from the last round is not shown on the next turn', (
     tester,
   ) async {
@@ -310,8 +391,13 @@ void main() {
 
     await quickScore(tester, 60); // Joueur 2 scores normally
 
-    // Joueur 1 is up again: their old bust must not look like a new one.
-    expect(find.textContaining('BUST'), findsNothing);
+    // Joueur 1 is up again: their old bust is told as their last visit,
+    // not flagged like a new one.
+    expect(find.byKey(const Key('active-bust')), findsNothing);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('active-last-visit'))).data,
+      'Dernière volée : BUST',
+    );
   });
 
   testWidgets('a dart-by-dart visit can end before its third dart', (

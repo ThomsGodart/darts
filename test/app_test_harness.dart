@@ -10,11 +10,15 @@ class AppStorage {
   final players = InMemoryPlayerStorage();
 
   /// A catalog already holding "Joueur 1" and "Joueur 2".
-  static Future<AppStorage> withTwoPlayers() async {
+  static Future<AppStorage> withTwoPlayers() =>
+      withPlayers(const ['Joueur 1', 'Joueur 2']);
+
+  static Future<AppStorage> withPlayers(List<String> names) async {
     final storage = AppStorage();
     final catalog = InMemoryPlayerCatalog(storage.players);
-    await catalog.add('Joueur 1');
-    await catalog.add('Joueur 2');
+    for (final name in names) {
+      await catalog.add(name);
+    }
     return storage;
   }
 }
