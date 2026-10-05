@@ -59,13 +59,18 @@ void main() {
     expect(at(0.3, 350.5)!.sector, 5);
   });
 
-  test('the rings are wider than a real board’s, for a finger', () {
+  test('the rings stay close to a real board’s: about twice as wide', () {
     // A real treble is 8 mm on a 170 mm radius, a real double the same.
     const real = 8 / 170;
-    expect(
+    for (final width in [
       DartboardRings.trebleOuter - DartboardRings.trebleInner,
-      greaterThan(3 * real),
-    );
-    expect(1 - DartboardRings.doubleInner, greaterThan(3 * real));
+      1 - DartboardRings.doubleInner,
+    ]) {
+      expect(width, greaterThan(1.8 * real));
+      expect(width, lessThan(2.2 * real));
+    }
+    // The treble sits where a real one does: 99 to 107 mm out.
+    expect(DartboardRings.trebleInner, closeTo(99 / 170, 0.03));
+    expect(DartboardRings.trebleOuter, closeTo(107 / 170, 0.03));
   });
 }

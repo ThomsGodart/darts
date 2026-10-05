@@ -9,14 +9,16 @@ const boardNumbers = [
 ];
 
 /// Where the rings of the on-screen board sit, as fractions of its
-/// radius. Not a real board's: the bull, the treble and the double are
-/// several times wider, so that a finger can land in them.
+/// radius. Close to a real board's, so that players recognise where they
+/// touch: the bull, the treble and the double are only twice as wide as
+/// the real ones, which leaves them thin under a finger — the name of the
+/// spot shown while the finger is down is what makes them usable.
 abstract final class DartboardRings {
-  static const bull = 0.11;
-  static const outerBull = 0.22;
-  static const trebleInner = 0.47;
-  static const trebleOuter = 0.64;
-  static const doubleInner = 0.82;
+  static const bull = 0.075;
+  static const outerBull = 0.16;
+  static const trebleInner = 0.56;
+  static const trebleOuter = 0.655;
+  static const doubleInner = 0.905;
 }
 
 /// The angle each number spans, in radians.
