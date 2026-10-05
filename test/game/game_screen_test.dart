@@ -276,7 +276,7 @@ void main() {
     );
     // Joueur 1 waits, with the darts of the visit just thrown.
     expect(find.text('386'), findsOneWidget);
-    expect(find.text('T20 5 Bull'), findsOneWidget);
+    expect(find.text('T20 - 5 - Bull'), findsOneWidget);
     expect(find.text('115'), findsOneWidget);
     // Chosen once, darts stay the way visits open.
     expect(find.byKey(const Key('darts-in-visit')), findsOneWidget);

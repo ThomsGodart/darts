@@ -86,8 +86,9 @@ class SetupController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Teams asked for; 0 when everyone plays for themselves.
-  int get teamCount => _teamCount;
+  /// Teams asked for; 0 when everyone plays for themselves — as two
+  /// players always do: they are two sides already.
+  int get teamCount => _picked.length > 2 ? _teamCount : 0;
 
   /// Asks for [value] teams and deals the picked players out in turn;
   /// they then choose who is with whom through [assign].
@@ -111,7 +112,7 @@ class SetupController extends ChangeNotifier {
 
   /// Members of each team asked for, in throwing order.
   List<List<Player>> get _teams => [
-    for (var team = 0; team < _teamCount; team++)
+    for (var team = 0; team < teamCount; team++)
       [
         for (final player in _picked)
           if (teamOf(player) == team) player,
@@ -120,7 +121,7 @@ class SetupController extends ChangeNotifier {
 
   /// Who holds a score in the game: the picked players, or their teams.
   /// Someone alone in a team is just themselves.
-  List<Player> get sides => _teamCount == 0
+  List<Player> get sides => teamCount == 0
       ? picked
       : [
           for (final members in _teams)

@@ -248,7 +248,8 @@ class _SetupScreenState extends State<SetupScreen> {
                 ],
               ),
             ],
-            if (setup.picked.length > 1) ...[
+            // Two players are two sides already: teams start at three.
+            if (setup.picked.length > 2) ...[
               const SizedBox(height: DartsSpace.xl),
               Text('Équipes', style: textTheme.titleLarge),
               const SizedBox(height: DartsSpace.sm),

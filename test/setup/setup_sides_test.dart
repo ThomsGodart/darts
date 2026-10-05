@@ -119,15 +119,29 @@ void main() {
     });
 
     test('a player picked later joins the smallest team', () async {
+      final setup = await setupWith(['Ana', 'Bob', 'Cléo', 'Dan']);
+      setup
+        ..toggle(setup.players[0])
+        ..toggle(setup.players[1])
+        ..toggle(setup.players[2])
+        ..teamCount = 2
+        ..assign(setup.players[1], 0)
+        ..toggle(setup.players[3]);
+
+      expect(sideNames(setup), ['Ana & Bob & Cléo', 'Dan']);
+    });
+
+    test('two players are two sides: no teams to ask for', () async {
       final setup = await setupWith(['Ana', 'Bob', 'Cléo']);
       setup
         ..toggle(setup.players[0])
         ..toggle(setup.players[1])
+        ..toggle(setup.players[2])
         ..teamCount = 2
-        ..assign(setup.players[1], 0)
         ..toggle(setup.players[2]);
 
-      expect(sideNames(setup), ['Ana & Bob', 'Cléo']);
+      expect(setup.teamCount, 0);
+      expect(sideNames(setup), ['Ana', 'Bob']);
     });
 
     test('a bot can be anyone’s team mate', () async {

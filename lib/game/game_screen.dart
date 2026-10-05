@@ -724,6 +724,8 @@ class _GameOverPanel extends StatelessWidget {
     final game = session.game!;
     final match = session.match;
     final matchIsOpen = match != null && match.winner == null;
+    // A team of several wins in the plural.
+    final wins = game.winner!.members.length > 1 ? 'gagnent' : 'gagne';
     final onChangeSetup = this.onChangeSetup;
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -733,10 +735,10 @@ class _GameOverPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(switch (match) {
-              null => '${game.winner!.name} gagne !',
+              null => '${game.winner!.name} $wins !',
               MatchScore(winner: null) =>
-                '${game.winner!.name} gagne la manche',
-              MatchScore() => '${game.winner!.name} gagne le match !',
+                '${game.winner!.name} $wins la manche',
+              MatchScore() => '${game.winner!.name} $wins le match !',
             }, style: textTheme.headlineMedium),
             if (match != null) ...[
               const SizedBox(height: DartsSpace.xs),

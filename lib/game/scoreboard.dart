@@ -52,15 +52,16 @@ class Scoreboard extends StatelessWidget {
   }
 }
 
-/// "T20 20 5 = 85" for a visit entered dart by dart, "85" for a total,
+/// "T20 - 20 - 5 = 85" for a visit entered dart by dart, "85" for a total,
 /// "BUST" in place of the points of a visit that busted.
 String visitLabel(Visit visit) => [
   if (visit.thrown.isNotEmpty) visitDarts(visit),
   visitTotal(visit),
 ].join(' = ');
 
-/// "T20 20 5"; empty for a visit entered as a total.
-String visitDarts(Visit visit) => visit.thrown.map((d) => d.notation).join(' ');
+/// "T20 - 20 - 5"; empty for a visit entered as a total.
+String visitDarts(Visit visit) =>
+    visit.thrown.map((d) => d.notation).join(' - ');
 
 /// "85", or "BUST".
 String visitTotal(Visit visit) => visit.isBust ? 'BUST' : '${visit.points}';

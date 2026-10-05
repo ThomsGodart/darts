@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../app_test_harness.dart';
-import 'game_screen_test.dart' show activeRemaining, quickScore;
+import 'game_screen_test.dart' show activeRemaining, playVisits, quickScore;
 
 String activeName(WidgetTester tester) =>
     tester.widget<Text>(find.byKey(const Key('active-name'))).data!;
@@ -104,6 +104,41 @@ void main() {
 
     String summary(WidgetTester tester) =>
         tester.widget<Text>(find.byKey(const Key('teams-summary'))).data!;
+
+    testWidgets('two players are not offered teams; three are', (tester) async {
+      await pumpApp(tester, await fourPlayers());
+      await pickPlayers(tester, 2);
+      final setup = find.byType(Scrollable).first;
+      // The whole setup, down to its last rule: no teams anywhere.
+      await tester.drag(setup, const Offset(0, -3000));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('team-count')), findsNothing);
+      expect(find.text('Équipes'), findsNothing);
+
+      await tester.drag(setup, const Offset(0, 3000));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(CheckboxListTile, 'Joueur 3'));
+      await tester.pump();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('team-count')),
+        100,
+        scrollable: setup,
+      );
+      expect(find.byKey(const Key('team-count')), findsOneWidget);
+    });
+
+    testWidgets('a team of several wins in the plural', (tester) async {
+      await pumpApp(tester, await fourPlayers());
+      await pickPlayers(tester, 4);
+      await tapInSetup(tester, '2 équipes');
+      await tester.tap(find.text('Lancer la partie'));
+      await tester.pumpAndSettle();
+      await switchToTotals(tester);
+
+      await playVisits(tester, [180, 26, 180, 26, 141]);
+      await tester.pumpAndSettle();
+      expect(find.text('Joueur 1 & Joueur 3 gagnent !'), findsOneWidget);
+    });
 
     testWidgets('a team shares a score; a banner says whose throw it is', (
       tester,
