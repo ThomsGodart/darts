@@ -11,6 +11,13 @@ class _BrokenStore implements SettingsStore {
   @override
   Future<void> writeBool(String key, {required bool value}) =>
       throw StateError('no disk');
+
+  @override
+  Future<String?> readString(String key) => throw StateError('no disk');
+
+  @override
+  Future<void> writeString(String key, String value) =>
+      throw StateError('no disk');
 }
 
 void main() {

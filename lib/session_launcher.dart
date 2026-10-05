@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 import 'setup/setup_controller.dart';
-import 'session/player_stats.dart' as session_stats;
 import 'session/session.dart';
+import 'session/stats.dart' as stats;
 import 'session_controller.dart';
 
 /// Opens sessions for the home screen, so widgets never touch storage.
@@ -75,20 +75,17 @@ class SessionLauncher extends ChangeNotifier {
   /// Past and open sessions, newest first.
   Future<List<SessionRecord>> history() => _repository.history();
 
-  /// Everyone's stats over every session, the open one included.
-  Future<List<PlayerStats>> playerStats() async {
-    final open = await _repository.resumable();
-    final ended = await _repository.history();
-    return session_stats.playerStats([
-      // Oldest first, so the latest name of a renamed player wins.
-      for (final record in ended.reversed) record.state,
-      if (open != null) open.state,
-    ]);
-  }
+  /// Every game played, in ended sessions and the open one, oldest first:
+  /// what the stats are counted over.
+  Future<List<PlayedGame>> playedGames() async =>
+      stats.playedGames(await _repository.played());
 
   /// Deletes a session from the history for good.
   Future<void> deleteSession(SessionRecord record) =>
       _repository.delete(record.id);
+
+  /// Deletes every ended session for good; the open one stays.
+  Future<void> deleteHistory() => _repository.deleteHistory();
 
   /// Stores everything played so far, e.g. before the app is backgrounded.
   Future<void> flush() => _repository.flush();

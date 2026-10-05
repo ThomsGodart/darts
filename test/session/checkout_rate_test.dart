@@ -13,8 +13,8 @@ X01Game gameOn(int remaining, {OutRule outRule = OutRule.double}) =>
         .state
         .x01!;
 
-PlayerStats statsOf(Player player, Session session) =>
-    playerStats([session.state]).firstWhere((s) => s.player.id == player.id);
+X01Stats statsOf(Player player, Session session) =>
+    statsFor<X01Stats>(player, [session]);
 
 void main() {
   group('entered dart by dart, darts at a double are counted', () {

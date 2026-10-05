@@ -377,6 +377,7 @@ CricketGame _cricketDart(CricketGame game, Dart dart) {
   if (!won) return game._next(scores: scores, dartsInVisit: darts);
   scores[game.activeIndex] = active.copyWith(
     visitsPlayed: active.visitsPlayed + 1,
+    rounds: List.unmodifiable([...active.rounds, darts]),
   );
   return game._next(scores: scores, winner: active.player);
 }
@@ -387,6 +388,7 @@ CricketGame _cricketEndVisit(CricketGame game) {
     scores: [...game.scores]
       ..[game.activeIndex] = active.copyWith(
         visitsPlayed: active.visitsPlayed + 1,
+        rounds: List.unmodifiable([...active.rounds, game.dartsInVisit]),
       ),
     activeIndex: game.nextIndex,
   );

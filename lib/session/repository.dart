@@ -1,3 +1,4 @@
+import 'events.dart';
 import 'journal.dart';
 import 'session_facade.dart';
 import 'state.dart';
@@ -8,11 +9,15 @@ class SessionRecord {
     required this.id,
     required this.createdAt,
     required this.state,
+    this.gameStartedAt = const [],
   });
 
   final String id;
   final DateTime createdAt;
   final SessionState state;
+
+  /// When each game of [state] was started, in order.
+  final List<DateTime> gameStartedAt;
 }
 
 /// Where sessions are kept between launches of the app.
@@ -23,9 +28,9 @@ abstract interface class SessionRepository {
   /// The most recently created session, if any.
   Future<Session?> latest();
 
-  /// Ended sessions that had at least one game, newest first. The open
-  /// session is not history yet: it is resumed instead.
-  Future<List<SessionRecord>> history();
+  /// Every session that had at least one game, newest first: the ended
+  /// ones and the one still open.
+  Future<List<SessionRecord>> played();
 
   /// Deletes a session and its journal for good; throws [ArgumentError] for
   /// an id this repository never gave.
@@ -42,6 +47,23 @@ abstract interface class SessionRepository {
   void watchPersistFailure(void Function() onFailure);
 }
 
+extension History on SessionRepository {
+  /// Ended sessions that had at least one game, newest first. The open
+  /// session is not history yet: it is resumed instead.
+  Future<List<SessionRecord>> history() async => [
+    for (final record in await played())
+      if (record.state.isEnded) record,
+  ];
+
+  /// Deletes every session of the [history] for good; the open session
+  /// stays.
+  Future<void> deleteHistory() async {
+    for (final record in await history()) {
+      await delete(record.id);
+    }
+  }
+}
+
 extension Resumable on SessionRepository {
   /// The latest session when it was not ended: its game may be in progress,
   /// or over and waiting for Rejouer.
@@ -53,11 +75,8 @@ extension Resumable on SessionRepository {
   }
 }
 
-/// Whether a session belongs in the history.
-bool isHistory(SessionState state) => state.isEnded && state.game != null;
-
 class _StoredSession {
-  _StoredSession(this.id, this.journal) : createdAt = DateTime.now();
+  _StoredSession(this.id, this.journal, this.createdAt);
 
   final String id;
   final DateTime createdAt;
@@ -66,6 +85,9 @@ class _StoredSession {
 
 /// Journals kept in memory; outlives the repositories opened on it.
 class InMemorySessionStorage {
+  /// What time it is: tests set it to date sessions and games.
+  DateTime Function() now = DateTime.now;
+
   final List<_StoredSession> _sessions = [];
   int _nextId = 1;
 
@@ -83,8 +105,10 @@ class InMemorySessionRepository implements SessionRepository {
 
   @override
   Future<Session> create() async {
-    final journal = InMemoryJournal();
-    _storage._sessions.add(_StoredSession('${_storage._nextId++}', journal));
+    final journal = InMemoryJournal(now: () => _storage.now());
+    _storage._sessions.add(
+      _StoredSession('${_storage._nextId++}', journal, _storage.now()),
+    );
     return Session(journal);
   }
 
@@ -95,10 +119,19 @@ class InMemorySessionRepository implements SessionRepository {
   }
 
   @override
-  Future<List<SessionRecord>> history() async => [
+  Future<List<SessionRecord>> played() async => [
     for (final stored in _storage._sessions.reversed)
-      if (Session(stored.journal).state case final state when isHistory(state))
-        SessionRecord(id: stored.id, createdAt: stored.createdAt, state: state),
+      if (Session(stored.journal).state case final state
+          when state.game != null)
+        SessionRecord(
+          id: stored.id,
+          createdAt: stored.createdAt,
+          state: state,
+          gameStartedAt: [
+            for (final (i, event) in stored.journal.events.indexed)
+              if (event is GameStarted) stored.journal.recordedAt[i],
+          ],
+        ),
   ];
 
   @override

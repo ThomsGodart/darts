@@ -49,13 +49,14 @@ class DriftSessionRepository implements SessionRepository {
   }
 
   @override
-  Future<List<SessionRecord>> history() async {
+  Future<List<SessionRecord>> played() async {
     await _writes;
     final sessions = await (_db.select(
       _db.sessions,
     )..orderBy([(s) => OrderingTerm.desc(s.id)])).get();
     // One query for every journal, grouped here, rather than one per session.
     final eventsBySession = <int, List<SessionEvent>>{};
+    final gameStartsBySession = <int, List<DateTime>>{};
     final rows =
         await (_db.select(_db.sessionEvents)..orderBy([
               (e) => OrderingTerm.asc(e.sessionId),
@@ -64,16 +65,20 @@ class DriftSessionRepository implements SessionRepository {
             .get();
     for (final row in rows) {
       (eventsBySession[row.sessionId] ??= []).add(_decode(row));
+      if (row.type == EventTypes.gameStarted) {
+        (gameStartsBySession[row.sessionId] ??= []).add(row.recordedAt);
+      }
     }
     return [
       for (final session in sessions)
         if (Session(InMemoryJournal.of(eventsBySession[session.id] ?? const []))
                 .state
-            case final state when isHistory(state))
+            case final state when state.game != null)
           SessionRecord(
             id: '${session.id}',
             createdAt: session.createdAt,
             state: state,
+            gameStartedAt: gameStartsBySession[session.id] ?? const [],
           ),
     ];
   }

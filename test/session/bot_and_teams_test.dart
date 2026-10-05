@@ -86,7 +86,11 @@ void main() {
       play(session, [60, 60]);
       expect(
         [
-          for (final s in playerStats([session.state])) s.player,
+          for (final s in statsOf(
+            gamesOf([session]),
+            const StatsQuery(kind: GameKind.x01),
+          ))
+            s.player,
         ],
         [alice],
       );
@@ -137,10 +141,57 @@ void main() {
       expect(decoded.players.first.isTeam, isTrue);
     });
 
-    test('teams are left out of the stats', () {
+    test('each member of a team has the stats of their own visits', () {
       final session = newSession()..startGame([ab, cd]);
-      play(session, [60, 60]);
-      expect(playerStats([session.state]), isEmpty);
+      // Alice 60, Chloé 26, Bob 100, Dan 45, Alice 140.
+      play(session, [60, 26, 100, 45, 140]);
+
+      final stats = statsOf(
+        gamesOf([session]),
+        const StatsQuery(kind: GameKind.x01),
+      );
+      expect([for (final s in stats) s.player], [alice, bob, chloe, dan]);
+      final byName = {for (final s in stats) s.player.name: s as X01Stats};
+      expect(byName['Alice']!.average, 100);
+      expect(byName['Alice']!.dartsThrown, 6);
+      expect(byName['Bob']!.average, 100);
+      expect(byName['Bob']!.tons, 1);
+      expect(byName['Chloé']!.average, 26);
+      expect(byName['Dan']!.bestVisit, 45);
+    });
+
+    test('a team win is a win for each member; solo and team are told '
+        'apart', () {
+      final session = newSession()
+        ..startGame([ab, cd], config: const X01Config(startScore: 101));
+      checkOut(session, 101);
+      session.startGame([
+        alice,
+        chloe,
+      ], config: const X01Config(startScore: 101));
+      play(session, [0]);
+      checkOut(session, 101);
+
+      expect(statsFor<X01Stats>(alice, [session]).gamesPlayed, 2);
+      expect(statsFor<X01Stats>(alice, [session]).gamesWon, 1);
+      expect(statsFor<X01Stats>(bob, [session]).gamesWon, 1);
+      // Bob never threw: the win is his, the checkout is Alice's.
+      expect(statsFor<X01Stats>(bob, [session]).bestCheckout, isNull);
+      expect(statsFor<X01Stats>(alice, [session]).bestCheckout, 101);
+      // How fast a leg was won is only told of someone playing alone.
+      expect(statsFor<X01Stats>(alice, [session]).fewestDartsToWin, isNull);
+      expect(statsFor<X01Stats>(chloe, [session]).fewestDartsToWin, 3);
+
+      final solo = statsFor<X01Stats>(alice, [
+        session,
+      ], participation: Participation.solo);
+      expect(solo.gamesPlayed, 1);
+      expect(solo.gamesWon, 0);
+      final team = statsFor<X01Stats>(alice, [
+        session,
+      ], participation: Participation.team);
+      expect(team.gamesPlayed, 1);
+      expect(team.gamesWon, 1);
     });
 
     test('a bot in a team throws to its own level on its turns', () {

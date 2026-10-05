@@ -370,7 +370,12 @@ class CricketScore {
     this.points = 0,
     this.visitsPlayed = 0,
     this.marksHit = 0,
+    this.rounds = const [],
   });
+
+  /// The darts of every visit the player completed, in order, misses
+  /// never thrown left out.
+  final List<List<Dart>> rounds;
 
   final Player player;
 
@@ -393,12 +398,14 @@ class CricketScore {
     int? points,
     int? visitsPlayed,
     int? marksHit,
+    List<List<Dart>>? rounds,
   }) => CricketScore(
     player: player,
     marks: marks ?? this.marks,
     points: points ?? this.points,
     visitsPlayed: visitsPlayed ?? this.visitsPlayed,
     marksHit: marksHit ?? this.marksHit,
+    rounds: rounds ?? this.rounds,
   );
 }
 

@@ -121,7 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _openStats() => Navigator.of(context).push(
     MaterialPageRoute<void>(
-      builder: (_) => StatsScreen(launcher: widget.launcher),
+      builder: (_) =>
+          StatsScreen(launcher: widget.launcher, settings: widget.settings),
     ),
   );
 

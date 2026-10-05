@@ -78,3 +78,27 @@ List<Object?> scoreboardOf(Session session) {
 extension X01Access on SessionState {
   X01Game? get x01 => game as X01Game?;
 }
+
+/// The games of [sessions] as the stats take them, all started at [at].
+List<PlayedGame> gamesOf(List<Session> sessions, {DateTime? at}) => [
+  for (final session in sessions)
+    for (final (i, game) in session.state.games.indexed)
+      PlayedGame(
+        game: game,
+        startedAt: at ?? DateTime(2026),
+        matchWinner: game.isFinished
+            ? matchOf(session.state.games.sublist(0, i + 1))?.winner
+            : null,
+      ),
+];
+
+/// [player]'s stats over the games of [kind] in [sessions].
+T statsFor<T extends GameStats>(
+  Player player,
+  List<Session> sessions, {
+  GameKind kind = GameKind.x01,
+  Participation participation = Participation.any,
+}) => statsOf(
+  gamesOf(sessions),
+  StatsQuery(kind: kind, participation: participation),
+).firstWhere((s) => s.player.id == player.id) as T;

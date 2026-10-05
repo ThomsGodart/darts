@@ -13,7 +13,7 @@ export 'journal.dart';
 export 'match.dart';
 export 'player.dart';
 export 'player_catalog.dart';
-export 'player_stats.dart';
+export 'stats.dart';
 export 'repository.dart';
 export 'session_facade.dart';
 export 'state.dart';

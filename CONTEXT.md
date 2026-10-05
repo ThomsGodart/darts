@@ -41,5 +41,6 @@ in French.
 | **Team** | Several people sharing one score: one side of a game. Teams need not be the same size. Its members take turns to throw, round after round. Stored as a player with **members**. | équipe |
 | **Thrower** | Who is at the oche: the active player, or the member of the active team whose turn it is. | — |
 | **Virtual opponent** | A player the app throws for, to a chosen three-dart average. Plays the games entered as totals (X01, Count-Up); in no catalog and no stats. Also "bot" in code. | adversaire virtuel |
+| **Stats** | Counted per person over one **game kind** at a time, never across kinds, and over a period that goes by when each game started. Throwing stats count every dart thrown; games, wins and records count finished games only. A team member is counted for the visits they threw; a team's win is a win for each member. | statistiques |
 | **Player catalog** | The players known to the app across sessions; players who played are archived, not deleted. | joueurs |
 | **Journal** | The ordered events of a session; the session's state is a fold of it. | — |

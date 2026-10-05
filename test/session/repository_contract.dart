@@ -351,6 +351,46 @@ void repositoryContract(
         expect(history.single.state.players, [alice]);
       });
 
+      test('every played session is listed with when its games started, '
+          'the open one too', () async {
+        final repository = open();
+        (await repository.create())
+          ..startGame([alice], config: const X01Config(startScore: 40))
+          ..submitVisitTotal(40, dartsAtCheckout: 1)
+          ..rematch()
+          ..endSession();
+        (await repository.create()).startGame([bob]);
+        // Never played in: not a session to list.
+        final before = DateTime.now().subtract(const Duration(minutes: 1));
+
+        final played = await (await relaunch(repository)).played();
+        expect([for (final r in played) r.state.isEnded], [false, true]);
+        expect(played.first.gameStartedAt, hasLength(1));
+        expect(played.last.gameStartedAt, hasLength(2));
+        for (final at in played.last.gameStartedAt) {
+          expect(at.isAfter(before), isTrue);
+        }
+      });
+
+      test('deleting the history leaves the open session alone', () async {
+        final repository = open();
+        for (final player in [alice, bob]) {
+          (await repository.create())
+            ..startGame([player])
+            ..endSession();
+        }
+        (await repository.create())
+          ..startGame([alice, bob])
+          ..submitVisitTotal(60);
+
+        await repository.deleteHistory();
+
+        final relaunched = await relaunch(repository);
+        expect(await relaunched.history(), isEmpty);
+        final open_ = await relaunched.resumable();
+        expect(open_!.state.x01!.scoreOf(alice).remaining, 441);
+      });
+
       test('an unknown id is refused, as is deleting twice', () async {
         final repository = open();
         await expectLater(repository.delete('not-an-id'), throwsArgumentError);
