@@ -59,6 +59,30 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('the third dart stays on the board until Fin de tour', (
+    tester,
+  ) async {
+    await launchCricket(tester);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byKey(const ValueKey('board-key-20')));
+      await tester.pump();
+    }
+    expect(boardMarks(), findsOneWidget);
+    final key = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('board-key-20')),
+    );
+    expect(key.onPressed, isNull, reason: 'no fourth dart');
+
+    await tester.tap(find.byKey(const Key('end-visit')));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('board-key-19')))
+          .onPressed,
+      isNotNull,
+    );
+  });
+
   testWidgets('the dart keypad is chosen in the setup', (tester) async {
     await pumpApp(tester, await AppStorage.withTwoPlayers());
     await launchGame(
@@ -97,10 +121,10 @@ void main() {
     await tester.tap(find.text('Lancer la partie'));
     await tester.pumpAndSettle();
 
-    expect(
-      tester.widget<Text>(find.byKey(const Key('cricket-variant'))).data,
-      startsWith('Cut-Throat'),
-    );
+    // The variant is in the bar, with the way back; the board says the
+    // round.
+    expect(find.text('Cut-Throat'), findsOneWidget);
+    expect(find.text('Round 1'), findsOneWidget);
   });
 
   testWidgets('Partie suivante switches from X01 to cricket mid-session', (
@@ -117,7 +141,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('cricket-board')), findsOneWidget);
-    expect(find.text('MPR'), findsOneWidget);
+    expect(find.text('Round 1'), findsOneWidget);
   });
 
   testWidgets('no miss key: ending the visit says the rest missed', (

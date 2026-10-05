@@ -30,9 +30,15 @@ void main() {
     expect(Dart.miss.score, 0);
   });
 
-  test('a full visit of three darts passes the turn', () {
+  test('a full visit waits to be ended, then passes the turn', () {
     final session = newSession()..startGame([alice, bob]);
     throwDarts(session, [Dart.treble(20), Dart.single(5), Dart.treble(20)]);
+
+    expect(gameOf(session).activePlayer, alice, reason: 'still to be read');
+    expect(gameOf(session).dartsInVisit, hasLength(3));
+    expect(gameOf(session).activeRemaining, 376);
+    expect(session.throwDart(Dart.miss), isA<Rejected>());
+    session.endVisit();
 
     final game = gameOf(session);
     expect(game.scoreOf(alice).remaining, 376);
@@ -52,10 +58,15 @@ void main() {
     expect(game.activePlayer, alice);
   });
 
-  group('busts end the visit at once', () {
+  group('busts stop the visit on their dart', () {
     test('below zero', () {
       final session = aliceOn(50);
       throwDarts(session, [Dart.treble(20)]);
+
+      expect(gameOf(session).visitBusts, isTrue);
+      expect(gameOf(session).dartsInVisit, [Dart.treble(20)]);
+      expect(session.throwDart(Dart.miss), isA<Rejected>());
+      session.endVisit();
 
       final alices = gameOf(session).scoreOf(alice);
       expect(alices.remaining, 50);
@@ -67,6 +78,7 @@ void main() {
     test('double-out: leaving 1', () {
       final session = aliceOn(41);
       throwDarts(session, [Dart.double(20)]);
+      session.endVisit();
       expect(gameOf(session).scoreOf(alice).lastVisit!.isBust, isTrue);
       expect(gameOf(session).scoreOf(alice).remaining, 41);
     });
@@ -74,6 +86,7 @@ void main() {
     test('double-out: reaching 0 on a single is a bust', () {
       final session = aliceOn(40);
       throwDarts(session, [Dart.single(20), Dart.single(20)]);
+      session.endVisit();
 
       final alices = gameOf(session).scoreOf(alice);
       expect(alices.lastVisit!.isBust, isTrue);
@@ -85,6 +98,7 @@ void main() {
     test('double-out: reaching 0 on a treble is a bust', () {
       final session = aliceOn(60);
       throwDarts(session, [Dart.treble(20)]);
+      session.endVisit();
       expect(gameOf(session).scoreOf(alice).lastVisit!.isBust, isTrue);
     });
   });
@@ -123,6 +137,7 @@ void main() {
     play(session, [180, 0]);
     // Alice on 121: T20 T20 leaves 1, a bust after two darts.
     throwDarts(session, [Dart.treble(20), Dart.treble(20)]);
+    session.endVisit();
     play(session, [0]);
     // Then 121 = T20 T11 D14 dart by dart.
     throwDarts(session, [Dart.treble(20), Dart.treble(11), Dart.double(14)]);

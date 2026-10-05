@@ -8,11 +8,20 @@ sealed class SessionEvent {
 }
 
 class GameStarted extends SessionEvent {
-  const GameStarted({required this.players, required this.config});
+  const GameStarted({
+    required this.players,
+    required this.config,
+    this.confirmsVisits = true,
+  });
 
   /// Players in throwing order.
   final List<Player> players;
   final GameConfig config;
+
+  /// Whether a visit entered dart by dart waits for a [VisitEnded] after
+  /// its last dart. False only in the games journaled before visits were
+  /// confirmed, where the turn passed on the third dart.
+  final bool confirmsVisits;
 }
 
 /// A visit entered as its total (0–180).
@@ -21,6 +30,7 @@ class VisitTotalSubmitted extends SessionEvent {
     this.score, {
     this.darts = dartsPerVisit,
     this.dartsAtDouble,
+    this.isBust = false,
   });
 
   final int score;
@@ -30,6 +40,11 @@ class VisitTotalSubmitted extends SessionEvent {
 
   /// How many of them were thrown at a finish; null when nobody said.
   final int? dartsAtDouble;
+
+  /// Whether the players said the visit busted although its total fits:
+  /// a remaining brought to 0 without the finishing dart the out rule
+  /// asks for.
+  final bool isBust;
 }
 
 /// The session is over: it goes to the history.

@@ -10,11 +10,11 @@ HalveItGame halveItOf(Session session) => session.state.game! as HalveItGame;
 
 /// One visit: [darts], padded with misses to three.
 void visit(Session session, [List<Dart> darts = const []]) {
-  final padded = [...darts, for (var i = darts.length; i < 3; i++) miss];
-  for (final dart in padded) {
+  for (final dart in darts) {
     if (session.state.game!.isFinished) return;
     expect(session.throwDart(dart), isA<Accepted>(), reason: '$dart');
   }
+  if (!session.state.game!.isFinished) session.endVisit();
 }
 
 void main() {
@@ -129,15 +129,16 @@ void main() {
     expect(halveItOf(session).winner, alice);
   });
 
-  test('undo takes a dart back, even the one that halved', () {
+  test('undo takes back the end of a visit, even one that halved', () {
     final session = newSession()..startGame([alice, bob], config: halveIt);
     visit(session, [const Dart.double(20)]); // Alice 40
     visit(session); // Bob
     session
       ..throwDart(miss)
+      ..throwDart(miss)
       ..throwDart(miss);
     final before = scoreboardOf(session);
-    session.throwDart(miss);
+    session.endVisit();
     expect(halveItOf(session).scoreOf(alice).points, 20);
 
     session.undo();

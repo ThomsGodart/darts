@@ -13,7 +13,15 @@ double? averagePerVisit(int points, int darts) =>
     darts == 0 ? null : points / darts * dartsPerVisit;
 
 class SessionState {
-  const SessionState({this.games = const [], this.isEnded = false});
+  const SessionState({
+    this.games = const [],
+    this.isEnded = false,
+    this.confirmsVisits = true,
+  });
+
+  /// Whether the current game holds a visit open after its last dart
+  /// until it is ended (see [GameStarted.confirmsVisits]).
+  final bool confirmsVisits;
 
   /// Every game of the session, in the order they were played.
   final List<Game> games;
@@ -83,14 +91,16 @@ class SessionState {
     ];
   }
 
-  SessionState addGame(Game game) => SessionState(
+  SessionState addGame(Game game, {bool confirmsVisits = true}) => SessionState(
     games: List.unmodifiable([...games, game]),
     isEnded: isEnded,
+    confirmsVisits: confirmsVisits,
   );
 
   SessionState replaceCurrentGame(Game game) => SessionState(
     games: List.unmodifiable([...games.take(games.length - 1), game]),
     isEnded: isEnded,
+    confirmsVisits: confirmsVisits,
   );
 }
 
@@ -101,7 +111,12 @@ class Visit {
     required this.darts,
     required this.isBust,
     this.dartsAtDouble,
+    this.thrown = const [],
   });
+
+  /// The darts of the visit when it was entered dart by dart, misses
+  /// never thrown left out; empty when it was entered as a total.
+  final List<Dart> thrown;
 
   /// Total entered for the visit, even when it busted.
   final int score;
@@ -190,6 +205,10 @@ sealed class Game {
 
   bool get isFinished => winner != null;
 
+  /// Whether the visit in progress has had its last dart and waits to be
+  /// ended.
+  bool get visitIsOver => dartsInVisit.length >= dartsPerVisit;
+
   Player get activePlayer => players[activeIndex];
 
   /// Who is at the oche: the active player, or in a team whichever of its
@@ -240,6 +259,22 @@ final class X01Game extends Game {
 
   /// The active player's remaining score, counting darts already thrown.
   int get activeRemaining => activeScore.remaining - dartsInVisitScore;
+
+  /// Whether the last dart thrown brought the remaining to 0 the way the
+  /// out rule asks.
+  bool get visitChecksOut =>
+      dartsInVisit.isNotEmpty &&
+      activeRemaining == 0 &&
+      config.outRule.allowsFinishOn(dartsInVisit.last);
+
+  /// Whether the darts thrown bust the visit.
+  bool get visitBusts =>
+      dartsInVisit.isNotEmpty &&
+      !visitChecksOut &&
+      (activeRemaining == 0 || config.outRule.bustsOn(activeRemaining));
+
+  @override
+  bool get visitIsOver => super.visitIsOver || visitBusts;
 
   /// The route to call for the active player to check out with the darts
   /// left in their visit; null when they cannot finish this visit.
@@ -404,6 +439,10 @@ final class CricketGame extends Game {
 
   /// Closed by every player: no one scores on it any more.
   bool isDead(int number) => scores.every((s) => s.isClosed(number));
+
+  /// The round being played, counting from 1; once the game is won, how
+  /// many it took its winner.
+  int get round => activeScore.visitsPlayed + (isFinished ? 0 : 1);
 
   /// Rounds [player] has played, the visit in progress included.
   int roundsOf(Player player) {

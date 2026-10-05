@@ -111,6 +111,7 @@ void main() {
     await launchGame(tester, const ['Joueur 1'], 'Tour de l’horloge');
     for (var n = 1; n <= 20; n++) {
       await tapKey(tester, '$n');
+      if (n % 3 == 0) await endVisit(tester);
     }
     // After 20, the bull.
     expect(titleOf(tester), 'Cible Bull');

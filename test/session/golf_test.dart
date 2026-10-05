@@ -38,7 +38,8 @@ void main() {
     session
       ..throwDart(const Dart.double(1))
       ..throwDart(const Dart.single(1))
-      ..throwDart(miss);
+      ..throwDart(miss)
+      ..endVisit();
 
     expect(golfOf(session).scoreOf(alice).holeStrokes, [5]);
     expect(golfOf(session).activePlayer, bob);

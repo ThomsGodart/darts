@@ -10,19 +10,29 @@ SessionState foldEvents(Iterable<SessionEvent> events) =>
 
 SessionState applyEvent(SessionState state, SessionEvent event) {
   return switch (event) {
-    GameStarted(:final players, :final config) => state.addGame(
-      _newGame(players, config),
-    ),
-    VisitTotalSubmitted(:final score, :final darts, :final dartsAtDouble) =>
+    GameStarted(:final players, :final config, :final confirmsVisits) =>
+      state.addGame(_newGame(players, config), confirmsVisits: confirmsVisits),
+    VisitTotalSubmitted(
+      :final score,
+      :final darts,
+      :final dartsAtDouble,
+      :final isBust,
+    ) =>
       state.replaceCurrentGame(switch (state.game) {
-        final X01Game game => _visitTotal(game, score, darts, dartsAtDouble),
+        final X01Game game => _visitTotal(
+          game,
+          score,
+          darts,
+          dartsAtDouble,
+          isBust: isBust,
+        ),
         final CountUpGame game => _countUpCompleteVisit(game, score),
         _ => throw const FormatException(
           'A visit total in a game entered dart by dart',
         ),
       }),
     DartThrown(:final dart) => state.replaceCurrentGame(
-      _dartThrown(state.game!, dart),
+      _dartThrown(state.game!, dart, confirms: state.confirmsVisits),
     ),
     VisitEnded() => state.replaceCurrentGame(_visitEnded(state.game!)),
     NumberAssigned(:final sector) => state.replaceCurrentGame(
@@ -31,7 +41,11 @@ SessionState applyEvent(SessionState state, SessionEvent event) {
         _ => throw const FormatException('A number outside a Killer game'),
       },
     ),
-    SessionEnded() => SessionState(games: state.games, isEnded: true),
+    SessionEnded() => SessionState(
+      games: state.games,
+      isEnded: true,
+      confirmsVisits: state.confirmsVisits,
+    ),
   };
 }
 
@@ -104,9 +118,23 @@ Game _newGame(List<Player> players, GameConfig config) => switch (config) {
   ),
 };
 
-/// Adds [dart] to the active player's visit: what it scores is each
-/// game's business, as is what ends the visit before its last dart.
-Game _dartThrown(Game game, Dart dart) => switch (game) {
+/// Adds [dart] to the active player's visit. A visit that has had its
+/// last dart stays open until it is ended, for its thrower to read it;
+/// unless [confirms] is false, as in the games journaled before visits
+/// were confirmed, where the turn passes at once.
+Game _dartThrown(Game game, Dart dart, {required bool confirms}) {
+  if (game.visitIsOver) {
+    throw const FormatException('A dart in a visit that is over');
+  }
+  final next = _addDart(game, dart);
+  return confirms || next.isFinished || !next.visitIsOver
+      ? next
+      : _visitEnded(next);
+}
+
+/// What [dart] scores is each game's business, as is whether it wins the
+/// game on the spot.
+Game _addDart(Game game, Dart dart) => switch (game) {
   X01Game() => _x01Dart(game, dart),
   CricketGame() => _cricketDart(game, dart),
   ShanghaiGame() => _shanghaiDart(game, dart),
@@ -119,20 +147,26 @@ Game _dartThrown(Game game, Dart dart) => switch (game) {
   BaseballGame() => _baseballDart(game, dart),
 };
 
-/// Ends the visit early. In Golf the last dart thrown stands; everywhere
-/// else the darts left count as misses.
-Game _visitEnded(Game game) {
-  if (game is GolfGame) return _golfCompleteVisit(game, game.dartsInVisit);
-  final visits = game.visitsPlayed;
-  var next = game;
-  while (!next.isFinished && next.visitsPlayed == visits) {
-    next = _dartThrown(next, Dart.miss);
-  }
-  return next;
-}
-
-/// Whether a visit of [darts] has had its last dart.
-bool _isFull(List<Dart> darts) => darts.length >= dartsPerVisit;
+/// Ends the visit and passes the turn. In Golf the last dart thrown
+/// stands; everywhere else the darts not thrown count as misses.
+Game _visitEnded(Game game) => switch (game) {
+  X01Game() => _x01EndVisit(game),
+  CricketGame() => _cricketEndVisit(game),
+  ShanghaiGame() => _shanghaiCompleteVisit(game),
+  KillerGame() => _killerCompleteVisit(game),
+  HalveItGame() => _halveItEndVisit(game),
+  GolfGame() => _golfCompleteVisit(game, game.dartsInVisit),
+  AroundTheClockGame() => game._next(
+    activeIndex: game.nextIndex,
+    visitsPlayed: game.visitsPlayed + 1,
+  ),
+  Bobs27Game() => _bobs27EndVisit(game),
+  CountUpGame() => _countUpCompleteVisit(
+    game,
+    game.dartsInVisit.fold(0, (sum, d) => sum + d.score),
+  ),
+  BaseballGame() => _baseballEndVisit(game),
+};
 
 // Each game below is rebuilt through its `_next`: the visit is over unless
 // `dartsInVisit` is given, and whatever is not given stays as it was.
@@ -243,14 +277,20 @@ extension on GolfGame {
   );
 }
 
-X01Game _visitTotal(X01Game game, int score, int darts, int? dartsAtDouble) {
+X01Game _visitTotal(
+  X01Game game,
+  int score,
+  int darts,
+  int? dartsAtDouble, {
+  required bool isBust,
+}) {
   final after = game.activeScore.remaining - score;
   return _x01CompleteVisit(
     game,
     Visit(
       score: score,
       darts: darts,
-      isBust: game.config.outRule.bustsOn(after),
+      isBust: isBust || game.config.outRule.bustsOn(after),
       dartsAtDouble: dartsAtDouble,
     ),
     // A total says nothing of the darts: scoring is taken as being in.
@@ -258,27 +298,32 @@ X01Game _visitTotal(X01Game game, int score, int darts, int? dartsAtDouble) {
   );
 }
 
-/// The X01 visit ends on a bust, a checkout or the last dart.
+/// A checkout wins the game on the spot; a bust waits to be read.
 X01Game _x01Dart(X01Game game, Dart dart) {
-  final darts = [...game.dartsInVisit, dart];
-  final visitScore = game.countedScoreOf(darts);
-  final after = game.activeScore.remaining - visitScore;
-  final outRule = game.config.outRule;
-  final isBust =
-      outRule.bustsOn(after) || (after == 0 && !outRule.allowsFinishOn(dart));
-  if (!isBust && after != 0 && !_isFull(darts)) {
-    return game._next(dartsInVisit: darts);
-  }
+  final next = game._next(dartsInVisit: [...game.dartsInVisit, dart]);
+  return next.visitChecksOut ? _x01EndVisit(next) : next;
+}
+
+/// A bust or a checkout stops the visit on the dart that did it; any
+/// other visit counts three darts.
+X01Game _x01EndVisit(X01Game game) {
+  final isBust = game.visitBusts;
+  final darts = [
+    ...game.dartsInVisit,
+    if (!isBust && !game.visitChecksOut)
+      for (var i = game.dartsInVisit.length; i < dartsPerVisit; i++) Dart.miss,
+  ];
   return _x01CompleteVisit(
     game,
     Visit(
-      score: visitScore,
+      score: game.countedScoreOf(darts),
       darts: darts.length,
       isBust: isBust,
       // Straight-out has no double to aim at: nothing to count.
-      dartsAtDouble: outRule == OutRule.straight
+      dartsAtDouble: game.config.outRule == OutRule.straight
           ? null
           : game.dartsAtDoubleIn(darts),
+      thrown: game.dartsInVisit,
     ),
     isIn: game.activeScore.isIn || darts.any((d) => d.isDouble),
   );
@@ -295,8 +340,8 @@ X01Game _x01CompleteVisit(X01Game game, Visit visit, {required bool isIn}) {
   );
 }
 
-/// The cricket visit ends on its third dart or as soon as the thrower
-/// wins.
+/// A cricket dart marks the board at once, and ends the game as soon as
+/// the thrower wins.
 CricketGame _cricketDart(CricketGame game, Dart dart) {
   final darts = [...game.dartsInVisit, dart];
   final scores = [...game.scores];
@@ -329,21 +374,26 @@ CricketGame _cricketDart(CricketGame game, Dart dart) {
       game.config.variant.wins(active.points, [
         for (final s in scores) s.points,
       ]);
-  if (!won && !_isFull(darts)) {
-    return game._next(scores: scores, dartsInVisit: darts);
-  }
+  if (!won) return game._next(scores: scores, dartsInVisit: darts);
   scores[game.activeIndex] = active.copyWith(
     visitsPlayed: active.visitsPlayed + 1,
   );
+  return game._next(scores: scores, winner: active.player);
+}
+
+CricketGame _cricketEndVisit(CricketGame game) {
+  final active = game.activeScore;
   return game._next(
-    scores: scores,
-    activeIndex: won ? game.activeIndex : game.nextIndex,
-    winner: won ? active.player : null,
+    scores: [...game.scores]
+      ..[game.activeIndex] = active.copyWith(
+        visitsPlayed: active.visitsPlayed + 1,
+      ),
+    activeIndex: game.nextIndex,
   );
 }
 
-/// The Shanghai visit ends on its third dart, or wins at once on a
-/// single, a double and a treble of the number.
+/// A Shanghai dart scores at once, and wins at once on a single, a double
+/// and a treble of the number.
 ShanghaiGame _shanghaiDart(ShanghaiGame game, Dart dart) {
   final darts = [...game.dartsInVisit, dart];
   final number = game.currentNumber;
@@ -360,8 +410,7 @@ ShanghaiGame _shanghaiDart(ShanghaiGame game, Dart dart) {
       winner: game.activePlayer,
     );
   }
-  if (!_isFull(darts)) return game._next(scores: scores, dartsInVisit: darts);
-  return _shanghaiCompleteVisit(game._next(scores: scores));
+  return game._next(scores: scores, dartsInVisit: darts);
 }
 
 bool _isShanghai(List<Dart> darts, int number) {
@@ -406,8 +455,8 @@ KillerGame _assignNumber(KillerGame game, int sector) {
       : game._next(scores: scores, activeIndex: nextUnassigned);
 }
 
-/// The Killer visit ends on its third dart, or with the game as soon as
-/// a single player is left alive.
+/// A Killer dart takes its life at once, and ends the game as soon as a
+/// single player is left alive.
 KillerGame _killerDart(KillerGame game, Dart dart) {
   if (game.phase != KillerPhase.playing) {
     throw const FormatException('Darts are only thrown while playing');
@@ -430,8 +479,7 @@ KillerGame _killerDart(KillerGame game, Dart dart) {
       winner: scores[alive.single].player,
     );
   }
-  if (!_isFull(darts)) return game._next(scores: scores, dartsInVisit: darts);
-  return _killerCompleteVisit(game._next(scores: scores));
+  return game._next(scores: scores, dartsInVisit: darts);
 }
 
 List<KillerScore> _applyKillerDouble(
@@ -483,12 +531,13 @@ KillerGame _killerCompleteVisit(KillerGame game) {
   return game._next(activeIndex: next, visitsPlayed: game.visitsPlayed + 1);
 }
 
-/// The Halve-It visit always runs to its third dart: its hits add up, and
-/// a visit without one halves the score, rounding up.
-HalveItGame _halveItDart(HalveItGame game, Dart dart) {
-  final darts = [...game.dartsInVisit, dart];
-  if (!_isFull(darts)) return game._next(dartsInVisit: darts);
+HalveItGame _halveItDart(HalveItGame game, Dart dart) =>
+    game._next(dartsInVisit: [...game.dartsInVisit, dart]);
 
+/// The hits of a Halve-It visit add up, and a visit without one halves
+/// the score, rounding up.
+HalveItGame _halveItEndVisit(HalveItGame game) {
+  final darts = game.dartsInVisit;
   final target = game.currentTarget;
   final hit = darts.fold(0, (sum, d) => sum + target.scoreOf(d));
   final before = game.activeScore;
@@ -516,14 +565,8 @@ HalveItGame _halveItDart(HalveItGame game, Dart dart) {
   );
 }
 
-/// The Golf visit ends on its third dart, or earlier when the player
-/// stops (see [_visitEnded]).
-GolfGame _golfDart(GolfGame game, Dart dart) {
-  final darts = [...game.dartsInVisit, dart];
-  return _isFull(darts)
-      ? _golfCompleteVisit(game, darts)
-      : game._next(dartsInVisit: darts);
-}
+GolfGame _golfDart(GolfGame game, Dart dart) =>
+    game._next(dartsInVisit: [...game.dartsInVisit, dart]);
 
 /// Writes the hole on the active player's card from the last of [darts],
 /// then passes the turn; once everyone has played the hole, moves on to
@@ -658,21 +701,16 @@ AroundTheClockGame _aroundTheClockDart(AroundTheClockGame game, Dart dart) {
       winner: before.player,
     );
   }
-  if (!_isFull(darts)) return game._next(scores: scores, dartsInVisit: darts);
-  return game._next(
-    scores: scores,
-    activeIndex: game.nextIndex,
-    visitsPlayed: game.visitsPlayed + 1,
-  );
+  return game._next(scores: scores, dartsInVisit: darts);
 }
 
-/// The Bob's 27 visit always runs to its third dart: each hit on the
-/// target adds its value, a visit without one takes it away, and a player
-/// down to zero or less is out.
-Bobs27Game _bobs27Dart(Bobs27Game game, Dart dart) {
-  final darts = [...game.dartsInVisit, dart];
-  if (!_isFull(darts)) return game._next(dartsInVisit: darts);
+Bobs27Game _bobs27Dart(Bobs27Game game, Dart dart) =>
+    game._next(dartsInVisit: [...game.dartsInVisit, dart]);
 
+/// Each hit of a Bob's 27 visit on the target adds its value, a visit
+/// without one takes it away, and a player down to zero or less is out.
+Bobs27Game _bobs27EndVisit(Bobs27Game game) {
+  final darts = game.dartsInVisit;
   final target = game.currentTarget;
   final hits = darts.where((d) => d == target).length;
   final before = game.activeScore;
@@ -719,13 +757,8 @@ Bobs27Game _bobs27Dart(Bobs27Game game, Dart dart) {
   );
 }
 
-/// The Count-Up visit runs to its third dart, then counts their total.
-CountUpGame _countUpDart(CountUpGame game, Dart dart) {
-  final darts = [...game.dartsInVisit, dart];
-  return _isFull(darts)
-      ? _countUpCompleteVisit(game, darts.fold(0, (sum, d) => sum + d.score))
-      : game._next(dartsInVisit: darts);
-}
+CountUpGame _countUpDart(CountUpGame game, Dart dart) =>
+    game._next(dartsInVisit: [...game.dartsInVisit, dart]);
 
 /// Adds a visit of [points], then passes the turn; once everyone has
 /// thrown the round, moves on to the next one, or ends the game on the
@@ -753,19 +786,23 @@ CountUpGame _countUpCompleteVisit(CountUpGame game, int points) {
   );
 }
 
-/// The Baseball visit always runs to its third dart. After the ninth
-/// inning the most runs win; a tie for the lead plays another inning, as
-/// long as the board has a number for it.
+/// A Baseball dart scores its runs at once.
 BaseballGame _baseballDart(BaseballGame game, Dart dart) {
-  final darts = [...game.dartsInVisit, dart];
   final before = game.activeScore;
-  final scores = [...game.scores];
-  scores[game.activeIndex] = BaseballScore(
-    player: before.player,
-    runs: before.runs + game.runsOf(dart),
+  return game._next(
+    scores: [...game.scores]
+      ..[game.activeIndex] = BaseballScore(
+        player: before.player,
+        runs: before.runs + game.runsOf(dart),
+      ),
+    dartsInVisit: [...game.dartsInVisit, dart],
   );
-  if (!_isFull(darts)) return game._next(scores: scores, dartsInVisit: darts);
+}
 
+/// After the ninth inning the most runs win; a tie for the lead plays
+/// another inning, as long as the board has a number for it.
+BaseballGame _baseballEndVisit(BaseballGame game) {
+  final scores = game.scores;
   final roundIsOver = game.nextIndex == 0;
   if (roundIsOver && game.inning >= baseballInnings) {
     final leader = _firstBest(scores, (a, b) => a.runs > b.runs);

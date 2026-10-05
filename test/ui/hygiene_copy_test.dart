@@ -30,7 +30,7 @@ void main() {
   testWidgets('visit pad undo says Annuler la saisie', (tester) async {
     await pumpApp(tester, await AppStorage.withTwoPlayers());
     await launchGame(tester);
-    expect(find.text('Annuler la saisie'), findsOneWidget);
+    expect(find.byTooltip('Annuler la saisie'), findsOneWidget);
     expect(
       find.descendant(
         of: find.byType(OutlinedButton),

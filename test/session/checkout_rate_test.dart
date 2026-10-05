@@ -24,7 +24,8 @@ void main() {
       session
         ..throwDart(const Dart.single(20)) // at D20, leaves 20
         ..throwDart(Dart.miss) // at D10
-        ..throwDart(const Dart.single(10)); // at D10, leaves 10
+        ..throwDart(const Dart.single(10)) // at D10, leaves 10
+        ..endVisit();
 
       expect(session.state.x01!.scoreOf(alice).lastVisit!.dartsAtDouble, 3);
     });
@@ -48,6 +49,7 @@ void main() {
         ..throwDart(Dart.miss)
         ..throwDart(Dart.miss)
         ..throwDart(Dart.miss)
+        ..endVisit()
         ..throwDart(const Dart.double(20));
 
       final stats = statsOf(alice, session);

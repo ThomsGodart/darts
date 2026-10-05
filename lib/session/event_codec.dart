@@ -124,17 +124,29 @@ Player _decodePlayer(Map<Object?, Object?> stored) => Player(
 typedef EncodedEvent = ({String type, Map<String, Object?> payload});
 
 EncodedEvent encodeEvent(SessionEvent event) => switch (event) {
-  GameStarted(:final players, :final config) => (
+  GameStarted(:final players, :final config, :final confirmsVisits) => (
     type: EventTypes.gameStarted,
     payload: {
       'players': [for (final p in players) _encodePlayer(p)],
+      if (confirmsVisits) 'confirmsVisits': true,
       ..._encodeConfig(config),
     },
   ),
-  VisitTotalSubmitted(:final score, :final darts, :final dartsAtDouble) => (
-    type: EventTypes.visitTotalSubmitted,
-    payload: {'score': score, 'darts': darts, 'dartsAtDouble': ?dartsAtDouble},
-  ),
+  VisitTotalSubmitted(
+    :final score,
+    :final darts,
+    :final dartsAtDouble,
+    :final isBust,
+  ) =>
+    (
+      type: EventTypes.visitTotalSubmitted,
+      payload: {
+        'score': score,
+        'darts': darts,
+        'dartsAtDouble': ?dartsAtDouble,
+        if (isBust) 'bust': true,
+      },
+    ),
   DartThrown(:final dart) => (
     type: EventTypes.dartThrown,
     payload: {'sector': dart.sector, 'multiplier': dart.multiplier},
@@ -154,11 +166,14 @@ SessionEvent decodeEvent(String type, Map<String, Object?> payload) =>
           for (final p in payload['players']! as List) _decodePlayer(p as Map),
         ],
         config: _decodeConfig(payload),
+        // Games stored before visits were confirmed do not hold the key.
+        confirmsVisits: payload['confirmsVisits'] as bool? ?? false,
       ),
       EventTypes.visitTotalSubmitted => VisitTotalSubmitted(
         payload['score']! as int,
         darts: payload['darts']! as int,
         dartsAtDouble: payload['dartsAtDouble'] as int?,
+        isBust: payload['bust'] as bool? ?? false,
       ),
       EventTypes.dartThrown => DartThrown(
         Dart.fromStored(

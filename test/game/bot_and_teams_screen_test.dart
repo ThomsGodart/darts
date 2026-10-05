@@ -59,7 +59,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Annuler la saisie'));
+      await tester.tap(find.byKey(const Key('undo')));
       await tester.pumpAndSettle();
 
       expect(activeName(tester), 'Joueur 1');

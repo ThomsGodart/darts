@@ -31,7 +31,11 @@ ThemeData _buildDefault() {
         cricketMark: Color(0xFFE0E0E0),
         // Light enough to clear 4.5:1 on the amber-tinted active column too.
         cricketClosed: Color(0xFF81C784),
-        cricketDead: Color(0xFF616161),
+        // Near-black on the light green disc: the X stays readable.
+        onCricketClosed: Color(0xFF0B3D0F),
+        cricketDeadRow: Color(0xFF000000),
+        // Light enough to be read struck through on the dead row.
+        cricketDead: Color(0xFF9E9E9E),
         cricketActiveColumn: Color(0x40FFC107),
         remainingFontSize: 120,
         playerNameFontSize: 40,

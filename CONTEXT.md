@@ -12,10 +12,12 @@ in French.
 | **Set** | A group of legs: the first to the legs asked takes the set. | set |
 | **Match** | X01 legs chained with the same players and rules, won by the first to the legs asked, or to the sets asked. Not stored: it is read off the session's consecutive games. | match |
 | **Rematch** | The next game with the same players and rules; whoever started last throws last. | Rejouer |
-| **Visit** | One player's turn: up to three darts (a **round** for Cricket MPR). Entered as a total or dart by dart in X01 and Count-Up; dart by dart only in the other games. A visit ended early counts its missing darts as misses, except in Golf, where the last dart thrown stands. | volée |
+| **Visit** | One player's turn: up to three darts (a **round** for Cricket). Entered as a total or dart by dart in X01 and Count-Up; dart by dart only in the other games. Entered dart by dart, it stays open after its last dart until the players **end** it ("Fin de tour"), so the thrower reads it before the turn passes; only a dart that wins the game ends it by itself. A visit ended before its third dart counts the missing darts as misses, except in Golf, where the last dart thrown stands. | volée |
 | **Dart** | One throw: a sector (1–20, 25) with a multiplier (single, double, treble), or a miss. | fléchette |
+| **Bull** | The centre of the board, worth 50: the double of 25 (also "inner bull", "bullseye"; "double bull" in Cricket). There is no treble bull. | Bull, 50 |
+| **Outer bull** | The ring around the bull, worth 25 (also "single bull"). | 25 |
 | **Remaining** | Points a player still has to score in X01. | reste |
-| **Bust** | A visit that would leave the remaining below 0, on 1 in double-out, or on 0 without a double; it scores nothing. | BUST |
+| **Bust** | A visit that would leave the remaining below 0, on 1 in double-out, or on 0 without a double; it scores nothing. Entered as a total that reaches 0, the players are asked whether the last dart was a double. | BUST |
 | **Checkout** | The visit that brings the remaining to exactly 0 and wins the game. | checkout |
 | **Dart at a double** | A dart thrown with a one-dart finish left under the out rule (a double, or a treble too in master-out). Counted on visits entered dart by dart; asked on totals only when the game tracks doubles. | fléchette sur un double |
 | **Checkout rate** | Checkouts per dart at a double, over the visits that say how many there were. | pourcentage de checkout |
@@ -23,6 +25,7 @@ in French.
 | **Double-in** | An X01 option: a player's darts score nothing until they hit a double. A visit entered as a total gets them in when it scores. | Double-in |
 | **Mark** | A hit count toward closing a Cricket number (need 3; S/D/T = 1/2/3; outer/inner bull = 1/2). | marque |
 | **MPR** | Marks per round (visit) in Cricket. | MPR |
+| **Cricket round** | A player's nth visit of a Cricket game; the board shows the one being played, and a finished game how many its winner took. | Round |
 | **Killer** | Party game: claim a number, become Killer on its double, remove lives on others’ doubles. | Killer |
 | **Shanghai** | Fixed number sequence; score S/D/T on that number; optional instant win on S+D+T in one visit. | Shanghai |
 | **Halve-It** | Fixed targets (20, 16, D7, 14, T10, 17, bull), everyone starting on 0; hits on the target add up, a visit without one halves the score, rounding up. Highest score wins. | Halve-It |

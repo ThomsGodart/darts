@@ -76,7 +76,7 @@ void main() {
       for (var n = 1; n <= 19; n++) {
         if (session.state.game!.activePlayer == alice) visit(session);
         session.throwDart(Dart.single(n));
-        if ((n % 3) == 0) continue;
+        if (session.state.game!.visitIsOver) session.endVisit();
       }
       // Bob is on 20; let the turn come back to him.
       while (session.state.game!.activePlayer != bob ||
@@ -102,6 +102,7 @@ void main() {
         ], config: const AroundTheClockConfig(finishOnBull: true));
       for (var n = 1; n <= 20; n++) {
         session.throwDart(Dart.single(n));
+        if (session.state.game!.visitIsOver) session.endVisit();
       }
       expect(gameOf(session).isFinished, isFalse);
       expect(gameOf(session).activeTarget, Dart.bullSector);

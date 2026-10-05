@@ -108,6 +108,7 @@ void repositoryContract(
         ..throwDart(Dart.treble(20))
         ..throwDart(Dart.outerBull)
         ..throwDart(Dart.miss)
+        ..endVisit()
         ..throwDart(Dart.bull);
       final before = scoreboardOf(session);
 
@@ -148,7 +149,8 @@ void repositoryContract(
         ..startGame([bob, alice], config: const CricketConfig())
         ..throwDart(const Dart.treble(20))
         ..throwDart(const Dart.single(20))
-        ..throwDart(Dart.bull);
+        ..throwDart(Dart.bull)
+        ..endVisit();
       session.throwDart(const Dart.double(19));
       final before = scoreboardOf(session);
 
@@ -316,6 +318,7 @@ void repositoryContract(
           Dart.outerBull,
         ]) {
           session.throwDart(dart);
+          if (session.state.game!.visitIsOver) session.endVisit();
         }
         session.endSession();
 

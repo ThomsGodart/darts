@@ -5,7 +5,8 @@ import '../theme/darts_space.dart';
 
 /// The pane a visit is entered in, whatever the game: the darts thrown so
 /// far, the game's own keys, then what every visit offers — taking the
-/// latest input back and ending the visit early.
+/// latest input back and ending the visit. A visit that has had its last
+/// dart stays on screen, its keys off, until the players end it.
 class InputPane extends StatelessWidget {
   const InputPane({
     super.key,
@@ -15,7 +16,12 @@ class InputPane extends StatelessWidget {
     required this.onUndo,
     this.onEndVisit,
     this.secondaryAction,
+    this.visitIsOver,
   });
+
+  /// Whether the visit takes no more darts and waits to be ended; by
+  /// default, once [dartsInVisit] is full.
+  final bool? visitIsOver;
 
   /// Shown above everything else, e.g. a mode switch.
   final Widget? header;
@@ -29,20 +35,29 @@ class InputPane extends StatelessWidget {
   /// Takes back the latest input; null when there is nothing to undo.
   final VoidCallback? onUndo;
 
-  /// Ends the visit before its third dart; null hides the option.
+  /// Ends the visit and passes the turn; null hides the option.
   final VoidCallback? onEndVisit;
 
-  /// Sits next to the undo when the visit cannot be ended early.
+  /// Sits next to the undo when the visit cannot be ended.
   final Widget? secondaryAction;
 
   @override
   Widget build(BuildContext context) {
     final header = this.header;
     final dartsInVisit = this.dartsInVisit;
+    final isOver = visitIsOver ?? (dartsInVisit?.length ?? 0) >= dartsPerVisit;
+    final textTheme = Theme.of(context).textTheme;
+    final colors = Theme.of(context).colorScheme;
     final trailing = switch (onEndVisit) {
-      final onEndVisit? => FilledButton.tonal(
+      // The key pressed most: the largest, and the only one left when
+      // the visit is over.
+      final onEndVisit? => FilledButton(
+        key: const Key('end-visit'),
         onPressed: onEndVisit,
-        child: const Text('Fin de tour'),
+        child: Text(
+          'Fin de tour',
+          style: textTheme.titleMedium?.copyWith(color: colors.onPrimary),
+        ),
       ),
       null => secondaryAction,
     };
@@ -68,22 +83,52 @@ class InputPane extends StatelessWidget {
               ),
               const SizedBox(height: DartsSpace.sm),
             ],
-            ...children,
-            const SizedBox(height: DartsSpace.xs),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onUndo,
-                    icon: const Icon(Icons.undo),
-                    label: const Text('Annuler la saisie'),
+            if (isOver)
+              IgnorePointer(
+                key: const Key('visit-over'),
+                child: Opacity(
+                  opacity: 0.35,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: children,
                   ),
                 ),
-                if (trailing != null) ...[
-                  const SizedBox(width: DartsSpace.sm),
-                  Expanded(child: trailing),
+              )
+            else
+              ...children,
+            const SizedBox(height: DartsSpace.xs),
+            SizedBox(
+              height: DartsSpace.tap,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (trailing == null)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onUndo,
+                        icon: const Icon(Icons.undo),
+                        label: const Text('Annuler la saisie'),
+                      ),
+                    )
+                  else ...[
+                    // Next to the key that ends the visit, the undo is
+                    // its icon alone: the room goes to the keys.
+                    Tooltip(
+                      message: 'Annuler la saisie',
+                      child: OutlinedButton(
+                        key: const Key('undo'),
+                        onPressed: onUndo,
+                        child: const Icon(
+                          Icons.undo,
+                          semanticLabel: 'Annuler la saisie',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: DartsSpace.sm),
+                    Expanded(child: trailing),
+                  ],
                 ],
-              ],
+              ),
             ),
           ],
         ),

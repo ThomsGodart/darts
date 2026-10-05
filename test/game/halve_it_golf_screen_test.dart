@@ -34,6 +34,7 @@ void main() {
       for (var i = 0; i < 3; i++) {
         await tapKey(tester, 'Raté');
       }
+      await tester.tap(find.text('Fin de tour'));
       await tester.pumpAndSettle();
 
       expect(titleOf(tester), 'Cible 16');

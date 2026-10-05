@@ -228,7 +228,8 @@ class _GameScreenState extends State<GameScreen> {
           final X01Game game => Scoreboard(game: game),
           final CricketGame game => CricketBoard(
             game: game,
-            onDart: game.isFinished || game.config.input != CricketInput.board
+            showKeys: game.config.input == CricketInput.board,
+            onDart: game.isFinished || game.visitIsOver
                 ? null
                 : controller.throwDart,
           ),
@@ -322,6 +323,7 @@ class _GameScreenState extends State<GameScreen> {
                   onSubmit: (score) => _submit(context, game, score),
                   onDart: controller.throwDart,
                   dartsInVisit: game.dartsInVisit,
+                  visitIsOver: game.visitIsOver,
                   onEndVisit: controller.endVisit,
                   onUndo: onUndo,
                 ),
@@ -517,6 +519,20 @@ class _GameScreenState extends State<GameScreen> {
   Future<void> _submit(BuildContext context, X01Game game, int score) async {
     int? dartsAtCheckout;
     final options = game.checkoutDartOptions(score);
+    // A total does not say what the last dart was: when the rule asks
+    // for one, the players say whether it was thrown.
+    if (options.isNotEmpty && game.config.outRule != OutRule.straight) {
+      final finished = await _askFinishingDart(context, game.config.outRule);
+      if (finished == null || !context.mounted) return;
+      if (!finished) {
+        _reportIfRejected(
+          context,
+          controller.submitVisitTotal(score, missedFinish: true),
+          score,
+        );
+        return;
+      }
+    }
     if (options.length == 1) {
       dartsAtCheckout = options.single;
     } else if (options.isNotEmpty) {
@@ -543,6 +559,32 @@ class _GameScreenState extends State<GameScreen> {
     );
     if (context.mounted) _reportIfRejected(context, result, score);
   }
+}
+
+/// Asks whether the dart that brought the remaining to 0 was one the
+/// [outRule] finishes on; null if dismissed.
+Future<bool?> _askFinishingDart(BuildContext context, OutRule outRule) {
+  return showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      key: const Key('finishing-dart-dialog'),
+      title: Text(switch (outRule) {
+        OutRule.master => 'Dernière fléchette en double ou en triple ?',
+        _ => 'Dernière fléchette en double ?',
+      }),
+      content: const Text('Sinon la volée est un bust.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Non, bust'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Oui'),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Asks how many darts of the visit were thrown at a finish; null if
@@ -741,15 +783,7 @@ class _GameOverPanel extends StatelessWidget {
                   icon: const Icon(Icons.undo),
                   label: Text(switch (game) {
                     X01Game() => 'Annuler le checkout',
-                    CricketGame() ||
-                    ShanghaiGame() ||
-                    KillerGame() ||
-                    HalveItGame() ||
-                    GolfGame() ||
-                    AroundTheClockGame() ||
-                    Bobs27Game() ||
-                    BaseballGame() => 'Annuler la dernière fléchette',
-                    CountUpGame() => 'Annuler la dernière saisie',
+                    _ => 'Annuler la dernière saisie',
                   }),
                 ),
                 TextButton.icon(

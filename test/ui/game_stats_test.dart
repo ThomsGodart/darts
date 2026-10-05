@@ -45,6 +45,7 @@ void main() {
       ..throwDart(const Dart.double(2))
       ..endVisit()
       ..endVisit()
+      ..endVisit()
       ..throwDart(const Dart.double(2));
 
     final stats = gameStats(session.state.game!);

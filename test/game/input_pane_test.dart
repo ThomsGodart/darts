@@ -26,7 +26,7 @@ void main() {
       'T20  ·  –  ·  –',
     );
     await tester.tap(find.text('Fin de tour'));
-    await tester.tap(find.text('Annuler la saisie'));
+    await tester.tap(find.byTooltip('Annuler la saisie'));
     expect(calls, ['end', 'undo']);
   });
 
@@ -46,14 +46,7 @@ void main() {
     expect(find.text('Fin de tour'), findsNothing);
     expect(find.text('autre'), findsOneWidget);
     expect(
-      tester
-          .widget<OutlinedButton>(
-            find.ancestor(
-              of: find.text('Annuler la saisie'),
-              matching: find.bySubtype<OutlinedButton>(),
-            ),
-          )
-          .onPressed,
+      tester.widget<OutlinedButton>(find.byKey(const Key('undo'))).onPressed,
       isNull,
     );
   });

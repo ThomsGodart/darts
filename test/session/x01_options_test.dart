@@ -29,7 +29,9 @@ void main() {
           alice,
           bob,
         ], config: const X01Config(startScore: 20, outRule: OutRule.master));
-      session.throwDart(const Dart.single(20));
+      session
+        ..throwDart(const Dart.single(20))
+        ..endVisit();
 
       final game = session.state.x01!;
       expect(game.winner, isNull);
@@ -63,7 +65,9 @@ void main() {
         ..throwDart(const Dart.single(20));
       expect(session.state.x01!.activeRemaining, 101);
 
-      session.throwDart(const Dart.double(10));
+      session
+        ..throwDart(const Dart.double(10))
+        ..endVisit();
       final score = session.state.x01!.scoreOf(alice);
       expect(score.remaining, 81);
       expect(score.isIn, isTrue);
@@ -74,7 +78,8 @@ void main() {
       session
         ..throwDart(const Dart.double(10))
         ..throwDart(const Dart.single(20))
-        ..throwDart(Dart.miss);
+        ..throwDart(Dart.miss)
+        ..endVisit();
       expect(session.state.x01!.scoreOf(alice).remaining, 61);
 
       session.endVisit(); // Bob, still out

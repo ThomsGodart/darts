@@ -11,11 +11,11 @@ const miss = Dart.miss;
 
 /// One visit: [darts], padded with misses to three.
 void visit(Session session, [List<Dart> darts = const []]) {
-  final padded = [...darts, for (var i = darts.length; i < 3; i++) miss];
-  for (final dart in padded) {
+  for (final dart in darts) {
     if (session.state.game!.isFinished) return;
     expect(session.throwDart(dart), isA<Accepted>(), reason: '$dart');
   }
+  if (!session.state.game!.isFinished) session.endVisit();
 }
 
 void main() {

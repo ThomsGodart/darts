@@ -17,6 +17,8 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     required this.onCheckout,
     required this.cricketMark,
     required this.cricketClosed,
+    required this.onCricketClosed,
+    required this.cricketDeadRow,
     required this.cricketDead,
     required this.cricketActiveColumn,
     required this.remainingFontSize,
@@ -45,10 +47,15 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
   /// Marks on a number still open for that player.
   final Color cricketMark;
 
-  /// Marks on a number the player has closed.
+  /// The disc on a number the player has closed, and the mark drawn on
+  /// it.
   final Color cricketClosed;
+  final Color onCricketClosed;
 
-  /// A number every player has closed: it no longer scores.
+  /// Background of the row of a number every player has closed.
+  final Color cricketDeadRow;
+
+  /// The label of a number every player has closed: it no longer scores.
   final Color cricketDead;
 
   /// Background of the active player's column on the cricket board.
@@ -82,6 +89,8 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     Color? onCheckout,
     Color? cricketMark,
     Color? cricketClosed,
+    Color? onCricketClosed,
+    Color? cricketDeadRow,
     Color? cricketDead,
     Color? cricketActiveColumn,
     double? remainingFontSize,
@@ -100,6 +109,8 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       onCheckout: onCheckout ?? this.onCheckout,
       cricketMark: cricketMark ?? this.cricketMark,
       cricketClosed: cricketClosed ?? this.cricketClosed,
+      onCricketClosed: onCricketClosed ?? this.onCricketClosed,
+      cricketDeadRow: cricketDeadRow ?? this.cricketDeadRow,
       cricketDead: cricketDead ?? this.cricketDead,
       cricketActiveColumn: cricketActiveColumn ?? this.cricketActiveColumn,
       remainingFontSize: remainingFontSize ?? this.remainingFontSize,
@@ -125,6 +136,8 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       onCheckout: Color.lerp(onCheckout, other.onCheckout, t)!,
       cricketMark: Color.lerp(cricketMark, other.cricketMark, t)!,
       cricketClosed: Color.lerp(cricketClosed, other.cricketClosed, t)!,
+      onCricketClosed: Color.lerp(onCricketClosed, other.onCricketClosed, t)!,
+      cricketDeadRow: Color.lerp(cricketDeadRow, other.cricketDeadRow, t)!,
       cricketDead: Color.lerp(cricketDead, other.cricketDead, t)!,
       cricketActiveColumn: Color.lerp(
         cricketActiveColumn,
@@ -175,6 +188,8 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
       other.onCheckout == onCheckout &&
       other.cricketMark == cricketMark &&
       other.cricketClosed == cricketClosed &&
+      other.onCricketClosed == onCricketClosed &&
+      other.cricketDeadRow == cricketDeadRow &&
       other.cricketDead == cricketDead &&
       other.cricketActiveColumn == cricketActiveColumn &&
       other.remainingFontSize == remainingFontSize &&
@@ -194,6 +209,8 @@ class DartsTokens extends ThemeExtension<DartsTokens> {
     onCheckout,
     cricketMark,
     cricketClosed,
+    onCricketClosed,
+    cricketDeadRow,
     cricketDead,
     cricketActiveColumn,
     remainingFontSize,

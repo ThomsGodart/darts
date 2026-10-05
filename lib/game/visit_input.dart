@@ -33,6 +33,7 @@ class VisitInput extends StatefulWidget {
     required this.onUndo,
     this.onEndVisit,
     this.dartsInVisit = const [],
+    this.visitIsOver,
     this.entry = VisitEntry.keypad,
     this.onEntryChanged,
   });
@@ -45,11 +46,14 @@ class VisitInput extends StatefulWidget {
   /// entered as a total any more.
   final List<Dart> dartsInVisit;
 
+  /// Whether the visit takes no more darts although it is not full: an
+  /// X01 bust. Null leaves it to the count of darts.
+  final bool? visitIsOver;
+
   /// Takes back the latest input; null when there is nothing to undo.
   final VoidCallback? onUndo;
 
-  /// Ends a visit entered dart by dart before its third dart; null hides
-  /// the option.
+  /// Ends a visit entered dart by dart; null hides the option.
   final VoidCallback? onEndVisit;
 
   /// The way the visit opens. [VisitEntry.total] only applies to a game
@@ -111,6 +115,7 @@ class _VisitInputState extends State<VisitInput> {
         },
       ),
       dartsInVisit: _inDartMode ? widget.dartsInVisit : null,
+      visitIsOver: _inDartMode ? widget.visitIsOver : false,
       onUndo: widget.onUndo,
       onEndVisit: _inDartMode ? widget.onEndVisit : null,
       secondaryAction: _inDartMode

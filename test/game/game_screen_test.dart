@@ -25,7 +25,21 @@ Future<void> playVisits(WidgetTester tester, List<int> scores) async {
     } else {
       await typeTotal(tester, score);
     }
+    await confirmFinishingDart(tester);
   }
+}
+
+/// Answers "Oui" when a total that reaches 0 is asked about its last dart.
+Future<void> confirmFinishingDart(WidgetTester tester) async {
+  await tester.pump();
+  final yes = find.descendant(
+    of: find.byKey(const Key('finishing-dart-dialog')),
+    matching: find.text('Oui'),
+  );
+  if (yes.evaluate().isEmpty) return;
+  await tester.pump(const Duration(milliseconds: 300));
+  await tester.tap(yes);
+  await tester.pumpAndSettle();
 }
 
 Future<void> typeTotal(WidgetTester tester, int score) async {
@@ -78,6 +92,8 @@ void main() {
     await playVisits(tester, [180, 26, 180, 26, 101, 26]);
 
     await typeTotal(tester, 40);
+    expect(find.text('Dernière fléchette en double ?'), findsOneWidget);
+    await confirmFinishingDart(tester);
     expect(find.text('Combien de fléchettes ?'), findsOneWidget);
     final inDialog = find.descendant(
       of: find.byType(AlertDialog),
@@ -98,8 +114,61 @@ void main() {
 
     // 141 double-out can only be done in three darts.
     await typeTotal(tester, 141);
+    await confirmFinishingDart(tester);
     expect(find.text('Combien de fléchettes ?'), findsNothing);
     expect(find.text('Joueur 1 gagne !'), findsOneWidget);
+  });
+
+  testWidgets('a total that reaches 0 off a double busts when told so', (
+    tester,
+  ) async {
+    await startGame(tester);
+    await playVisits(tester, [180, 26, 180, 26, 101, 26]);
+
+    await typeTotal(tester, 40);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Non, bust'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('gagne'), findsNothing);
+    expect(find.textContaining('BUST'), findsOneWidget);
+    expect(activeRemaining(tester), '423');
+  });
+
+  testWidgets('three darts stay on screen until Fin de tour', (tester) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await launchGame(
+      tester,
+      const ['Joueur 1', 'Joueur 2'],
+      null,
+      const [],
+      false,
+    );
+
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.widgetWithText(FilledButton, '20'));
+      await tester.pump();
+    }
+    expect(
+      tester.widget<Text>(find.byKey(const Key('active-name'))).data,
+      'Joueur 1',
+    );
+    expect(activeRemaining(tester), '441');
+    expect(find.byKey(const Key('visit-over')), findsOneWidget);
+    // The keys are off: a fourth dart goes nowhere.
+    await tester.tap(
+      find.widgetWithText(FilledButton, '20'),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+    expect(activeRemaining(tester), '441');
+
+    await tester.tap(find.byKey(const Key('end-visit')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('active-name'))).data,
+      'Joueur 2',
+    );
   });
 
   testWidgets('a bust is flagged on the player who busted', (tester) async {
@@ -114,11 +183,7 @@ void main() {
   testWidgets('undo takes back visits, even the checkout', (tester) async {
     await startGame(tester);
     expect(
-      tester
-          .widget<OutlinedButton>(
-            find.widgetWithText(OutlinedButton, 'Annuler la saisie'),
-          )
-          .onPressed,
+      tester.widget<OutlinedButton>(find.byKey(const Key('undo'))).onPressed,
       isNull,
     );
 
@@ -130,7 +195,7 @@ void main() {
     expect(find.text('Joueur 1 gagne !'), findsNothing);
     expect(activeRemaining(tester), '141');
 
-    await tester.tap(find.text('Annuler la saisie'));
+    await tester.tap(find.byKey(const Key('undo')));
     await tester.pump();
     expect(find.text('Joueur 2'), findsOneWidget);
     // Joueur 2's second 26 is taken back: back to 501 - 26.

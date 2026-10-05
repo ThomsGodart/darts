@@ -85,10 +85,13 @@ class Session {
   /// [X01Game.checkoutDartOptions]); otherwise it must be omitted. Only
   /// X01 and Count-Up games take totals. [dartsAtDouble] optionally says
   /// how many darts of an X01 visit were thrown at a finish.
+  /// [missedFinish] says the total equals the remaining score but its last
+  /// dart was not one the out rule finishes on: the visit busts.
   CommandResult submitVisitTotal(
     int score, {
     int? dartsAtCheckout,
     int? dartsAtDouble,
+    bool missedFinish = false,
   }) {
     final current = _state.game;
     if (current == null || current.isFinished || _state.isEnded) {
@@ -115,6 +118,15 @@ class Session {
     }
     if (!isPossibleVisitTotal(score)) {
       return Rejected('$score cannot be scored with three darts');
+    }
+    if (missedFinish) {
+      if (score != game.activeScore.remaining ||
+          game.config.outRule == OutRule.straight) {
+        return const Rejected(
+          'Only a total that reaches 0 can miss its finish',
+        );
+      }
+      return _record(VisitTotalSubmitted(score, isBust: true));
     }
     if (score != game.activeScore.remaining) {
       if (dartsAtCheckout != null) {
@@ -150,8 +162,9 @@ class Session {
     );
   }
 
-  /// Enters the next dart of the active player's visit. The visit ends by
-  /// itself on the third dart, a bust or a checkout.
+  /// Enters the next dart of the active player's visit. A dart that wins
+  /// the game ends it; otherwise the visit stays open, even after its
+  /// last dart, until [endVisit].
   CommandResult throwDart(Dart dart) {
     final game = _state.game;
     if (game == null || game.isFinished || _state.isEnded) {
@@ -161,11 +174,12 @@ class Session {
       return const Rejected('Assign numbers before throwing');
     }
     if (!dart.isValid) return Rejected('No such dart: $dart');
+    if (game.visitIsOver) return const Rejected('End the visit first');
     return _record(DartThrown(dart));
   }
 
-  /// Ends the active player's visit before its third dart, the darts left
-  /// counting as misses. One [undo] takes it back whole.
+  /// Ends the active player's visit and passes the turn, the darts not
+  /// thrown counting as misses. One [undo] takes it back whole.
   CommandResult endVisit() {
     final game = _state.game;
     if (game == null || game.isFinished || _state.isEnded) {

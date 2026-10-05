@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../app_test_harness.dart';
-import 'game_screen_test.dart' show quickScore, typeTotal;
+import 'game_screen_test.dart' show confirmFinishingDart, quickScore, typeTotal;
 
 final dialog = find.byKey(const Key('double-darts-dialog'));
 
@@ -52,7 +52,7 @@ void main() {
 
     // The checkout: how many darts, and one of them was at the double.
     await typeTotal(tester, 40);
-    await tester.pumpAndSettle();
+    await confirmFinishingDart(tester);
     await tester.tap(find.widgetWithText(FilledButton, '1').last);
     await tester.pumpAndSettle();
     expect(find.text('Joueur 1 gagne !'), findsOneWidget);

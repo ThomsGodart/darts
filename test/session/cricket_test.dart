@@ -12,11 +12,11 @@ const t20 = Dart.treble(20);
 
 /// One visit for whoever is up: [darts], padded with misses to three.
 void visit(Session session, [List<Dart> darts = const []]) {
-  final padded = [...darts, for (var i = darts.length; i < 3; i++) miss];
-  for (final dart in padded) {
+  for (final dart in darts) {
     if (session.state.game!.isFinished) return;
     expect(session.throwDart(dart), isA<Accepted>(), reason: '$dart');
   }
+  if (!session.state.game!.isFinished) session.endVisit();
 }
 
 /// Closes every number for whoever is up, over three visits each followed
@@ -180,8 +180,8 @@ void main() {
       expect(cricketOf(session).scoreOf(alice).marksOn(25), 2);
       expect(cricketOf(session).activePlayer, alice);
 
+      // Alice's bull, then the end of Bob's visit.
       session
-        ..undo()
         ..undo()
         ..undo();
       expect(cricketOf(session).activePlayer, bob);

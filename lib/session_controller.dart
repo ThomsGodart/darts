@@ -20,11 +20,13 @@ class SessionController extends ChangeNotifier {
     int score, {
     int? dartsAtCheckout,
     int? dartsAtDouble,
+    bool missedFinish = false,
   }) => _notifyIfAccepted(
     _session.submitVisitTotal(
       score,
       dartsAtCheckout: dartsAtCheckout,
       dartsAtDouble: dartsAtDouble,
+      missedFinish: missedFinish,
     ),
   );
 
