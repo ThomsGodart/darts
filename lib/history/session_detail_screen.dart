@@ -79,9 +79,23 @@ class SessionDetailScreen extends StatelessWidget {
           ],
           for (final (i, game) in state.games.indexed) ...[
             if (i > 0) const SizedBox(height: DartsSpace.xl),
-            Text(
-              'Partie ${i + 1} · ${configLabel(game.config)}',
-              style: textTheme.titleMedium,
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    'Partie ${i + 1} · ${configLabel(game.config)}',
+                    style: textTheme.titleMedium,
+                  ),
+                ),
+                if (hasTeam(game)) ...[
+                  const SizedBox(width: DartsSpace.sm),
+                  const Icon(
+                    Icons.groups_outlined,
+                    size: 20,
+                    semanticLabel: 'En équipe',
+                  ),
+                ],
+              ],
             ),
             Text(switch (game.winner) {
               final winner? => [

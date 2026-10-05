@@ -52,6 +52,65 @@ void main() {
     expect(find.byKey(const Key('session-stats')), findsOneWidget);
   });
 
+  testWidgets('a long press deletes a session, once confirmed', (tester) async {
+    final storage = await AppStorage.withTwoPlayers();
+    await playedSession(storage);
+    await pumpApp(tester, storage);
+    await openHistory(tester);
+
+    await tester.longPress(find.text('Joueur 1, Joueur 2 · 1 partie'));
+    await tester.pumpAndSettle();
+    expect(find.text('Supprimer cette session ?'), findsOneWidget);
+    await tester.tap(find.text('Annuler'));
+    await tester.pumpAndSettle();
+    expect(find.text('Joueur 1, Joueur 2 · 1 partie'), findsOneWidget);
+
+    await tester.longPress(find.text('Joueur 1, Joueur 2 · 1 partie'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Supprimer'));
+    await tester.pumpAndSettle();
+    expect(find.text('Aucune session pour l’instant'), findsOneWidget);
+  });
+
+  testWidgets('Tout effacer empties the history and the stats, not the '
+      'open session', (tester) async {
+    final storage = await AppStorage.withTwoPlayers();
+    await playedSession(storage);
+    await playedSession(storage);
+    final players = await InMemoryPlayerCatalog(storage.players).active();
+    (await InMemorySessionRepository(
+      storage.sessions,
+    ).create()).startGame(players);
+    await pumpApp(tester, storage);
+    await openHistory(tester);
+
+    await tester.tap(find.byKey(const Key('history-menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tout effacer'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Les 2 sessions'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Tout effacer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aucune session pour l’instant'), findsOneWidget);
+    expect(find.byKey(const Key('history-menu')), findsNothing);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Reprendre la session'), findsOneWidget);
+  });
+
+  testWidgets('a session with a team game is marked', (tester) async {
+    final storage = await AppStorage.withTwoPlayers();
+    final players = await InMemoryPlayerCatalog(storage.players).active();
+    (await InMemorySessionRepository(storage.sessions).create())
+      ..startGame([Player.team(players)], config: const GolfConfig())
+      ..endSession();
+    await pumpApp(tester, storage);
+    await openHistory(tester);
+
+    expect(find.byIcon(Icons.groups_outlined), findsOneWidget);
+  });
+
   testWidgets('the open session is not listed: it is resumed instead', (
     tester,
   ) async {
