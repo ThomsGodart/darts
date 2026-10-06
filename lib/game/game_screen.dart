@@ -9,6 +9,8 @@ import '../theme/darts_tokens.dart';
 import '../session/session.dart';
 import '../session_controller.dart';
 import '../session_launcher.dart';
+import '../share/session_share.dart';
+import '../share/share_dialogs.dart';
 import '../ui/game_labels.dart';
 import '../ui/game_stats.dart';
 import '../ui/persist_failure_banner.dart';
@@ -31,6 +33,8 @@ class GameScreen extends StatefulWidget {
     super.key,
     required this.controller,
     this.launcher,
+    this.share,
+    this.guest = false,
     this.onChangeSetup,
     this.onCancelGame,
     this.portraitLock = false,
@@ -43,6 +47,14 @@ class GameScreen extends StatefulWidget {
 
   /// When set, a storage failure banner is shown if writes stop.
   final SessionLauncher? launcher;
+
+  /// Shares the session with other devices; null hides the option.
+  final SessionShare? share;
+
+  /// Whether this device joined a session another one shares: it opens
+  /// as a screen, the keyboard hidden, and leaves the virtual opponents
+  /// to the device that shares.
+  final bool guest;
 
   /// Between games: lets players join, leave or reorder, or the rules
   /// change, then starts the next game. Null hides the option.
@@ -89,6 +101,14 @@ class _GameScreenState extends State<GameScreen> {
   /// Set while Back is being handled: blocks a second one.
   bool _cancelling = false;
 
+  /// Whether the input is put away, the game taking the whole screen:
+  /// for a phone set down as the scoreboard while another one enters.
+  late bool _keyboardHidden = widget.guest;
+
+  /// Set once the screen is being left for an ended session.
+  bool _leaving = false;
+  int _joinedSeen = 0;
+
   /// Pending visit of a virtual opponent, if it is its turn.
   Timer? _botTimer;
   late final Random _botRandom = widget.botRandom ?? Random();
@@ -97,8 +117,9 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     _gamesSeen = controller.state.games.length;
-    _visitsSeen = controller.state.game!.visitsPlayed;
+    _visitsSeen = controller.state.game?.visitsPlayed ?? 0;
     controller.addListener(_onGameChanged);
+    widget.share?.addListener(_onShareChanged);
     // The game screen may rotate, unless the players locked it; home and
     // setup stay in portrait, and take it back when we leave.
     SystemChrome.setPreferredOrientations(
@@ -119,14 +140,37 @@ class _GameScreenState extends State<GameScreen> {
   void dispose() {
     _botTimer?.cancel();
     controller.removeListener(_onGameChanged);
+    widget.share?.removeListener(_onShareChanged);
     if (_screenKeptOn) widget.screenAwake.release();
     SystemChrome.setPreferredOrientations(const [DeviceOrientation.portraitUp]);
     super.dispose();
   }
 
+  /// Says when a device joins: whoever shares need not keep the code up.
+  void _onShareChanged() {
+    final joined = widget.share!.joinedCount;
+    if (joined > _joinedSeen && mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Un appareil a rejoint la session')),
+        );
+    }
+    _joinedSeen = joined;
+  }
+
   void _onGameChanged() {
     final state = controller.state;
     final game = state.game;
+    if (state.isEnded && !_leaving) {
+      // Ended on another device sharing the session: nothing more to
+      // play here.
+      _leaving = true;
+      _botTimer?.cancel();
+      // Whatever is open over the game goes with it.
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      return;
+    }
     if (game == null) {
       // The only game was cancelled: nothing to show until the next one.
       _botTimer?.cancel();
@@ -160,7 +204,8 @@ class _GameScreenState extends State<GameScreen> {
     final state = controller.state;
     final game = state.game;
     // In a team, the bot throws when its turn comes among the members.
-    if (game == null ||
+    if (widget.guest ||
+        game == null ||
         game.isFinished ||
         state.isEnded ||
         !game.thrower.isBot) {
@@ -221,7 +266,24 @@ class _GameScreenState extends State<GameScreen> {
       builder: (context, _) {
         final game = controller.state.game;
         // Cancelled, the setup of the next one is open over this screen.
-        if (game == null) return const SizedBox.shrink();
+        if (game == null) {
+          if (!widget.guest) return const SizedBox.shrink();
+          return Column(
+            children: [
+              _GameBar(label: 'Session partagée', share: widget.share),
+              const Expanded(
+                child: Center(
+                  child: Text(
+                    'En attente de la prochaine partie…',
+                    key: Key('share-waiting'),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+        // A finished game shows its result whatever the screen is for.
+        final keyboardHidden = _keyboardHidden && !game.isFinished;
         final bannerPlayerName = _bannerPlayerName;
         final onUndo = controller.canUndo ? _undo : null;
         final statePane = switch (game) {
@@ -231,8 +293,9 @@ class _GameScreenState extends State<GameScreen> {
           ),
           final CricketGame game => CricketBoard(
             game: game,
-            showKeys: game.config.input == CricketInput.board,
-            onDart: game.isFinished || game.visitIsOver
+            showKeys:
+                game.config.input == CricketInput.board && !keyboardHidden,
+            onDart: game.isFinished || game.visitIsOver || keyboardHidden
                 ? null
                 : controller.throwDart,
           ),
@@ -364,6 +427,11 @@ class _GameScreenState extends State<GameScreen> {
                       null => configLabel(game.config),
                     },
                   ].join('  ·  '),
+                  share: widget.share,
+                  canStopShare: !widget.guest,
+                  keyboardHidden: game.isFinished ? null : _keyboardHidden,
+                  onKeyboardHidden: (hidden) =>
+                      setState(() => _keyboardHidden = hidden),
                 ),
                 // A team's score has one name on it, and a session has
                 // distractions: say in full view whose throw it is.
@@ -373,7 +441,9 @@ class _GameScreenState extends State<GameScreen> {
                     thrower: game.thrower,
                   ),
                 Expanded(
-                  child: GameShell(statePane: statePane, inputPane: inputPane),
+                  child: keyboardHidden
+                      ? statePane
+                      : GameShell(statePane: statePane, inputPane: inputPane),
                 ),
               ],
             ),
@@ -490,6 +560,7 @@ class _GameScreenState extends State<GameScreen> {
       ),
     );
     if (confirmed != true || !context.mounted) return;
+    _leaving = true;
     controller.endSession();
     Navigator.of(context).pop();
   }
@@ -655,32 +726,73 @@ class _ThrowerBanner extends StatelessWidget {
   }
 }
 
-/// Slim bar over the game: the way back to the menu, and what is played.
-/// Leaving keeps the session open, to resume from the home screen.
+/// Slim bar over the game: the way back to the menu, what is played,
+/// and what the screen is used for. Leaving keeps the session open, to
+/// resume from the home screen.
 class _GameBar extends StatelessWidget {
-  const _GameBar({required this.label});
+  const _GameBar({
+    required this.label,
+    this.share,
+    this.canStopShare = false,
+    this.keyboardHidden,
+    this.onKeyboardHidden,
+  });
 
   final String label;
+  final SessionShare? share;
+  final bool canStopShare;
+
+  /// Whether the input is put away; null when there is none to put away.
+  final bool? keyboardHidden;
+  final ValueChanged<bool>? onKeyboardHidden;
 
   @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      IconButton(
-        key: const Key('leave-game'),
-        tooltip: 'Retour au menu',
-        icon: const Icon(Icons.arrow_back),
-        onPressed: () => Navigator.of(context).maybePop(),
-      ),
-      Expanded(
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleMedium,
+  Widget build(BuildContext context) {
+    final share = this.share;
+    final keyboardHidden = this.keyboardHidden;
+    return Row(
+      children: [
+        IconButton(
+          key: const Key('leave-game'),
+          tooltip: 'Retour au menu',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-      ),
-    ],
-  );
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        if (keyboardHidden != null)
+          IconButton(
+            key: const Key('toggle-keyboard'),
+            tooltip: keyboardHidden
+                ? 'Afficher le clavier'
+                : 'Masquer le clavier (mode écran)',
+            icon: Icon(
+              keyboardHidden
+                  ? Icons.keyboard_outlined
+                  : Icons.keyboard_hide_outlined,
+            ),
+            onPressed: () => onKeyboardHidden?.call(!keyboardHidden),
+          ),
+        if (share != null)
+          ListenableBuilder(
+            listenable: share,
+            builder: (context, _) => IconButton(
+              key: const Key('share-session'),
+              tooltip: 'Partager la session',
+              icon: Icon(share.isOn ? Icons.cast_connected : Icons.cast),
+              onPressed: () =>
+                  showShareDialog(context, share, canStop: canStopShare),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 /// Asks how many darts the checkout took; null if dismissed.

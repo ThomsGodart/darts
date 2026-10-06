@@ -11,6 +11,13 @@ class SessionController extends ChangeNotifier {
 
   SessionState get state => _session.state;
 
+  /// The session's journal, oldest event first: what a share sends.
+  List<SessionEvent> get events => _session.events;
+
+  /// Takes the journal another device sharing the session sends.
+  CommandResult rewrite(int keep, List<SessionEvent> tail) =>
+      _notifyIfAccepted(_session.rewrite(keep, tail));
+
   CommandResult startGame(
     List<Player> players, {
     GameConfig config = const X01Config(),

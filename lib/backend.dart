@@ -1,29 +1,27 @@
-import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'share/share_transport.dart';
+import 'share/supabase_share_transport.dart';
 
-/// Compile-time credentials for the optional cloud backend.
+/// The Supabase project sessions are shared through. Both values are
+/// public by design: the key only opens what the project leaves open to
+/// anyone, here its Realtime broadcast. Another project is passed with
+/// `--dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...`;
+/// an empty value builds an app that cannot share.
+const supabaseUrl = String.fromEnvironment(
+  'SUPABASE_URL',
+  defaultValue: 'https://xpfqsrouluglhkdihmft.supabase.co',
+);
+const supabasePublishableKey = String.fromEnvironment(
+  'SUPABASE_PUBLISHABLE_KEY',
+  defaultValue: 'sb_publishable_3uJHivSjBOhLnw7iMk2_Gw_sct_29hN',
+);
+
+/// What sessions are shared over, or null in a build without a backend.
 ///
-/// Pass with `--dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...`.
-/// Never ship a `.env` asset: the app is local-first and must build without one.
-const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-
-/// Initializes the optional cloud backend (Supabase).
-///
-/// Never throws: the app is local-first and must work offline, so missing
-/// credentials or an unreachable backend is logged and ignored.
-Future<void> initBackend({Future<void> Function()? initializer}) async {
-  try {
-    await (initializer ?? _initSupabase)();
-  } catch (error) {
-    debugPrint('Backend unavailable, running offline: $error');
-  }
-}
-
-Future<void> _initSupabase() async {
-  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
-    debugPrint('Backend skipped: no SUPABASE_URL / SUPABASE_ANON_KEY defines');
-    return;
-  }
-  await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseAnonKey);
-}
+/// Making it does not touch the network: the app is local-first, and
+/// only connects once a session is shared or joined.
+ShareTransport? shareTransport({
+  String url = supabaseUrl,
+  String publishableKey = supabasePublishableKey,
+}) => url.isEmpty || publishableKey.isEmpty
+    ? null
+    : SupabaseShareTransport(url, publishableKey);

@@ -20,6 +20,32 @@ class Session {
 
   SessionState get state => _state;
 
+  /// The journal's events, oldest first.
+  List<SessionEvent> get events => _journal.events;
+
+  /// Makes the journal what another device sharing the session says it
+  /// is: its first [keep] events, then [tail]. Refused, the journal
+  /// untouched, when that is not a journal the state can be read off.
+  CommandResult rewrite(int keep, List<SessionEvent> tail) {
+    final events = _journal.events;
+    if (keep < 0 || keep > events.length) {
+      return Rejected('No $keep events to keep');
+    }
+    final SessionState state;
+    try {
+      state = foldEvents([...events.take(keep), ...tail]);
+    } catch (error) {
+      // Whatever the fold trips on: the other device sent nonsense.
+      return Rejected('Not a journal: $error');
+    }
+    for (var i = events.length; i > keep; i--) {
+      _journal.removeLast();
+    }
+    tail.forEach(_journal.append);
+    _state = state;
+    return const Accepted();
+  }
+
   /// Starts a game with [players] in throwing order: the first game of the
   /// session, or the next one with players added, removed or reordered.
   CommandResult startGame(

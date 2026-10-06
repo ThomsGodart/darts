@@ -11,15 +11,12 @@ void main() {
     expect(find.text('Nouvelle session'), findsOneWidget);
   });
 
-  test('a failing backend init never escapes to the caller', () async {
-    await expectLater(
-      initBackend(initializer: () async => throw Exception('offline')),
-      completes,
-    );
+  test('a build without a backend has nothing to share over', () {
+    expect(shareTransport(url: ''), isNull);
+    expect(shareTransport(publishableKey: ''), isNull);
   });
 
-  test('initBackend without dart-defines is a quiet no-op', () async {
-    // No SUPABASE_* --dart-define in the test process; must not throw.
-    await expectLater(initBackend(), completes);
+  test('making the share transport does not touch the network', () {
+    expect(shareTransport(), isNotNull);
   });
 }

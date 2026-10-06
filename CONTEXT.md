@@ -44,3 +44,7 @@ in French.
 | **Stats** | Counted per person over one **game kind** at a time, never across kinds, and over a period that goes by when each game started. Throwing stats count every dart thrown; games, wins and records count finished games only. A team member is counted for the visits they threw; a team's win is a win for each member. | statistiques |
 | **Player catalog** | The players known to the app across sessions; players who played are archived, not deleted. | joueurs |
 | **Journal** | The ordered events of a session; the session's state is a fold of it. | — |
+| **Share** | A session put on the line under a **code**, for other devices to join: each holds the whole journal, shows the same game and may enter into it. Nothing is stored on the way; the session is kept by the device that shares it, and only played on the ones that join. Two inputs made at once: one stands, the other is lost. | session partagée, partager |
+| **Code** | The six digits a share is joined with. A session keeps its code while it stays shared, across leaving and resuming it. | code |
+| **Guest** | A device that joined a share. It opens in screen mode and leaves the virtual opponents to the device that shares. | — |
+| **Screen mode** | The game screen with its input put away, the state taking the whole screen: for a phone set down as the scoreboard while another one enters. A finished game shows its result all the same. | mode écran, masquer le clavier |

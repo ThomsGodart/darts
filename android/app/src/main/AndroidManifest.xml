@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sharing a session with another device goes over the network. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Darts"
         android:name="${applicationName}"

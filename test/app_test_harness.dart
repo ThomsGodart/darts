@@ -1,6 +1,7 @@
 import 'package:darts_points_counter/app.dart';
 import 'package:darts_points_counter/session/session.dart';
 import 'package:darts_points_counter/settings/app_settings.dart';
+import 'package:darts_points_counter/share/share_transport.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -29,6 +30,7 @@ Future<void> pumpApp(
   AppStorage storage, {
   SessionRepository? repository,
   SettingsStore? settingsStore,
+  ShareTransport? shareTransport,
 }) async {
   tester.view.physicalSize = const Size(1080, 2340);
   tester.view.devicePixelRatio = 2.75;
@@ -38,6 +40,7 @@ Future<void> pumpApp(
       repository: repository ?? InMemorySessionRepository(storage.sessions),
       catalog: InMemoryPlayerCatalog(storage.players),
       settingsStore: settingsStore,
+      shareTransport: shareTransport,
     ),
   );
   await tester.pumpAndSettle();

@@ -4,6 +4,7 @@ import 'home/home_screen.dart';
 import 'session/session.dart';
 import 'session_launcher.dart';
 import 'settings/app_settings.dart';
+import 'share/share_transport.dart';
 import 'theme/app_themes.dart';
 
 class DartsApp extends StatefulWidget {
@@ -12,6 +13,7 @@ class DartsApp extends StatefulWidget {
     required this.repository,
     required this.catalog,
     this.settingsStore,
+    this.shareTransport,
     this.themeId = defaultThemeId,
   });
 
@@ -23,6 +25,10 @@ class DartsApp extends StatefulWidget {
 
   /// Where settings are kept; in memory when not given.
   final SettingsStore? settingsStore;
+
+  /// What sessions are shared over with other devices; without it the
+  /// app does not offer to share or join one.
+  final ShareTransport? shareTransport;
   final String themeId;
 
   @override
@@ -60,7 +66,11 @@ class _DartsAppState extends State<DartsApp> {
       title: 'Darts',
       debugShowCheckedModeBanner: false,
       theme: themeById(widget.themeId),
-      home: HomeScreen(launcher: _launcher, settings: _settings),
+      home: HomeScreen(
+        launcher: _launcher,
+        settings: _settings,
+        shareTransport: widget.shareTransport,
+      ),
     );
   }
 }

@@ -6,8 +6,15 @@ votre appareil.
 
 Données collectées
 - Aucun compte n’est requis.
-- Aucune donnée de jeu (scores, noms, sessions) n’est envoyée à un serveur pour
-  le fonctionnement normal de l’application.
+- Aucune donnée de jeu (scores, noms, sessions) n’est envoyée à un serveur tant
+  que vous ne partagez pas de session.
+- Si vous partagez une session avec un autre appareil, ou en rejoignez une, le
+  contenu de cette session (noms des joueurs, réglages et scores) transite par
+  un service de messagerie en temps réel (Supabase) jusqu’aux appareils qui
+  ont saisi son code. Rien n’y est enregistré : ces données ne sont pas
+  conservées sur le serveur, et le partage s’arrête quand vous le coupez ou
+  quittez la partie. Toute personne connaissant le code peut voir la session et
+  y saisir des scores tant qu’elle est partagée.
 - Dans les builds de production, l’application peut transmettre des rapports de
   plantage techniques (Firebase Crashlytics) afin de corriger des bugs. Ces
   rapports concernent uniquement les crashes : pas d’analytics comportementaux,
@@ -16,6 +23,7 @@ Données collectées
 Partage
 - Nous ne vendons pas vos données.
 - Pas de publicité ni d’achats intégrés dans l’application.
+- Une session partagée est relayée par Supabase selon sa politique respective.
 - Les rapports de crash, lorsqu’ils sont activés, sont traités par Google
   Firebase selon leur politique respective.
 

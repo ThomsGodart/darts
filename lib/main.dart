@@ -14,13 +14,13 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   // Fire-and-forget: optional services must never delay startup.
   unawaited(initCrashReporting());
-  unawaited(initBackend());
   final database = AppDatabase.onDevice();
   runApp(
     DartsApp(
       repository: DriftSessionRepository(database),
       catalog: DriftPlayerCatalog(database),
       settingsStore: DriftSettingsStore(database),
+      shareTransport: shareTransport(),
     ),
   );
 }
