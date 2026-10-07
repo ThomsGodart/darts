@@ -31,14 +31,12 @@ class SupabaseShareTransport implements ShareTransport {
           },
         )
         .subscribe((status, error) {
-          if (status == RealtimeSubscribeStatus.subscribed) {
-            if (!opened.isCompleted) {
-              opened.complete();
-            } else if (!line._rejoined.isClosed) {
-              line._rejoined.add(null);
-            }
-          } else if (!opened.isCompleted &&
-              status != RealtimeSubscribeStatus.closed) {
+          final subscribed = status == RealtimeSubscribeStatus.subscribed;
+          if (opened.isCompleted) {
+            if (!line._carrying.isClosed) line._carrying.add(subscribed);
+          } else if (subscribed) {
+            opened.complete();
+          } else if (status != RealtimeSubscribeStatus.closed) {
             opened.completeError(ShareUnreachable(error ?? status));
           }
         });
@@ -58,13 +56,13 @@ class _SupabaseLine implements ShareLine {
   final SupabaseClient _client;
   final RealtimeChannel _channel;
   final _messages = StreamController<ShareMessage>.broadcast();
-  final _rejoined = StreamController<void>.broadcast();
+  final _carrying = StreamController<bool>.broadcast();
 
   @override
   Stream<ShareMessage> get messages => _messages.stream;
 
   @override
-  Stream<void> get rejoined => _rejoined.stream;
+  Stream<bool> get carrying => _carrying.stream;
 
   @override
   void send(ShareMessage message) {
@@ -89,6 +87,6 @@ class _SupabaseLine implements ShareLine {
       debugPrint('Share line not closed cleanly: $error');
     }
     unawaited(_messages.close());
-    unawaited(_rejoined.close());
+    unawaited(_carrying.close());
   }
 }

@@ -1,14 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../game/game_screen.dart';
 import '../history/history_screen.dart';
 import '../settings/app_settings.dart';
 import '../settings/settings_screen.dart';
-import '../share/session_share.dart';
 import '../share/share_dialogs.dart';
-import '../share/share_transport.dart';
 import '../stats/stats_screen.dart';
 import '../session/session.dart';
 import '../setup/setup_screen.dart';
@@ -18,18 +14,10 @@ import '../theme/darts_space.dart';
 import '../ui/persist_failure_banner.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({
-    super.key,
-    required this.launcher,
-    required this.settings,
-    this.shareTransport,
-  });
+  const HomeScreen({super.key, required this.launcher, required this.settings});
 
   final SessionLauncher launcher;
   final AppSettings settings;
-
-  /// What sessions are shared over; null hides sharing and joining.
-  final ShareTransport? shareTransport;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -41,11 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Set while the setup of a next game is open: blocks a second one.
   bool _changingSetup = false;
-
-  /// The code the open session was last shared under, while it still
-  /// was when its game screen was left: coming back shares it again, and
-  /// the devices that joined find it where it was.
-  String? _shareCode;
 
   /// Stores what was played before the OS may kill the backgrounded app.
   late final AppLifecycleListener _lifecycle;
@@ -96,7 +79,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final setup = await _askSetup(from: last);
     if (setup == null || !mounted) return;
     final controller = await widget.launcher.newGame(setup);
-    _shareCode = null;
     if (!mounted) return controller.dispose();
     await _open(controller);
   }
@@ -186,33 +168,24 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Joins a session another device shares: it is played here too, and
   /// kept there.
   Future<void> _join() async {
-    final controller = SessionController(Session(InMemoryJournal()));
-    final share = SessionShare(widget.shareTransport!, controller);
-    if (await showJoinDialog(context, share.join) && mounted) {
+    final share = await showJoinDialog(context, widget.launcher.join);
+    if (share == null) return;
+    if (mounted) {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => GameScreen(
-            controller: controller,
+            controller: share.controller,
             share: share,
-            guest: true,
             portraitLock: widget.settings.portraitLock,
           ),
         ),
       );
     }
-    share.dispose();
-    controller.dispose();
+    widget.launcher.closeShare(share);
   }
 
   Future<void> _open(SessionController controller) async {
-    final transport = widget.shareTransport;
-    final share = transport == null
-        ? null
-        : SessionShare(transport, controller, code: _shareCode);
-    if (share != null && _shareCode != null) {
-      // Without network the game opens all the same, not shared.
-      unawaited(share.start().catchError((Object _) {}));
-    }
+    final share = widget.launcher.shareOf(controller);
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => GameScreen(
@@ -229,8 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-    _shareCode = share != null && share.isOn ? share.code : null;
-    share?.dispose();
+    if (share != null) widget.launcher.closeShare(share);
     controller.dispose();
     if (!mounted) return;
     final canResume = widget.launcher.canResume();
@@ -342,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: const Icon(Icons.bar_chart),
                           label: const Text('Statistiques'),
                         ),
-                        if (widget.shareTransport != null)
+                        if (widget.launcher.canShare)
                           TextButton.icon(
                             onPressed: _join,
                             icon: const Icon(Icons.cast_connected),

@@ -1,18 +1,68 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'setup/setup_controller.dart';
 import 'session/session.dart';
 import 'session/stats.dart' as stats;
 import 'session_controller.dart';
+import 'share/session_share.dart';
+import 'share/share_transport.dart';
 
 /// Opens sessions for the home screen, so widgets never touch storage.
 class SessionLauncher extends ChangeNotifier {
-  SessionLauncher(this._repository, this._catalog) {
+  SessionLauncher(this._repository, this._catalog, {this._shareTransport}) {
     _repository.watchPersistFailure(notifyListeners);
   }
 
   final SessionRepository _repository;
   final PlayerCatalog _catalog;
+
+  /// What sessions are shared over; without it nothing is shared.
+  final ShareTransport? _shareTransport;
+
+  /// How the open session was shared when its game screen was last
+  /// left: null when it was not. Opening it again shares it the same
+  /// way, so the devices that joined find it where it was.
+  ({String code, bool inputLocked})? _lastShare;
+
+  /// Whether sessions can be shared with other devices, and joined.
+  bool get canShare => _shareTransport != null;
+
+  /// The share of the open session [session], for as long as its game
+  /// screen is up; null when sessions cannot be shared. Back on the line
+  /// already if it was shared when it was last left — without network it
+  /// stays wanted, and off the line.
+  SessionShare? shareOf(SessionController session) {
+    final transport = _shareTransport;
+    if (transport == null) return null;
+    final last = _lastShare;
+    final share = SessionShare(
+      transport,
+      session,
+      code: last?.code,
+      lockInput: last?.inputLocked ?? false,
+    );
+    if (last != null) unawaited(share.start().catchError((Object _) {}));
+    return share;
+  }
+
+  /// Takes back a share made by [shareOf] or [join], the game screen
+  /// gone.
+  void closeShare(SessionShare share) {
+    if (!share.isGuest) {
+      final code = share.code;
+      _lastShare = share.isWanted && code != null
+          ? (code: code, inputLocked: share.inputLocked)
+          : null;
+    }
+    share.dispose();
+  }
+
+  /// Joins the session another device shares under [code]: played here
+  /// too, and kept there. Throws what [SessionShare.join] throws.
+  Future<SessionShare> join(String code) =>
+      SessionShare.join(_shareTransport!, code);
 
   /// Set when disk writes have stopped; resume may miss later visits.
   Object? get persistFailure => _repository.persistFailure;
@@ -48,6 +98,11 @@ class SessionLauncher extends ChangeNotifier {
       throw StateError('The setup was refused: ${dryRun.reason}');
     }
     (await _repository.resumable())?.endSession();
+    // Its guests are not left watching a game nobody plays any more.
+    if ((_lastShare, _shareTransport) case (final last?, final transport?)) {
+      _lastShare = null;
+      unawaited(SessionShare.announceGone(transport, last.code));
+    }
     final controller = SessionController(await _repository.create());
     try {
       await _start(controller, setup);

@@ -14,7 +14,8 @@ Données collectées
   ont saisi son code. Rien n’y est enregistré : ces données ne sont pas
   conservées sur le serveur, et le partage s’arrête quand vous le coupez ou
   quittez la partie. Toute personne connaissant le code peut voir la session et
-  y saisir des scores tant qu’elle est partagée.
+  y saisir des scores tant qu’elle est partagée, sauf si vous réservez la
+  saisie à votre téléphone.
 - Dans les builds de production, l’application peut transmettre des rapports de
   plantage techniques (Firebase Crashlytics) afin de corriger des bugs. Ces
   rapports concernent uniquement les crashes : pas d’analytics comportementaux,

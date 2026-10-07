@@ -8,7 +8,7 @@ Darts — compteur de fléchettes
 
 ## Description courte (≤ 80 car.)
 
-Compteur de fléchettes offline : 501, Cricket, Killer, Shanghai. Gratuit, sans pubs.
+Compteur de fléchettes, hors ligne ou sur deux téléphones. Gratuit, sans pubs.
 
 ## Description complète
 
@@ -16,7 +16,7 @@ Darts est un compteur de fléchettes conçu pour le téléphone partagé près d
 
 Jouez une **session** complète avec vos amis : 501 (double-out), Cricket, Killer et Shanghai, dans n’importe quel ordre. Reprenez une session en cours, consultez l’historique et les moyennes.
 
-**Gratuit. Sans publicité. Sans compte.** Les scores restent sur votre appareil (local-first). Orientation portrait ou paysage pour saisir confortablement.
+**Gratuit. Sans publicité. Sans compte.** Les scores restent sur votre appareil (local-first), et tout marche hors ligne. Orientation portrait ou paysage pour saisir confortablement.
 
 Fonctionnalités :
 - X01 (501 / 301), Cricket, Killer, Shanghai
@@ -24,8 +24,9 @@ Fonctionnalités :
 - Suggestions de checkout, undo honnête
 - Reprise de session et historique
 - Mode paysage score | saisie
+- Deux téléphones : l’un affiche le score près de la cible, l’autre saisit (session partagée par un code, rien n’est stocké en ligne)
 
-Pas d’achats intégrés. Pas de pub. Vos sessions restent sur l’appareil.
+Pas d’achats intégrés. Pas de pub. Vos sessions restent sur l’appareil ; une session que vous partagez ne fait que transiter jusqu’à l’autre téléphone.
 
 ## Mentions Data safety / store
 

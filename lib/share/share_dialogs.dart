@@ -6,30 +6,34 @@ import 'session_share.dart';
 import 'share_transport.dart';
 
 const _unreachable = 'Connexion impossible. Vérifiez le réseau.';
+const _incompatible =
+    'Un des téléphones utilise une autre version de l’application : '
+    'mettez-la à jour sur les deux.';
 
-/// Shows the code of [share], putting the session on the line first when
-/// it is not. With [canStop], offers to take it off again.
-Future<void> showShareDialog(
-  BuildContext context,
-  SessionShare share, {
-  bool canStop = true,
-}) => showDialog<void>(
-  context: context,
-  builder: (_) => _ShareDialog(share: share, canStop: canStop),
-);
+/// Shows the code of [share] and how it goes; on the device that shares,
+/// puts the session on the line first when it is not, and offers to take
+/// it off again or to keep the input to itself.
+Future<void> showShareDialog(BuildContext context, SessionShare share) =>
+    showDialog<void>(
+      context: context,
+      builder: (_) => _ShareDialog(share: share),
+    );
 
 class _ShareDialog extends StatefulWidget {
-  const _ShareDialog({required this.share, required this.canStop});
+  const _ShareDialog({required this.share});
 
   final SessionShare share;
-  final bool canStop;
 
   @override
   State<_ShareDialog> createState() => _ShareDialogState();
 }
 
 class _ShareDialogState extends State<_ShareDialog> {
-  late Future<void> _started = widget.share.start();
+  late Future<void> _started = _start();
+
+  /// A guest is on the line from joining.
+  Future<void> _start() =>
+      widget.share.isGuest ? Future.value() : widget.share.start();
 
   @override
   Widget build(BuildContext context) {
@@ -61,12 +65,47 @@ class _ShareDialogState extends State<_ShareDialog> {
                     style: textTheme.displaySmall?.copyWith(letterSpacing: 6),
                   ),
                   const SizedBox(height: DartsSpace.md),
-                  const Text(
-                    'Sur l’autre téléphone : « Rejoindre une session » à '
-                    'l’accueil, puis ce code. Il affiche la partie, et '
-                    'peut saisir lui aussi.',
+                  Text(
+                    share.inputLocked
+                        ? 'Sur l’autre téléphone : « Rejoindre une session » '
+                              'à l’accueil, puis ce code. Il affiche la '
+                              'partie.'
+                        : 'Sur l’autre téléphone : « Rejoindre une session » '
+                              'à l’accueil, puis ce code. Il affiche la '
+                              'partie, et peut saisir lui aussi.',
                     textAlign: TextAlign.center,
                   ),
+                  if (share.isOffLine) ...[
+                    const SizedBox(height: DartsSpace.md),
+                    Text(
+                      'Connexion perdue : elle reprend dès que le réseau '
+                      'revient.',
+                      key: const Key('share-lost'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                  if (share.hasIncompatiblePeer) ...[
+                    const SizedBox(height: DartsSpace.md),
+                    const Text(
+                      _incompatible,
+                      key: Key('share-incompatible'),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  if (!share.isGuest)
+                    SwitchListTile(
+                      key: const Key('share-lock-input'),
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Saisie sur ce téléphone seulement'),
+                      subtitle: const Text(
+                        'Les autres téléphones ne font qu’afficher.',
+                      ),
+                      value: share.inputLocked,
+                      onChanged: share.lockInput,
+                    ),
                   if (share.joinedCount > 0) ...[
                     const SizedBox(height: DartsSpace.md),
                     Text(
@@ -84,11 +123,10 @@ class _ShareDialogState extends State<_ShareDialog> {
           actions: [
             if (failed)
               TextButton(
-                onPressed: () =>
-                    setState(() => _started = widget.share.start()),
+                onPressed: () => setState(() => _started = _start()),
                 child: const Text('Réessayer'),
               )
-            else if (!waiting && widget.canStop)
+            else if (!waiting && !share.isGuest)
               TextButton(
                 onPressed: () {
                   share.stop();
@@ -107,22 +145,20 @@ class _ShareDialogState extends State<_ShareDialog> {
   }
 }
 
-/// Asks for the code of a shared session and has [join] join it. Says
-/// whether it was joined; false when the user backed out.
-Future<bool> showJoinDialog(
+/// Asks for the code of a shared session and has [join] join it. Gives
+/// the share that was joined; null when the user backed out.
+Future<SessionShare?> showJoinDialog(
   BuildContext context,
-  Future<void> Function(String code) join,
-) async =>
-    await showDialog<bool>(
-      context: context,
-      builder: (_) => _JoinDialog(join: join),
-    ) ??
-    false;
+  Future<SessionShare> Function(String code) join,
+) => showDialog<SessionShare>(
+  context: context,
+  builder: (_) => _JoinDialog(join: join),
+);
 
 class _JoinDialog extends StatefulWidget {
   const _JoinDialog({required this.join});
 
-  final Future<void> Function(String code) join;
+  final Future<SessionShare> Function(String code) join;
 
   @override
   State<_JoinDialog> createState() => _JoinDialogState();
@@ -151,15 +187,21 @@ class _JoinDialogState extends State<_JoinDialog> {
       _error = null;
     });
     try {
-      await widget.join(_code.text);
-      if (mounted) Navigator.of(context).pop(true);
+      final share = await widget.join(_code.text);
+      if (mounted) {
+        Navigator.of(context).pop(share);
+      } else {
+        share.dispose();
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _joining = false;
-        _error = error is ShareUnreachable
-            ? _unreachable
-            : 'Aucune session partagée sous ce code.';
+        _error = switch (error) {
+          ShareUnreachable() => _unreachable,
+          IncompatibleShare() => _incompatible,
+          _ => 'Aucune session partagée sous ce code.',
+        };
       });
     }
   }
@@ -167,51 +209,59 @@ class _JoinDialogState extends State<_JoinDialog> {
   @override
   Widget build(BuildContext context) {
     final complete = _code.text.length == SessionShare.codeLength;
-    return AlertDialog(
-      title: const Text('Rejoindre une session'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Le code s’affiche sur le téléphone qui partage la session : '
-            'l’icône de partage, en haut de la partie.',
+    return PopScope(
+      // Not while joining: the share would be made with nobody to take it.
+      canPop: !_joining,
+      child: AlertDialog(
+        title: const Text('Rejoindre une session'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Le code s’affiche sur le téléphone qui partage la session : '
+              'l’icône de partage, en haut de la partie.',
+            ),
+            const SizedBox(height: DartsSpace.md),
+            TextField(
+              key: const Key('join-code'),
+              controller: _code,
+              autofocus: true,
+              enabled: !_joining,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(SessionShare.codeLength),
+              ],
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineMedium
+                  ?.copyWith(letterSpacing: 6),
+              decoration: InputDecoration(
+                labelText: 'Code',
+                errorText: _error,
+                errorMaxLines: 3,
+              ),
+              onSubmitted: (_) {
+                if (complete) _join();
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: _joining ? null : () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
           ),
-          const SizedBox(height: DartsSpace.md),
-          TextField(
-            key: const Key('join-code'),
-            controller: _code,
-            autofocus: true,
-            enabled: !_joining,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(SessionShare.codeLength),
-            ],
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineMedium
-                ?.copyWith(letterSpacing: 6),
-            decoration: InputDecoration(labelText: 'Code', errorText: _error),
-            onSubmitted: (_) {
-              if (complete) _join();
-            },
+          FilledButton(
+            onPressed: complete && !_joining ? _join : null,
+            child: _joining
+                ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Rejoindre'),
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: _joining ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Annuler'),
-        ),
-        FilledButton(
-          onPressed: complete && !_joining ? _join : null,
-          child: _joining
-              ? const SizedBox.square(
-                  dimension: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Rejoindre'),
-        ),
-      ],
     );
   }
 }

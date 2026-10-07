@@ -41,6 +41,7 @@ class _DartsAppState extends State<DartsApp> {
   late final SessionLauncher _launcher = SessionLauncher(
     widget.repository,
     widget.catalog,
+    shareTransport: widget.shareTransport,
   );
 
   late final AppSettings _settings = AppSettings(
@@ -66,11 +67,7 @@ class _DartsAppState extends State<DartsApp> {
       title: 'Darts',
       debugShowCheckedModeBanner: false,
       theme: themeById(widget.themeId),
-      home: HomeScreen(
-        launcher: _launcher,
-        settings: _settings,
-        shareTransport: widget.shareTransport,
-      ),
+      home: HomeScreen(launcher: _launcher, settings: _settings),
     );
   }
 }

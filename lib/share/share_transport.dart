@@ -15,9 +15,10 @@ abstract interface class ShareLine {
   /// What the other devices on the line sent, never this one's own.
   Stream<ShareMessage> get messages;
 
-  /// Fires when the line is back after the network dropped: messages may
-  /// have been missed meanwhile.
-  Stream<void> get rejoined;
+  /// Whether the line carries messages, each time that changes: false
+  /// when the network drops, true when it is back, messages having
+  /// perhaps been missed meanwhile. An opened line starts out carrying.
+  Stream<bool> get carrying;
 
   /// Sends to every other device on the line. Never throws: a message
   /// that does not get through is caught up with once the line is back.
@@ -46,10 +47,15 @@ class InMemoryShareHub {
 
   ShareTransport transport() => _InMemoryTransport(this);
 
-  /// Has every line of [code] report it is back, as after a network drop.
-  void rejoin(String code) {
+  /// How many devices have a line open on [code].
+  int linesOn(String code) => _lines[code]?.length ?? 0;
+
+  /// Cuts the lines of [code] off, or puts them back: while cut, nothing
+  /// gets in or out of them, as on a phone that lost the network.
+  void cut(String code, {bool off = true}) {
     for (final line in [...?_lines[code]]) {
-      line._rejoined.add(null);
+      line._cut = off;
+      line._carrying.add(!off);
     }
   }
 }
@@ -75,18 +81,20 @@ class _InMemoryLine implements ShareLine {
   final String _code;
 
   final _messages = StreamController<ShareMessage>.broadcast();
-  final _rejoined = StreamController<void>.broadcast();
+  final _carrying = StreamController<bool>.broadcast();
+  bool _cut = false;
 
   @override
   Stream<ShareMessage> get messages => _messages.stream;
 
   @override
-  Stream<void> get rejoined => _rejoined.stream;
+  Stream<bool> get carrying => _carrying.stream;
 
   @override
   void send(ShareMessage message) {
+    if (_cut) return;
     for (final line in [...?_hub._lines[_code]]) {
-      if (line != this && !line._messages.isClosed) {
+      if (line != this && !line._cut && !line._messages.isClosed) {
         line._messages.add({...message});
       }
     }
@@ -96,6 +104,6 @@ class _InMemoryLine implements ShareLine {
   Future<void> close() async {
     _hub._lines[_code]?.remove(this);
     unawaited(_messages.close());
-    unawaited(_rejoined.close());
+    unawaited(_carrying.close());
   }
 }

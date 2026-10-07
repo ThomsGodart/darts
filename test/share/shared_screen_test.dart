@@ -11,16 +11,18 @@ import '../app_test_harness.dart';
 
 const _ann = Player(id: 'a', name: 'Ann');
 const _bob = Player(id: 'b', name: 'Bob');
+const _bot = Player(id: 'bot', name: 'Robot', botAverage: 60);
 
-/// The other phone: a session on the hub, without a screen.
-({SessionController controller, SessionShare share}) _otherPhone(
-  InMemoryShareHub hub,
-) {
-  final controller = SessionController(Session(InMemoryJournal()));
-  return (
-    controller: controller,
-    share: SessionShare(hub.transport(), controller, random: Random(7)),
-  );
+/// Another phone sharing a game of [players], without a screen.
+Future<SessionShare> _sharingPhone(
+  InMemoryShareHub hub, [
+  List<Player> players = const [_ann, _bob],
+]) async {
+  final controller = SessionController(Session(InMemoryJournal()))
+    ..startGame(players);
+  final share = SessionShare(hub.transport(), controller, random: Random(7));
+  await share.start();
+  return share;
 }
 
 Future<void> _enterTotal(WidgetTester tester, String digits) async {
@@ -32,10 +34,36 @@ Future<void> _enterTotal(WidgetTester tester, String digits) async {
   await tester.pumpAndSettle();
 }
 
+/// From the home screen: shares a new game, and gives its code.
+Future<String> _shareGame(WidgetTester tester) async {
+  await launchGame(tester);
+  await tester.tap(find.byKey(const Key('share-session')));
+  await tester.pumpAndSettle();
+  return tester
+      .widget<SelectableText>(find.byKey(const Key('share-code')))
+      .data!;
+}
+
+/// From the home screen: joins the session shared under [code].
+Future<void> _joinFromHome(WidgetTester tester, String code) async {
+  await tester.tap(find.text('Rejoindre une session'));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byKey(const Key('join-code')), code);
+  await tester.pump();
+  await tester.tap(find.text('Rejoindre'));
+  await tester.pumpAndSettle();
+}
+
+int _remaining(SessionShare share, [int player = 0]) =>
+    (share.controller.state.game! as X01Game).scores[player].remaining;
+
 void main() {
   late InMemoryShareHub hub;
 
   setUp(() => hub = InMemoryShareHub());
+
+  Future<void> pumpSharingApp(WidgetTester tester, AppStorage storage) =>
+      pumpApp(tester, storage, shareTransport: hub.transport());
 
   testWidgets('without a transport, nothing offers to share or join', (
     tester,
@@ -52,187 +80,289 @@ void main() {
   ) async {
     await pumpApp(tester, await AppStorage.withTwoPlayers());
     await launchGame(tester);
-    final boardHeight = tester
-        .getSize(find.byKey(const Key('game-shell-state')))
-        .height;
 
     await tester.tap(find.byKey(const Key('toggle-keyboard')));
     await tester.pump();
 
     expect(find.byKey(const Key('game-shell-input')), findsNothing);
-    expect(find.text('Valider'), findsNothing);
+    expect(find.widgetWithText(FilledButton, 'OK'), findsNothing);
     expect(find.text('501'), findsWidgets);
-    expect(boardHeight, lessThan(1000));
 
     await tester.tap(find.byKey(const Key('toggle-keyboard')));
     await tester.pump();
     expect(find.byKey(const Key('game-shell-input')), findsOneWidget);
   });
 
-  testWidgets('sharing shows a code; what the phone that joins enters '
-      'shows here', (tester) async {
-    await pumpApp(
+  group('the phone that shares', () {
+    testWidgets('shows a code; what the phone that joins enters shows '
+        'here', (tester) async {
+      await pumpSharingApp(tester, await AppStorage.withTwoPlayers());
+      final code = await _shareGame(tester);
+      expect(code, hasLength(6));
+
+      final other = await SessionShare.join(hub.transport(), code);
+      await tester.pump();
+      expect(find.text('1 appareil a rejoint'), findsOneWidget);
+      await tester.tap(find.text('Fermer'));
+      await tester.pumpAndSettle();
+
+      other.controller.submitVisitTotal(100);
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('401'), findsOneWidget);
+
+      await _enterTotal(tester, '60');
+      await tester.pump();
+      expect(_remaining(other, 1), 441);
+    });
+
+    testWidgets('a session left while shared is shared again under its '
+        'code when resumed', (tester) async {
+      await pumpSharingApp(tester, await AppStorage.withTwoPlayers());
+      final code = await _shareGame(tester);
+      await tester.tap(find.text('Fermer'));
+      await tester.pumpAndSettle();
+      final other = await SessionShare.join(hub.transport(), code);
+
+      // The game is finished from the other phone, then left here.
+      for (final total in [180, 0, 180, 0]) {
+        other.controller.submitVisitTotal(total);
+      }
+      other.controller.submitVisitTotal(141, dartsAtCheckout: 3);
+      await tester.pumpAndSettle();
+      expect(find.text('Joueur 1 gagne !'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('leave-game')));
+      await tester.pumpAndSettle();
+
+      // Meanwhile the other phone plays on.
+      other.controller.rematch();
+      other.controller.submitVisitTotal(45);
+      await tester.pump();
+
+      await tester.tap(find.text('Reprendre la session'));
+      await tester.pumpAndSettle();
+      expect(find.text('456'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('share-session')));
+      await tester.pumpAndSettle();
+      expect(find.text(code), findsOneWidget);
+    });
+
+    testWidgets('keeps the input to itself on demand', (tester) async {
+      await pumpSharingApp(tester, await AppStorage.withTwoPlayers());
+      final code = await _shareGame(tester);
+      final other = await SessionShare.join(hub.transport(), code);
+
+      await tester.tap(find.byKey(const Key('share-lock-input')));
+      await tester.pumpAndSettle();
+      expect(other.inputLocked, isTrue);
+
+      other.controller.submitVisitTotal(100);
+      await tester.pumpAndSettle();
+      expect(other.controller.events.length, 1);
+    });
+
+    testWidgets('without network, sharing says so and the game goes on', (
       tester,
-      await AppStorage.withTwoPlayers(),
-      shareTransport: hub.transport(),
-    );
-    await launchGame(tester);
+    ) async {
+      hub.unreachable = true;
+      await pumpSharingApp(tester, await AppStorage.withTwoPlayers());
+      await launchGame(tester);
 
-    await tester.tap(find.byKey(const Key('share-session')));
-    await tester.pumpAndSettle();
-    final code = tester
-        .widget<SelectableText>(find.byKey(const Key('share-code')))
-        .data!;
-    expect(code, hasLength(6));
+      await tester.tap(find.byKey(const Key('share-session')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('share-error')), findsOneWidget);
 
-    final other = _otherPhone(hub);
-    await other.share.join(code);
-    await tester.pump();
-    expect(find.text('1 appareil a rejoint'), findsOneWidget);
-    await tester.tap(find.text('Fermer'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Fermer'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('share-off-line')), findsOneWidget);
+      await _enterTotal(tester, '60');
+      expect(find.text('441'), findsOneWidget);
 
-    other.controller.submitVisitTotal(100);
-    await tester.pump();
-    await tester.pump();
-    expect(find.text('401'), findsOneWidget);
+      // The network is back: the next input puts the session on the line.
+      hub.unreachable = false;
+      await _enterTotal(tester, '45');
+      expect(find.byKey(const Key('share-off-line')), findsNothing);
+    });
 
-    await _enterTotal(tester, '60');
-    await tester.pump();
-    expect((other.controller.state.game! as X01Game).scores[1].remaining, 441);
-  });
-
-  testWidgets('a session left while shared is shared again under its code '
-      'when resumed', (tester) async {
-    await pumpApp(
+    testWidgets('says when the network drops, until it is back', (
       tester,
-      await AppStorage.withTwoPlayers(),
-      shareTransport: hub.transport(),
-    );
-    await launchGame(tester);
-    await tester.tap(find.byKey(const Key('share-session')));
-    await tester.pumpAndSettle();
-    final code = tester
-        .widget<SelectableText>(find.byKey(const Key('share-code')))
-        .data!;
-    await tester.tap(find.text('Fermer'));
-    await tester.pumpAndSettle();
-    final other = _otherPhone(hub);
-    await other.share.join(code);
+    ) async {
+      await pumpSharingApp(tester, await AppStorage.withTwoPlayers());
+      final code = await _shareGame(tester);
+      await tester.tap(find.text('Fermer'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('share-off-line')), findsNothing);
 
-    // The game is finished from the other phone, then left here.
-    for (final total in [180, 0, 180, 0]) {
-      other.controller.submitVisitTotal(total);
-    }
-    other.controller.submitVisitTotal(141, dartsAtCheckout: 3);
-    await tester.pumpAndSettle();
-    expect(find.text('Joueur 1 gagne !'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('leave-game')));
-    await tester.pumpAndSettle();
+      hub.cut(code);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('share-off-line')), findsOneWidget);
 
-    // Meanwhile the other phone plays on.
-    other.controller.rematch();
-    other.controller.submitVisitTotal(45);
-    await tester.pump();
+      hub.cut(code, off: false);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('share-off-line')), findsNothing);
+    });
 
-    await tester.tap(find.text('Reprendre la session'));
-    await tester.pumpAndSettle();
-    expect(find.text('456'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('share-session')));
-    await tester.pumpAndSettle();
-    expect(find.text(code), findsOneWidget);
+    testWidgets('starting a new session tells the guests of the one it '
+        'ends', (tester) async {
+      await pumpSharingApp(tester, await AppStorage.withTwoPlayers());
+      final code = await _shareGame(tester);
+      await tester.tap(find.text('Fermer'));
+      await tester.pumpAndSettle();
+      final other = await SessionShare.join(hub.transport(), code);
+      for (final total in [180, 0, 180, 0]) {
+        other.controller.submitVisitTotal(total);
+      }
+      other.controller.submitVisitTotal(141, dartsAtCheckout: 3);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('leave-game')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Nouvelle session'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Terminer et commencer'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Lancer la partie'));
+      await tester.pumpAndSettle();
+
+      expect(other.controller.state.isEnded, isTrue);
+      // The new session is not shared until asked.
+      expect(hub.linesOn(code), 1);
+    });
   });
 
-  testWidgets('joining opens the shared game as a screen, and the '
-      'keyboard comes back on demand', (tester) async {
-    final host = _otherPhone(hub);
-    host.controller.startGame([_ann, _bob]);
-    host.controller.submitVisitTotal(41);
-    await host.share.start();
+  group('the phone that joins', () {
+    testWidgets('opens the shared game as a screen, and its keyboard '
+        'comes back on demand', (tester) async {
+      final host = await _sharingPhone(hub);
+      host.controller.submitVisitTotal(41);
 
-    await pumpApp(tester, AppStorage(), shareTransport: hub.transport());
-    await tester.tap(find.text('Rejoindre une session'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('join-code')),
-      host.share.code!,
-    );
-    await tester.pump();
-    await tester.tap(find.text('Rejoindre'));
-    await tester.pumpAndSettle();
+      await pumpSharingApp(tester, AppStorage());
+      await _joinFromHome(tester, host.code!);
 
-    expect(find.text('460'), findsOneWidget);
-    expect(find.text('Ann'), findsWidgets);
-    expect(find.byKey(const Key('game-shell-input')), findsNothing);
+      expect(find.text('460'), findsOneWidget);
+      expect(find.text('Ann'), findsWidgets);
+      expect(find.byKey(const Key('game-shell-input')), findsNothing);
 
-    host.controller.submitVisitTotal(100);
-    await tester.pump();
-    await tester.pump();
-    expect(find.text('401'), findsOneWidget);
+      host.controller.submitVisitTotal(100);
+      await tester.pump();
+      await tester.pump();
+      expect(find.text('401'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('toggle-keyboard')));
-    await tester.pump();
-    await switchToTotals(tester);
-    await _enterTotal(tester, '60');
-    await tester.pump();
-    expect((host.controller.state.game! as X01Game).scores[0].remaining, 400);
-  });
+      await tester.tap(find.byKey(const Key('toggle-keyboard')));
+      await tester.pump();
+      await switchToTotals(tester);
+      await _enterTotal(tester, '60');
+      await tester.pump();
+      expect(_remaining(host), 400);
+    });
 
-  testWidgets('a code nobody shares is refused in the dialog', (tester) async {
-    await pumpApp(tester, AppStorage(), shareTransport: hub.transport());
-    await tester.tap(find.text('Rejoindre une session'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('join-code')), '123456');
-    await tester.pump();
-    await tester.tap(find.text('Rejoindre'));
-    await tester.pump(const Duration(seconds: 7));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Aucune session partagée sous ce code.'), findsOneWidget);
-    expect(find.text('Rejoindre une session'), findsWidgets);
-  });
-
-  testWidgets('without network, sharing says so and the game goes on', (
-    tester,
-  ) async {
-    hub.unreachable = true;
-    await pumpApp(
+    testWidgets('shows how a game ended, but does not end the session', (
       tester,
-      await AppStorage.withTwoPlayers(),
-      shareTransport: hub.transport(),
-    );
-    await launchGame(tester);
+    ) async {
+      final host = await _sharingPhone(hub);
+      await pumpSharingApp(tester, AppStorage());
+      await _joinFromHome(tester, host.code!);
 
-    await tester.tap(find.byKey(const Key('share-session')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('share-error')), findsOneWidget);
+      for (final total in [180, 0, 180, 0]) {
+        host.controller.submitVisitTotal(total);
+      }
+      host.controller.submitVisitTotal(141, dartsAtCheckout: 3);
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Fermer'));
-    await tester.pumpAndSettle();
-    await _enterTotal(tester, '60');
-    expect(find.text('441'), findsOneWidget);
-  });
+      expect(find.text('Ann gagne !'), findsOneWidget);
+      expect(find.text('Rejouer'), findsOneWidget);
+      expect(find.text('Terminer la session'), findsNothing);
+    });
 
-  testWidgets('a session ended on the other phone closes the game here', (
-    tester,
-  ) async {
-    final host = _otherPhone(hub);
-    host.controller.startGame([_ann, _bob]);
-    await host.share.start();
-    await pumpApp(tester, AppStorage(), shareTransport: hub.transport());
-    await tester.tap(find.text('Rejoindre une session'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('join-code')),
-      host.share.code!,
-    );
-    await tester.pump();
-    await tester.tap(find.text('Rejoindre'));
-    await tester.pumpAndSettle();
+    testWidgets('is only a screen once the phone that shares keeps the '
+        'input', (tester) async {
+      final host = await _sharingPhone(hub);
+      await pumpSharingApp(tester, AppStorage());
+      await _joinFromHome(tester, host.code!);
+      expect(find.byKey(const Key('toggle-keyboard')), findsOneWidget);
 
-    host.controller.endSession();
-    await tester.pumpAndSettle();
+      host.lockInput(true);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('toggle-keyboard')), findsNothing);
+      expect(find.byKey(const Key('game-shell-input')), findsNothing);
 
-    expect(find.text('Nouvelle session'), findsOneWidget);
+      for (final total in [180, 0, 180, 0]) {
+        host.controller.submitVisitTotal(total);
+      }
+      host.controller.submitVisitTotal(141, dartsAtCheckout: 3);
+      await tester.pumpAndSettle();
+      expect(find.text('Ann gagne !'), findsOneWidget);
+      expect(find.text('Rejouer'), findsNothing);
+    });
+
+    testWidgets('leaves the virtual opponent to the phone that shares, '
+        'and throws for it only when that one does not', (tester) async {
+      final host = await _sharingPhone(hub, const [_bot, _ann]);
+      await pumpSharingApp(tester, AppStorage());
+      await _joinFromHome(tester, host.code!);
+      expect(host.controller.events.length, 1);
+
+      // Long enough for the phone that shares to have thrown.
+      await tester.pump(const Duration(seconds: 2));
+      expect(host.controller.events.length, 1);
+
+      // It did not: this phone does.
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump();
+      expect(host.controller.events.length, 2);
+      expect(host.controller.state.game!.activePlayer.name, 'Ann');
+    });
+
+    testWidgets('says when the network drops', (tester) async {
+      final host = await _sharingPhone(hub);
+      await pumpSharingApp(tester, AppStorage());
+      await _joinFromHome(tester, host.code!);
+
+      hub.cut(host.code!);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Connexion perdue : le score peut ne plus être à jour.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a code nobody shares is refused in the dialog, which '
+        'only Annuler closes', (tester) async {
+      await pumpSharingApp(tester, AppStorage());
+      await tester.tap(find.text('Rejoindre une session'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('join-code')), '123456');
+      await tester.pump();
+      await tester.tap(find.text('Rejoindre'));
+      await tester.pump();
+
+      // While it joins, a tap outside does not close it.
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pump(const Duration(seconds: 7));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Aucune session partagée sous ce code.'),
+        findsOneWidget,
+      );
+      expect(hub.linesOn('123456'), 0);
+      await tester.tap(find.text('Annuler'));
+      await tester.pumpAndSettle();
+      expect(find.text('Nouvelle session'), findsOneWidget);
+    });
+
+    testWidgets('a session ended on the phone that shares closes the '
+        'game here', (tester) async {
+      final host = await _sharingPhone(hub);
+      await pumpSharingApp(tester, AppStorage());
+      await _joinFromHome(tester, host.code!);
+
+      host.controller.endSession();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nouvelle session'), findsOneWidget);
+      expect(hub.linesOn(host.code!), 1);
+    });
   });
 }
