@@ -352,6 +352,53 @@ void main() {
       expect(find.text('Nouvelle session'), findsOneWidget);
     });
 
+    testWidgets('once left, the session can be kept in this phone\'s '
+        'history, its people told apart', (tester) async {
+      final host = await _sharingPhone(hub);
+      host.controller.submitVisitTotal(41);
+      await pumpSharingApp(tester, await AppStorage.withPlayers(['Ann']));
+      await _joinFromHome(tester, host.code!);
+
+      await tester.tap(find.byKey(const Key('leave-game')));
+      await tester.pumpAndSettle();
+      expect(find.text('Garder cette session ?'), findsOneWidget);
+      // Ann is known here; Bob is not.
+      expect(find.text('Nouveau joueur'), findsOneWidget);
+
+      await tester.tap(find.text('Garder'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Historique'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Ann'), findsWidgets);
+      expect(find.textContaining('Bob'), findsWidgets);
+    });
+
+    testWidgets('two people said to be the same player cannot be kept; '
+        'not kept, the session leaves no trace', (tester) async {
+      final host = await _sharingPhone(hub);
+      host.controller.submitVisitTotal(41);
+      await pumpSharingApp(tester, await AppStorage.withPlayers(['Ann']));
+      await _joinFromHome(tester, host.code!);
+      await tester.tap(find.byKey(const Key('leave-game')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('keep-as-b')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ann').last);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('keep-clash')), findsOneWidget);
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton).last).onPressed,
+        isNull,
+      );
+
+      await tester.tap(find.text('Ne pas garder'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Historique'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Bob'), findsNothing);
+    });
+
     testWidgets('a session ended on the phone that shares closes the '
         'game here', (tester) async {
       final host = await _sharingPhone(hub);

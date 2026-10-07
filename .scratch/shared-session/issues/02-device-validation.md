@@ -12,6 +12,7 @@
 - [ ] Mode avion sur un téléphone : bandeau « Connexion perdue », puis rattrapage au retour du réseau
 - [ ] Verrouiller / déverrouiller un téléphone, couper puis remettre le réseau : il se remet à jour
 - [ ] Quitter la partie côté hôte puis « Reprendre la session » : même code, l’invité suit toujours
+- [ ] Quitter une session rejointe : « Garder cette session ? », puis la retrouver dans l’historique et les stats de l’invité
 - [ ] Play Console : formulaire Data safety à revoir (`docs/release/play-data-safety.md`)
 
 ## Comments

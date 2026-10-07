@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../session/session.dart';
+import '../session_launcher.dart';
 import '../theme/darts_space.dart';
 import 'session_share.dart';
 import 'share_transport.dart';
@@ -262,6 +264,123 @@ class _JoinDialogState extends State<_JoinDialog> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Asks whether to keep a joined session on this device, and who its
+/// people are here. Gives, by the id each has in the session, the known
+/// player they are — those left out being new players; null when the
+/// session is not to be kept.
+Future<Map<String, Player>?> showKeepDialog(
+  BuildContext context,
+  KeepProposal proposal,
+) => showDialog<Map<String, Player>>(
+  context: context,
+  barrierDismissible: false,
+  builder: (_) => _KeepDialog(proposal: proposal),
+);
+
+class _KeepDialog extends StatefulWidget {
+  const _KeepDialog({required this.proposal});
+
+  final KeepProposal proposal;
+
+  @override
+  State<_KeepDialog> createState() => _KeepDialogState();
+}
+
+class _KeepDialogState extends State<_KeepDialog> {
+  /// Who each person is here, by their id in the session; absent for a
+  /// new player.
+  late final Map<String, Player> _who = {
+    for (final (:shared, :match) in widget.proposal.people) shared.id: ?match,
+  };
+
+  /// Whether two people were said to be the same player.
+  bool get _clashes =>
+      _who.values.map((p) => p.id).toSet().length != _who.length;
+
+  @override
+  Widget build(BuildContext context) {
+    final proposal = widget.proposal;
+    final textTheme = Theme.of(context).textTheme;
+    return AlertDialog(
+      title: const Text('Garder cette session ?'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Elle s’ajoute à l’historique et aux statistiques de ce '
+              'téléphone. Qui est qui ?',
+            ),
+            const SizedBox(height: DartsSpace.sm),
+            for (final (:shared, match: _) in proposal.people)
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      shared.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.titleMedium,
+                    ),
+                  ),
+                  const SizedBox(width: DartsSpace.sm),
+                  DropdownButton<Player?>(
+                    key: Key('keep-as-${shared.id}'),
+                    value: _who[shared.id],
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('Nouveau joueur'),
+                      ),
+                      for (final player in proposal.known)
+                        DropdownMenuItem(
+                          value: player,
+                          child: Text(player.name),
+                        ),
+                    ],
+                    onChanged: (player) => setState(
+                      () => player == null
+                          ? _who.remove(shared.id)
+                          : _who[shared.id] = player,
+                    ),
+                  ),
+                ],
+              ),
+            if (_clashes)
+              Padding(
+                padding: const EdgeInsets.only(top: DartsSpace.sm),
+                child: Text(
+                  'Deux personnes ne peuvent pas être le même joueur.',
+                  key: const Key('keep-clash'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            if (proposal.endsOpenSession)
+              const Padding(
+                padding: EdgeInsets.only(top: DartsSpace.sm),
+                child: Text(
+                  'La session en cours sur ce téléphone sera terminée : '
+                  'elle passe dans l’historique.',
+                  key: Key('keep-ends-open'),
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Ne pas garder'),
+        ),
+        FilledButton(
+          onPressed: _clashes ? null : () => Navigator.of(context).pop(_who),
+          child: const Text('Garder'),
+        ),
+      ],
     );
   }
 }

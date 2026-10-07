@@ -18,3 +18,4 @@
 
 - 2026-10-06: agent — voir `docs/adr/0006`. Validation sur deux vrais téléphones : ticket 02.
 - 2026-10-07: agent — revue du commit, puis corrections : ligne jamais laissée ouverte par un partage fermé ; dialogue « Rejoindre » non refermable pendant la connexion ; protocole typé et versionné ; parties déjà jouées non réécrivables depuis la ligne ; « Saisie sur ce téléphone seulement » ; bandeau « Connexion perdue » et reprise automatique ; l’invité ne termine pas la session et lance pour l’adversaire virtuel si l’hôte ne le fait pas ; les invités sont prévenus quand l’hôte démarre une nouvelle session ; cycle de vie du partage dans `SessionLauncher`. Non fait : rejoindre par QR code (deux dépendances + permission caméra, à décider).
+- 2026-10-07: agent — l’invité peut garder une copie de la session quittée dans son historique et ses stats : joueurs rapprochés par nom, à confirmer dans un dialogue.

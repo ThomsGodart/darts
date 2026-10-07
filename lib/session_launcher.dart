@@ -9,6 +9,18 @@ import 'session_controller.dart';
 import 'share/session_share.dart';
 import 'share/share_transport.dart';
 
+/// What keeping a joined session on this device would do: who its
+/// [people] would be here, among the players [known] to this device.
+typedef KeepProposal = ({
+  /// Each person of the session, with the known player of the same name
+  /// if there is one.
+  List<({Player shared, Player? match})> people,
+  List<Player> known,
+
+  /// Whether a session is open here: keeping this one ends it first.
+  bool endsOpenSession,
+});
+
 /// Opens sessions for the home screen, so widgets never touch storage.
 class SessionLauncher extends ChangeNotifier {
   SessionLauncher(this._repository, this._catalog, {this._shareTransport}) {
@@ -57,6 +69,73 @@ class SessionLauncher extends ChangeNotifier {
           : null;
     }
     share.dispose();
+  }
+
+  /// The copies of joined sessions kept since the app started, by the
+  /// code they were joined under: keeping one again replaces its copy.
+  final Map<String, String> _keptCopies = {};
+
+  /// What [keep] would do with the session [guest] joined; null when
+  /// nothing was played in it.
+  Future<KeepProposal?> proposeKeeping(SessionShare guest) async {
+    final events = guest.controller.events;
+    if (!hasInput(events)) return null;
+    final known = await _catalog.active();
+    return (
+      people: [
+        for (final shared in peopleIn(events))
+          (
+            shared: shared,
+            match: known
+                .where((p) => p.name.toLowerCase() == shared.name.toLowerCase())
+                .firstOrNull,
+          ),
+      ],
+      known: known,
+      endsOpenSession: await canResume(),
+    );
+  }
+
+  /// Keeps a copy of the session [guest] joined in this device's history
+  /// and stats, ended. [who] says, by the id each person has in it, which
+  /// known player they are; anyone it leaves out becomes a new player.
+  /// Two people cannot be the same player. A session open here is ended
+  /// first; a copy kept earlier from the same share is replaced.
+  Future<void> keep(SessionShare guest, Map<String, Player> who) async {
+    final events = guest.controller.events;
+    final byId = <String, Player>{};
+    for (final person in peopleIn(events)) {
+      byId[person.id] = who[person.id] ?? await _addAs(person.name);
+    }
+    if (byId.values.map((p) => p.id).toSet().length != byId.length) {
+      throw ArgumentError.value(who, 'who', 'two people are one player');
+    }
+    (await _repository.resumable())?.endSession();
+    final code = guest.code;
+    if (_keptCopies.remove(code) case final earlier?) {
+      try {
+        await _repository.delete(earlier);
+      } on ArgumentError {
+        // Deleted from the history meanwhile.
+      }
+    }
+    final copy = await _repository.create();
+    final written = copy.rewrite(0, replacePlayers(events, byId));
+    if (written is Rejected) throw StateError(written.reason);
+    if (!copy.state.isEnded) copy.endSession();
+    await _catalog.markPlayed(byId.values);
+    await _repository.flush();
+    if (code != null) _keptCopies[code] = (await _repository.played()).first.id;
+  }
+
+  /// A new player called [name], or as near as the catalog allows when
+  /// the name is taken.
+  Future<Player> _addAs(String name) async {
+    var free = name;
+    for (var n = 2; await _catalog.nameProblem(free) != null; n++) {
+      free = '$name ($n)';
+    }
+    return _catalog.add(free);
   }
 
   /// Joins the session another device shares under [code]: played here

@@ -4,7 +4,7 @@ Two phones play one session: typically one set down as the scoreboard, the other
 
 Every change of the journal gets a version: a count, and the device that made it. A device sends what changed since the version before (how many events to keep, then the new tail); one that receives a change built on a version it does not hold asks for the whole journal. The higher version always stands, so every device ends on the same journal. Incoming journals are folded before they are taken, and refused if the fold trips.
 
-The session is stored by the device that shares it, through its usual repository. A device that joins only holds it in memory: it has no history or stats of it.
+The session is stored by the device that shares it, through its usual repository. A device that joins holds it in memory while it plays; on leaving it may keep a copy in its own history and stats. No identity is shared between devices — a player is an id in one device's catalog — so the copy's people are matched with the guest's players by name, the guest confirming who is who (`SessionLauncher.keep`). The same person under two spellings is two players; only accounts would fix that.
 
 ## Considered options
 

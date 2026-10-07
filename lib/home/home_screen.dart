@@ -4,6 +4,7 @@ import '../game/game_screen.dart';
 import '../history/history_screen.dart';
 import '../settings/app_settings.dart';
 import '../settings/settings_screen.dart';
+import '../share/session_share.dart';
 import '../share/share_dialogs.dart';
 import '../stats/stats_screen.dart';
 import '../session/session.dart';
@@ -181,7 +182,31 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
+    if (mounted) await _offerToKeep(share);
     widget.launcher.closeShare(share);
+  }
+
+  /// Once a joined session is left: offers to keep a copy of it here,
+  /// with its people told apart.
+  Future<void> _offerToKeep(SessionShare share) async {
+    final launcher = widget.launcher;
+    try {
+      final proposal = await launcher.proposeKeeping(share);
+      if (proposal == null || !mounted) return;
+      final who = await showKeepDialog(context, proposal);
+      if (who == null) return;
+      await launcher.keep(share, who);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible de garder la session.')),
+      );
+    }
+    if (!mounted) return;
+    final canResume = launcher.canResume();
+    setState(() {
+      _canResume = canResume;
+    });
   }
 
   Future<void> _open(SessionController controller) async {

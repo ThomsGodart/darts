@@ -21,7 +21,7 @@ Depuis une partie, « Partager la session » affiche un code à six chiffres. Su
 
 ## Out of Scope
 
-- Comptes, historique ou stats synchronisés entre appareils
+- Comptes, ou identité des joueurs commune aux appareils (l’invité peut garder une copie de la session, ses joueurs rapprochés par nom)
 - Session qui survit à l’arrêt du téléphone qui partage sans qu’un autre l’ait rejointe
 - Fusion de deux saisies simultanées (une seule est gardée)
 - QR code / lien pour rejoindre
