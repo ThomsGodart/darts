@@ -50,7 +50,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   /// The app's database file on the device.
-  factory AppDatabase.onDevice() => AppDatabase(driftDatabase(name: 'darts'));
+  factory AppDatabase.onDevice() => AppDatabase(
+    driftDatabase(
+      name: 'darts',
+      // In a browser, SQLite is a WebAssembly module run by a worker: both
+      // files sit in `web/`, at the versions of the sqlite3 and drift
+      // packages (see the README).
+      web: DriftWebOptions(
+        sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+        driftWorker: Uri.parse('drift_worker.js'),
+      ),
+    ),
+  );
 
   @override
   int get schemaVersion => 4;

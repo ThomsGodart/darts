@@ -1,12 +1,12 @@
 {
-    "name": "darts_points_counter",
-    "short_name": "darts_points_counter",
+    "name": "Darts",
+    "short_name": "Darts",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#0F1510",
+    "theme_color": "#0F1510",
+    "description": "Compteur de fléchettes : X01, Cricket et huit autres jeux.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {
