@@ -43,6 +43,23 @@ void main() {
     expect(find.byKey(const Key('game-shell-landscape')), findsOneWidget);
     expect(find.byKey(const Key('cricket-board')), findsOneWidget);
     expect(find.byKey(const Key('darts-in-visit')), findsOneWidget);
+    // Marks left, D/S/T keys in the input pane — not cramped on the board.
+    final board = find.byKey(const Key('cricket-board'));
+    final input = find.byKey(const Key('game-shell-input'));
+    expect(
+      find.descendant(of: board, matching: find.byKey(const ValueKey('board-key-T20'))),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: input, matching: find.byKey(const ValueKey('board-key-T20'))),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('board-key-T20')));
+    await tester.pump();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('darts-in-visit'))).data,
+      contains('T20'),
+    );
   });
 
   testWidgets('Shanghai landscape shows board and S/D/T', (tester) async {

@@ -90,18 +90,30 @@ class CricketBoard extends StatelessWidget {
                       tokens: tokens,
                       marksWidth: marksWidth,
                       label: const SizedBox.shrink(),
-                      cellOf: (score) => Text(
-                        score.player.name,
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.fade,
-                        style: textTheme.titleSmall?.copyWith(
-                          fontWeight: score.player.id == game.activePlayer.id
-                              ? FontWeight.w900
-                              : null,
-                          decoration: score.player.id == game.activePlayer.id
-                              ? TextDecoration.underline
-                              : null,
+                      cellOf: (score) => FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          score.player.name,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.fade,
+                          // With keys beside the marks, names stay compact;
+                          // without, they fill the column like on a wide
+                          // board.
+                          style:
+                              (showKeys
+                                      ? textTheme.titleSmall
+                                      : textTheme.headlineSmall)
+                                  ?.copyWith(
+                                    fontWeight:
+                                        score.player.id == game.activePlayer.id
+                                        ? FontWeight.w900
+                                        : null,
+                                    decoration:
+                                        score.player.id == game.activePlayer.id
+                                        ? TextDecoration.underline
+                                        : null,
+                                  ),
                         ),
                       ),
                     ),
@@ -155,7 +167,7 @@ class CricketBoard extends StatelessWidget {
       // staying full so that it never reads as not played.
       color: isDead ? tokens.cricketDeadRow : null,
       label: showKeys
-          ? _NumberKeys(
+          ? CricketNumberKeys(
               number: number,
               isDead: isDead,
               onDart: isDead ? null : onDart,
@@ -227,8 +239,9 @@ class CricketBoard extends StatelessWidget {
 /// The keys of one cricket number as they sit on a real board's wire,
 /// going out from the middle: double, single, treble. The bull has its
 /// two rings, 50 and 25, and no treble: they share the row.
-class _NumberKeys extends StatelessWidget {
-  const _NumberKeys({
+class CricketNumberKeys extends StatelessWidget {
+  const CricketNumberKeys({
+    super.key,
     required this.number,
     required this.isDead,
     required this.onDart,
@@ -304,29 +317,53 @@ class _NumberKeys extends StatelessWidget {
   }
 }
 
-/// The input pane of a cricket game entered on its board: the keys are on
-/// the board, so this is the visit so far and the actions.
+/// The input pane of a cricket game entered on its board: the visit so
+/// far and the actions. With [showKeys], the D/S/T grid sits here too —
+/// used when the shell splits so the marks fill the state pane.
 class CricketBoardInput extends StatelessWidget {
   const CricketBoardInput({
     super.key,
+    required this.game,
     required this.dartsInVisit,
     required this.onDart,
     required this.onEndVisit,
     required this.onUndo,
+    this.showKeys = false,
   });
 
+  final CricketGame game;
   final List<Dart> dartsInVisit;
   final ValueChanged<Dart> onDart;
   final VoidCallback onEndVisit;
   final VoidCallback? onUndo;
 
+  /// Whether the number keys are in this pane rather than on the board.
+  final bool showKeys;
+
+  static const _keyRowHeight = 44.0;
+
   @override
-  Widget build(BuildContext context) => InputPane(
-    dartsInVisit: dartsInVisit,
-    onUndo: onUndo,
-    onEndVisit: onEndVisit,
-    children: const [],
-  );
+  Widget build(BuildContext context) {
+    final visitOver = game.visitIsOver;
+    return InputPane(
+      dartsInVisit: dartsInVisit,
+      onUndo: onUndo,
+      onEndVisit: onEndVisit,
+      visitIsOver: visitOver,
+      children: [
+        if (showKeys)
+          for (final number in cricketNumbers)
+            SizedBox(
+              height: _keyRowHeight,
+              child: CricketNumberKeys(
+                number: number,
+                isDead: game.isDead(number),
+                onDart: visitOver || game.isDead(number) ? null : onDart,
+              ),
+            ),
+      ],
+    );
+  }
 }
 
 /// The marks of one player on one number: "/", "X", then the X in a ring

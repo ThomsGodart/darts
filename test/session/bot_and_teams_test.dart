@@ -123,6 +123,22 @@ void main() {
       expect(session.state.x01!.scoreOf(cd).remaining, 501 - 71);
     });
 
+    test('a team score exposes each member\'s last visit and average', () {
+      final session = newSession()..startGame([ab, cd]);
+      // Alice 60, Chloé 26, Bob 100, Dan 45 — Alice is up again.
+      play(session, [60, 26, 100, 45]);
+
+      final abScore = session.state.x01!.scoreOf(ab);
+      expect(abScore.lastVisitOf(alice)?.points, 60);
+      expect(abScore.lastVisitOf(bob)?.points, 100);
+      expect(abScore.threeDartAverageOf(alice), 60);
+      expect(abScore.threeDartAverageOf(bob), 100);
+      expect(abScore.dartsThrownBy(alice), 3);
+      // Team aggregates stay on the shared score.
+      expect(abScore.lastVisit?.points, 100);
+      expect(abScore.threeDartAverage, 80);
+    });
+
     test('a single player throws for themselves', () {
       final session = newSession()..startGame([alice, bob]);
       expect(session.state.game!.thrower, alice);

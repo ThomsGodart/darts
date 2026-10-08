@@ -173,6 +173,37 @@ class PlayerScore {
   /// Points per three darts, null before the first dart.
   double? get threeDartAverage => averagePerVisit(pointsScored, dartsThrown);
 
+  /// Visits [member] threw: all of them alone, or every Nth when [player]
+  /// is a team whose members alternate.
+  List<Visit> visitsOf(Player member) {
+    if (!player.isTeam) {
+      return member.id == player.id ? visits : const [];
+    }
+    final turn = player.members.indexWhere((m) => m.id == member.id);
+    if (turn < 0) return const [];
+    final turns = player.members.length;
+    return [
+      for (final (i, visit) in visits.indexed)
+        if (i % turns == turn) visit,
+    ];
+  }
+
+  /// [member]'s latest visit on this score, null before their first.
+  Visit? lastVisitOf(Player member) => visitsOf(member).lastOrNull;
+
+  /// Points per three darts for [member]'s own visits on this score.
+  double? threeDartAverageOf(Player member) {
+    final own = visitsOf(member);
+    if (own.isEmpty) return null;
+    final points = own.fold(0, (sum, visit) => sum + visit.points);
+    final darts = own.fold(0, (sum, visit) => sum + visit.darts);
+    return averagePerVisit(points, darts);
+  }
+
+  /// Darts [member] has thrown on this score.
+  int dartsThrownBy(Player member) =>
+      visitsOf(member).fold(0, (sum, visit) => sum + visit.darts);
+
   /// The score after [visit]; [isIn] says whether the player is in by
   /// the end of it.
   PlayerScore after(Visit visit, {required bool isIn}) => PlayerScore(

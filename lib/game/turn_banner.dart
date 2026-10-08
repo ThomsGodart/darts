@@ -30,13 +30,21 @@ class TurnBanner extends StatelessWidget {
           width: double.infinity,
           color: tokens.activePlayer,
           padding: const EdgeInsets.symmetric(vertical: DartsSpace.xl),
-          child: Text(
-            'À toi, $playerName !',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: tokens.playerNameFontSize,
-              color: tokens.onActivePlayer,
-              fontWeight: FontWeight.bold,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: DartsSpace.lg),
+              child: Text(
+                'À toi, $playerName !',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  // Same order of magnitude as the active remaining score,
+                  // so the hand-off reads from the oche on a tablet too.
+                  fontSize: tokens.remainingFontSize * 0.55,
+                  color: tokens.onActivePlayer,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ),

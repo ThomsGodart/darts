@@ -68,15 +68,26 @@ String visitTotal(Visit visit) => visit.isBust ? 'BUST' : '${visit.points}';
 
 /// "Manches 2 · moy. 45.2 · 12 fl.": what [score]'s player has won in
 /// [match], if the game is a leg of one, then how they throw; empty
-/// before the first dart of a game played alone.
-String _summary(PlayerScore score, MatchScore? match, {int dartsInVisit = 0}) =>
-    [
-      if (match != null) matchWinsLabel(match, score.player),
-      if (score.threeDartAverage case final average?)
-        'moy. ${averageLabel(average)}',
-      if (score.dartsThrown + dartsInVisit > 0)
-        '${score.dartsThrown + dartsInVisit} fl.',
-    ].join(' · ');
+/// before the first dart. Pass [member] to scope the figures to one
+/// team mate's visits.
+String _summary(
+  PlayerScore score,
+  MatchScore? match, {
+  int dartsInVisit = 0,
+  Player? member,
+}) {
+  final moy = member != null
+      ? score.threeDartAverageOf(member)
+      : score.threeDartAverage;
+  final darts =
+      (member != null ? score.dartsThrownBy(member) : score.dartsThrown) +
+      dartsInVisit;
+  return [
+    if (match != null) matchWinsLabel(match, score.player),
+    if (moy case final average?) 'moy. ${averageLabel(average)}',
+    if (darts > 0) '$darts fl.',
+  ].join(' · ');
+}
 
 /// "Manches 2", or with sets "Sets 1 · Manches 2": what [player] has won
 /// in [match].
@@ -143,16 +154,18 @@ class _ActivePlayer extends StatelessWidget {
     final tokens = Theme.of(context).extension<DartsTokens>()!;
     final score = game.activeScore;
     final checkout = game.checkoutSuggestion;
-    // A team's score has several throwers behind it, named in the banner
-    // over the board: its block is the score to read from the oche, and
-    // nothing that would be one member's.
+    // A team's name and thrower sit in the banner over the board; the
+    // block still shows the thrower's last visit and average, as in solo.
     final isTeam = score.player.isTeam;
+    final thrower = game.thrower;
+    final lastVisit = isTeam ? score.lastVisitOf(thrower) : score.lastVisit;
     // The visit being entered busts: say so before the turn passes.
     final busts = game.visitBusts;
     final summary = _summary(
       score,
       match,
       dartsInVisit: game.isFinished ? 0 : game.dartsInVisit.length,
+      member: isTeam ? thrower : null,
     );
     final small = TextStyle(
       fontSize: tokens.visitSummaryFontSize,
@@ -185,7 +198,7 @@ class _ActivePlayer extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            if (isTeam || score.lastVisit == null)
+            if (lastVisit == null)
               remaining
             else
               Row(
@@ -199,7 +212,7 @@ class _ActivePlayer extends StatelessWidget {
                   // not flagged as if it were this visit's.
                   _LastVisit(
                     key: const Key('active-last-visit'),
-                    visit: score.lastVisit,
+                    visit: lastVisit,
                     heading: 'Dernière volée',
                     color: tokens.onActivePlayer,
                     dartsStyle: small,
@@ -223,7 +236,7 @@ class _ActivePlayer extends StatelessWidget {
                   ),
                 ),
               ),
-            if (!isTeam && summary.isNotEmpty)
+            if (summary.isNotEmpty)
               Text(summary, key: const Key('active-summary'), style: small),
             if (checkout != null)
               Container(

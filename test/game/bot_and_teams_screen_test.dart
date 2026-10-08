@@ -185,6 +185,31 @@ void main() {
         findsOneWidget,
       );
       expect(activeRemaining(tester), '441');
+      // Joueur 3 has not thrown yet: no last visit / moyenne for them.
+      expect(find.byKey(const Key('active-last-visit')), findsNothing);
+      expect(find.byKey(const Key('active-summary')), findsNothing);
+
+      await quickScore(tester, 100);
+      await tester.pumpAndSettle();
+      await quickScore(tester, 26);
+      await tester.pumpAndSettle();
+
+      // Joueur 1 is up again: their own last visit and moyenne, as in solo.
+      expect(
+        find.descendant(of: banner, matching: find.text('Joueur 1 lance')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('active-last-visit')),
+          matching: find.text('60'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<Text>(find.byKey(const Key('active-summary'))).data,
+        contains('moy. 60.0'),
+      );
     });
 
     testWidgets('players choose their team: three against one', (tester) async {

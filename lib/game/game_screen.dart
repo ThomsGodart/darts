@@ -193,7 +193,8 @@ class _GameScreenState extends State<GameScreen> {
       setState(() => _bannerPlayerName = null);
     } else if (game.visitsPlayed > _visitsSeen && !game.isFinished) {
       // Only a completed visit passes the phone on; an undo does not.
-      HapticFeedback.mediumImpact();
+      // Stronger than a tap: the next thrower should feel the hand-off.
+      HapticFeedback.heavyImpact();
       // In a team, whoever of its members is up.
       setState(() => _bannerPlayerName = game.thrower.name);
     } else if (game.visitsPlayed < _visitsSeen) {
@@ -252,135 +253,6 @@ class _GameScreenState extends State<GameScreen> {
             (_keyboardHidden || _isScreenOnly) && !game.isFinished;
         final bannerPlayerName = _bannerPlayerName;
         final onUndo = controller.canUndo ? _undo : null;
-        final statePane = switch (game) {
-          final X01Game game => Scoreboard(
-            game: game,
-            match: controller.state.match,
-          ),
-          final CricketGame game => CricketBoard(
-            game: game,
-            showKeys:
-                game.config.input == CricketInput.board && !keyboardHidden,
-            onDart: game.isFinished || game.visitIsOver || keyboardHidden
-                ? null
-                : controller.throwDart,
-          ),
-          final ShanghaiGame game => ShanghaiBoard(game: game),
-          final KillerGame game => KillerBoard(game: game),
-          final HalveItGame game => HalveItBoard(game: game),
-          final GolfGame game => GolfBoard(game: game),
-          final AroundTheClockGame game => AroundTheClockBoard(game: game),
-          final Bobs27Game game => Bobs27Board(game: game),
-          final CountUpGame game => CountUpBoard(game: game),
-          final BaseballGame game => BaseballBoard(game: game),
-        };
-        final inputPane = game.isFinished
-            ? _GameOverPanel(
-                session: controller.state,
-                // A screen only shows the result; and the session is
-                // ended by the device that keeps it.
-                onRematch: _isScreenOnly ? null : controller.rematch,
-                onUndo: _isScreenOnly ? null : _undo,
-                onChangeSetup: widget.onChangeSetup,
-                onEnd: _isGuest ? null : () => _endSession(context),
-              )
-            : switch (game) {
-                _ when game.thrower.isBot => InputPane(
-                  onUndo: onUndo,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(DartsSpace.lg),
-                      child: Text(
-                        '${game.thrower.name} joue…',
-                        key: const Key('bot-playing'),
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                    ),
-                  ],
-                ),
-                final KillerGame game
-                    when game.phase == KillerPhase.assigning =>
-                  KillerAssignInput(
-                    key: ValueKey('assign-${game.activeIndex}'),
-                    taken: game.takenNumbers,
-                    onAssign: controller.assignNumber,
-                    onUndo: onUndo,
-                  ),
-                final KillerGame game => KillerPlayInput(
-                  key: ValueKey(game.visitsPlayed),
-                  dartsInVisit: game.dartsInVisit,
-                  onDart: controller.throwDart,
-                  onEndVisit: controller.endVisit,
-                  onUndo: onUndo,
-                ),
-                final CountUpGame game => VisitInput(
-                  key: ValueKey(game.visitsPlayed),
-                  entry: _entry[GameKind.countUp] ?? VisitEntry.keypad,
-                  onEntryChanged: (entry) =>
-                      setState(() => _entry[GameKind.countUp] = entry),
-                  onSubmit: (score) => _submitTotal(context, score),
-                  onDart: controller.throwDart,
-                  dartsInVisit: game.dartsInVisit,
-                  onEndVisit: controller.endVisit,
-                  onUndo: onUndo,
-                ),
-                final HalveItGame game => _dartKeys(
-                  game,
-                  halveItKeys(game.currentTarget),
-                ),
-                final GolfGame game => _dartKeys(
-                  game,
-                  ringKeys(game.currentHole),
-                ),
-                final AroundTheClockGame game => _dartKeys(
-                  game,
-                  aroundTheClockKeys(game),
-                ),
-                final Bobs27Game game => _dartKeys(game, bobs27Keys(game)),
-                final BaseballGame game => _dartKeys(
-                  game,
-                  ringKeys(game.inning),
-                ),
-                final ShanghaiGame game => ShanghaiInput(
-                  key: ValueKey(game.visitsPlayed),
-                  number: game.currentNumber,
-                  dartsInVisit: game.dartsInVisit,
-                  onDart: controller.throwDart,
-                  onEndVisit: controller.endVisit,
-                  onUndo: onUndo,
-                ),
-                final X01Game game => VisitInput(
-                  key: ValueKey(game.visitsPlayed),
-                  entry: _entry[GameKind.x01] ?? VisitEntry.keypad,
-                  onEntryChanged: (entry) =>
-                      setState(() => _entry[GameKind.x01] = entry),
-                  onSubmit: (score) => _submit(context, game, score),
-                  onDart: controller.throwDart,
-                  dartsInVisit: game.dartsInVisit,
-                  visitIsOver: game.visitIsOver,
-                  onEndVisit: controller.endVisit,
-                  onUndo: onUndo,
-                ),
-                final CricketGame game
-                    when game.config.input == CricketInput.board =>
-                  CricketBoardInput(
-                    dartsInVisit: game.dartsInVisit,
-                    onDart: controller.throwDart,
-                    onEndVisit: controller.endVisit,
-                    onUndo: onUndo,
-                  ),
-                CricketGame() => VisitInput(
-                  key: ValueKey(game.visitsPlayed),
-                  entry: _entry[GameKind.cricket] ?? VisitEntry.keypad,
-                  onEntryChanged: (entry) =>
-                      setState(() => _entry[GameKind.cricket] = entry),
-                  onSubmit: null,
-                  onDart: controller.throwDart,
-                  dartsInVisit: game.dartsInVisit,
-                  onEndVisit: controller.endVisit,
-                  onUndo: onUndo,
-                ),
-              };
         return Stack(
           children: [
             Column(
@@ -412,9 +284,31 @@ class _GameScreenState extends State<GameScreen> {
                     thrower: game.thrower,
                   ),
                 Expanded(
-                  child: keyboardHidden
-                      ? statePane
-                      : GameShell(statePane: statePane, inputPane: inputPane),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Wide / landscape: cricket marks fill the state
+                      // pane; board keys move to the input pane.
+                      final splits = GameShell.splits(constraints);
+                      final statePane = _statePane(
+                        game,
+                        keyboardHidden: keyboardHidden,
+                        boardKeysOnBoard:
+                            !splits ||
+                            game is! CricketGame ||
+                            game.config.input != CricketInput.board,
+                      );
+                      if (keyboardHidden) return statePane;
+                      return GameShell(
+                        statePane: statePane,
+                        inputPane: _inputPane(
+                          context,
+                          game,
+                          onUndo: onUndo,
+                          boardKeysInInput: splits,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -442,6 +336,142 @@ class _GameScreenState extends State<GameScreen> {
       },
       child: _scaffold(launcher, gameBody),
     );
+  }
+
+  /// Scoreboard / board for [game]. Cricket board keys stay on the board
+  /// only when [boardKeysOnBoard] is true (portrait phone); otherwise the
+  /// marks fill the pane and keys sit in the input.
+  Widget _statePane(
+    Game game, {
+    required bool keyboardHidden,
+    required bool boardKeysOnBoard,
+  }) => switch (game) {
+    final X01Game game => Scoreboard(
+      game: game,
+      match: controller.state.match,
+    ),
+    final CricketGame game => CricketBoard(
+      game: game,
+      showKeys:
+          boardKeysOnBoard &&
+          game.config.input == CricketInput.board &&
+          !keyboardHidden,
+      onDart: game.isFinished || game.visitIsOver || keyboardHidden
+          ? null
+          : controller.throwDart,
+    ),
+    final ShanghaiGame game => ShanghaiBoard(game: game),
+    final KillerGame game => KillerBoard(game: game),
+    final HalveItGame game => HalveItBoard(game: game),
+    final GolfGame game => GolfBoard(game: game),
+    final AroundTheClockGame game => AroundTheClockBoard(game: game),
+    final Bobs27Game game => Bobs27Board(game: game),
+    final CountUpGame game => CountUpBoard(game: game),
+    final BaseballGame game => BaseballBoard(game: game),
+  };
+
+  Widget _inputPane(
+    BuildContext context,
+    Game game, {
+    required VoidCallback? onUndo,
+    required bool boardKeysInInput,
+  }) {
+    if (game.isFinished) {
+      return _GameOverPanel(
+        session: controller.state,
+        // A screen only shows the result; and the session is
+        // ended by the device that keeps it.
+        onRematch: _isScreenOnly ? null : controller.rematch,
+        onUndo: _isScreenOnly ? null : _undo,
+        onChangeSetup: widget.onChangeSetup,
+        onEnd: _isGuest ? null : () => _endSession(context),
+      );
+    }
+    return switch (game) {
+      _ when game.thrower.isBot => InputPane(
+        onUndo: onUndo,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(DartsSpace.lg),
+            child: Text(
+              '${game.thrower.name} joue…',
+              key: const Key('bot-playing'),
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+          ),
+        ],
+      ),
+      final KillerGame game when game.phase == KillerPhase.assigning =>
+        KillerAssignInput(
+          key: ValueKey('assign-${game.activeIndex}'),
+          taken: game.takenNumbers,
+          onAssign: controller.assignNumber,
+          onUndo: onUndo,
+        ),
+      final KillerGame game => KillerPlayInput(
+        key: ValueKey(game.visitsPlayed),
+        dartsInVisit: game.dartsInVisit,
+        onDart: controller.throwDart,
+        onEndVisit: controller.endVisit,
+        onUndo: onUndo,
+      ),
+      final CountUpGame game => VisitInput(
+        key: ValueKey(game.visitsPlayed),
+        entry: _entry[GameKind.countUp] ?? VisitEntry.keypad,
+        onEntryChanged: (entry) =>
+            setState(() => _entry[GameKind.countUp] = entry),
+        onSubmit: (score) => _submitTotal(context, score),
+        onDart: controller.throwDart,
+        dartsInVisit: game.dartsInVisit,
+        onEndVisit: controller.endVisit,
+        onUndo: onUndo,
+      ),
+      final HalveItGame game => _dartKeys(game, halveItKeys(game.currentTarget)),
+      final GolfGame game => _dartKeys(game, ringKeys(game.currentHole)),
+      final AroundTheClockGame game => _dartKeys(game, aroundTheClockKeys(game)),
+      final Bobs27Game game => _dartKeys(game, bobs27Keys(game)),
+      final BaseballGame game => _dartKeys(game, ringKeys(game.inning)),
+      final ShanghaiGame game => ShanghaiInput(
+        key: ValueKey(game.visitsPlayed),
+        number: game.currentNumber,
+        dartsInVisit: game.dartsInVisit,
+        onDart: controller.throwDart,
+        onEndVisit: controller.endVisit,
+        onUndo: onUndo,
+      ),
+      final X01Game game => VisitInput(
+        key: ValueKey(game.visitsPlayed),
+        entry: _entry[GameKind.x01] ?? VisitEntry.keypad,
+        onEntryChanged: (entry) =>
+            setState(() => _entry[GameKind.x01] = entry),
+        onSubmit: (score) => _submit(context, game, score),
+        onDart: controller.throwDart,
+        dartsInVisit: game.dartsInVisit,
+        visitIsOver: game.visitIsOver,
+        onEndVisit: controller.endVisit,
+        onUndo: onUndo,
+      ),
+      final CricketGame game when game.config.input == CricketInput.board =>
+        CricketBoardInput(
+          game: game,
+          showKeys: boardKeysInInput,
+          dartsInVisit: game.dartsInVisit,
+          onDart: controller.throwDart,
+          onEndVisit: controller.endVisit,
+          onUndo: onUndo,
+        ),
+      CricketGame() => VisitInput(
+        key: ValueKey(game.visitsPlayed),
+        entry: _entry[GameKind.cricket] ?? VisitEntry.keypad,
+        onEntryChanged: (entry) =>
+            setState(() => _entry[GameKind.cricket] = entry),
+        onSubmit: null,
+        onDart: controller.throwDart,
+        dartsInVisit: game.dartsInVisit,
+        onEndVisit: controller.endVisit,
+        onUndo: onUndo,
+      ),
+    };
   }
 
   Widget _scaffold(SessionLauncher? launcher, Widget gameBody) {
@@ -676,7 +706,8 @@ class _ThrowerBanner extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               '${thrower.name} lance',
-              style: textTheme.headlineMedium?.copyWith(
+              style: TextStyle(
+                fontSize: tokens.playerNameFontSize,
                 color: tokens.onActivePlayer,
                 fontWeight: FontWeight.bold,
               ),
@@ -686,7 +717,7 @@ class _ThrowerBanner extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               'Équipe ${team.name}',
-              style: textTheme.titleMedium?.copyWith(
+              style: textTheme.titleLarge?.copyWith(
                 color: tokens.onActivePlayer,
               ),
             ),
