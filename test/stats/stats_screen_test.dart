@@ -84,7 +84,7 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, 'Cricket'));
     await tester.pumpAndSettle();
     expect(find.text('Moyenne'), findsNothing);
-    expect(valueOf(tester, 'MPR'), '3.0');
+    expect(valueOf(tester, 'MPR'), '3.00');
     expect(valueOf(tester, 'Meilleur round'), '3 marques');
   });
 

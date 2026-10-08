@@ -70,7 +70,7 @@ List<StatLine> statLines(List<GameStats> stats) {
     ],
     CricketStats() => [
       ...shared,
-      ('MPR', each<CricketStats>((s) => averageLabel(s.marksPerRound))),
+      ('MPR', each<CricketStats>((s) => mprLabel(s.marksPerRound))),
       (
         'Meilleur round',
         each<CricketStats>(

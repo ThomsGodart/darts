@@ -29,7 +29,7 @@ void main() {
 
     final stats = gameStats(session.state.game!);
     expect(stats.headings, ['pts', 'MPR']);
-    expect(rowsOf(stats), ['Alice: 120 9.0', 'Bob: 0 –']);
+    expect(rowsOf(stats), ['Alice: 120 9.00', 'Bob: 0 –']);
   });
 
   test('a Killer game shows numbers and lives, OUT without any', () {
@@ -64,7 +64,7 @@ void main() {
 
     final stats = sessionStats(session.state);
     expect(stats.headings, ['moy.', 'MPR']);
-    expect(rowsOf(stats), ['Alice: 101.0 –', 'Bob: – 1.0']);
+    expect(rowsOf(stats), ['Alice: 101.0 –', 'Bob: – 1.00']);
   });
 
   test('game over adds the session stats from the second game on', () {

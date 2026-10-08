@@ -29,7 +29,7 @@ StatsTable gameStats(Game game) => switch (game) {
       for (final score in scores)
         (
           score.player,
-          ['${score.points}', averageLabel(game.marksPerRound(score.player))],
+          ['${score.points}', mprLabel(game.marksPerRound(score.player))],
         ),
     ],
   ),
@@ -101,7 +101,7 @@ StatsTable sessionStats(SessionState session) {
           player,
           [
             if (x01) averageLabel(session.averageOf(player)),
-            if (cricket) averageLabel(session.marksPerRoundOf(player)),
+            if (cricket) mprLabel(session.marksPerRoundOf(player)),
           ],
         ),
     ],
@@ -124,7 +124,7 @@ StatsTable gameOverStats(SessionState session) {
         ),
         CricketGame() => (
           'MPR session',
-          (player) => averageLabel(session.marksPerRoundOf(player)),
+          (player) => mprLabel(session.marksPerRoundOf(player)),
         ),
         _ => null,
       };
