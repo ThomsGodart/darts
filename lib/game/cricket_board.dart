@@ -47,7 +47,8 @@ class CricketBoard extends StatelessWidget {
   /// the rest goes to the keys.
   static const _minKeysWidth = 3 * (DartsSpace.tap + 2 * DartsSpace.xxs);
   static const _maxMarksWidth = 76.0;
-  static const _labelWidth = 72.0;
+  /// Portrait label column (20…Bull): wide enough for bold figures, centred.
+  static const _labelWidth = 88.0;
 
   /// How much wider the thrower's column is when columns share the width.
   static const _activeFlex = 5;
@@ -192,6 +193,7 @@ class CricketBoard extends StatelessWidget {
             )
           : Text(
               number == Dart.bullSector ? 'Bull' : '$number',
+              textAlign: TextAlign.center,
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: isDead ? tokens.cricketDead : null,
@@ -266,19 +268,9 @@ class CricketBoard extends StatelessWidget {
           marksWidth == null
               ? SizedBox(
                   width: _labelWidth,
-                  child: cell(
-                    child: slot.child,
-                    active: false,
-                    alignment: AlignmentDirectional.centerStart,
-                  ),
+                  child: cell(child: slot.child, active: false),
                 )
-              : Expanded(
-                  child: cell(
-                    child: slot.child,
-                    active: false,
-                    alignment: AlignmentDirectional.centerStart,
-                  ),
-                )
+              : Expanded(child: cell(child: slot.child, active: false))
         else
           column(child: slot.child, active: slot.active),
     ];
