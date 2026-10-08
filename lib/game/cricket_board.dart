@@ -47,7 +47,15 @@ class CricketBoard extends StatelessWidget {
   /// the rest goes to the keys.
   static const _minKeysWidth = 3 * (DartsSpace.tap + 2 * DartsSpace.xxs);
   static const _maxMarksWidth = 76.0;
-  static const _labelWidth = 64.0;
+  static const _labelWidth = 72.0;
+
+  /// How much wider the thrower's column is when columns share the width.
+  static const _activeFlex = 5;
+  static const _idleFlex = 4;
+
+  /// How much larger the thrower's name, points and marks read when there
+  /// is room to grow.
+  static const _activeScale = 1.18;
 
   /// The width of a player's column in a board [width] wide, when the
   /// numbers are keys.
@@ -60,6 +68,7 @@ class CricketBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = Theme.of(context).extension<DartsTokens>()!;
     final textTheme = Theme.of(context).textTheme;
+    final grid = Theme.of(context).colorScheme.outlineVariant;
     return LayoutBuilder(
       builder: (context, constraints) {
         final marksWidth = showKeys && constraints.hasBoundedWidth
@@ -88,9 +97,10 @@ class CricketBoard extends StatelessWidget {
                     const SizedBox(height: DartsSpace.xs),
                     _row(
                       tokens: tokens,
+                      grid: grid,
                       marksWidth: marksWidth,
                       label: const SizedBox.shrink(),
-                      cellOf: (score) => FittedBox(
+                      cellOf: (score, {required active}) => FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
                           score.player.name,
@@ -98,19 +108,19 @@ class CricketBoard extends StatelessWidget {
                           softWrap: false,
                           overflow: TextOverflow.fade,
                           // With keys beside the marks, names stay compact;
-                          // without, they fill the column like on a wide
-                          // board.
+                          // without, they fill the column — the thrower
+                          // a notch larger when the columns can grow.
                           style:
                               (showKeys
                                       ? textTheme.titleSmall
+                                      : active
+                                      ? textTheme.headlineMedium
                                       : textTheme.headlineSmall)
                                   ?.copyWith(
-                                    fontWeight:
-                                        score.player.id == game.activePlayer.id
+                                    fontWeight: active
                                         ? FontWeight.w900
-                                        : null,
-                                    decoration:
-                                        score.player.id == game.activePlayer.id
+                                        : FontWeight.w600,
+                                    decoration: active
                                         ? TextDecoration.underline
                                         : null,
                                   ),
@@ -119,14 +129,19 @@ class CricketBoard extends StatelessWidget {
                     ),
                     _row(
                       tokens: tokens,
+                      grid: grid,
                       marksWidth: marksWidth,
                       label: const SizedBox.shrink(),
-                      cellOf: (score) => FittedBox(
+                      cellOf: (score, {required active}) => FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
                           '${score.points}',
                           style: TextStyle(
-                            fontSize: tokens.cricketPointsFontSize,
+                            fontSize:
+                                tokens.cricketPointsFontSize *
+                                (active && marksWidth == null
+                                    ? _activeScale
+                                    : 1),
                             fontWeight: FontWeight.bold,
                             height: 1,
                           ),
@@ -140,6 +155,7 @@ class CricketBoard extends StatelessWidget {
                           tokens,
                           textTheme,
                           marksWidth,
+                          grid,
                         ),
                       ),
                   ],
@@ -157,10 +173,12 @@ class CricketBoard extends StatelessWidget {
     DartsTokens tokens,
     TextTheme textTheme,
     double? marksWidth,
+    Color grid,
   ) {
     final isDead = game.isDead(number);
     return _row(
       tokens: tokens,
+      grid: grid,
       marksWidth: marksWidth,
       fillsHeight: true,
       // A number nobody scores on any more: its row goes dark, the marks
@@ -174,56 +192,96 @@ class CricketBoard extends StatelessWidget {
             )
           : Text(
               number == Dart.bullSector ? 'Bull' : '$number',
-              style: textTheme.titleLarge?.copyWith(
+              style: textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w800,
                 color: isDead ? tokens.cricketDead : null,
                 decoration: isDead ? TextDecoration.lineThrough : null,
               ),
             ),
-      cellOf: (score) =>
-          _Mark(marks: score.marksOn(number), isDead: isDead, tokens: tokens),
+      cellOf: (score, {required active}) => _Mark(
+        marks: score.marksOn(number),
+        isDead: isDead,
+        tokens: tokens,
+        scale: active && marksWidth == null ? _activeScale : 1,
+      ),
     );
   }
 
   Widget _row({
     required Widget label,
-    required Widget Function(CricketScore) cellOf,
+    required Widget Function(CricketScore score, {required bool active})
+    cellOf,
     required DartsTokens tokens,
+    required Color grid,
     Color? color,
     bool fillsHeight = false,
     double? marksWidth,
   }) {
+    // Half-width so neighbouring cells share a single fine line.
+    final line = BorderSide(color: grid, width: 0.5);
+    Widget cell({
+      required Widget child,
+      required bool active,
+      AlignmentGeometry alignment = Alignment.center,
+    }) => Container(
+      decoration: BoxDecoration(
+        color: active ? tokens.cricketActiveColumn : null,
+        border: Border.fromBorderSide(line),
+      ),
+      padding: const EdgeInsets.symmetric(
+        vertical: DartsSpace.xs,
+        horizontal: DartsSpace.xxs,
+      ),
+      alignment: alignment,
+      child: child,
+    );
+
     // With keys, the players' columns are as wide as marks need and the
     // keys take the rest; without, the players share what the labels
-    // leave.
-    Widget column(Widget child) => marksWidth == null
-        ? Expanded(child: child)
-        : SizedBox(width: marksWidth, child: child);
-    final cells = <Widget>[
+    // leave — the thrower a little more of that share.
+    Widget column({required Widget child, required bool active}) {
+      final boxed = cell(child: child, active: active);
+      if (marksWidth != null) {
+        return SizedBox(width: marksWidth, child: boxed);
+      }
+      return Expanded(
+        flex: active ? _activeFlex : _idleFlex,
+        child: boxed,
+      );
+    }
+
+    final slots = <({Widget child, bool active, bool isLabel})>[
       for (final (i, score) in game.scores.indexed)
-        column(
-          Container(
-            color: i == game.activeIndex ? tokens.cricketActiveColumn : null,
-            padding: const EdgeInsets.symmetric(
-              vertical: DartsSpace.xs,
-              horizontal: DartsSpace.xxs,
-            ),
-            alignment: Alignment.center,
-            child: cellOf(score),
-          ),
+        (
+          child: cellOf(score, active: i == game.activeIndex),
+          active: i == game.activeIndex,
+          isLabel: false,
         ),
     ];
-    cells.insert(
-      _labelColumn,
-      marksWidth == null
-          ? SizedBox(
-              width: _labelWidth,
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: label,
-              ),
-            )
-          : Expanded(child: label),
-    );
+    slots.insert(_labelColumn, (child: label, active: false, isLabel: true));
+
+    final cells = <Widget>[
+      for (final slot in slots)
+        if (slot.isLabel)
+          marksWidth == null
+              ? SizedBox(
+                  width: _labelWidth,
+                  child: cell(
+                    child: slot.child,
+                    active: false,
+                    alignment: AlignmentDirectional.centerStart,
+                  ),
+                )
+              : Expanded(
+                  child: cell(
+                    child: slot.child,
+                    active: false,
+                    alignment: AlignmentDirectional.centerStart,
+                  ),
+                )
+        else
+          column(child: slot.child, active: slot.active),
+    ];
     final row = Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: cells,
@@ -299,9 +357,12 @@ class CricketNumberKeys extends StatelessWidget {
                       // The number itself is what the eye looks for.
                       style:
                           (dart.multiplier == 1 || isBull
-                                  ? textTheme.titleLarge
+                                  ? textTheme.headlineSmall
                                   : textTheme.titleMedium)
                               ?.copyWith(
+                                fontWeight: dart.multiplier == 1 || isBull
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
                                 decoration: isDead
                                     ? TextDecoration.lineThrough
                                     : null,
@@ -374,11 +435,15 @@ class _Mark extends StatelessWidget {
     required this.marks,
     required this.isDead,
     required this.tokens,
+    this.scale = 1,
   });
 
   final int marks;
   final bool isDead;
   final DartsTokens tokens;
+
+  /// Grows the mark when the thrower's column has room.
+  final double scale;
 
   @override
   Widget build(BuildContext context) {
@@ -386,7 +451,7 @@ class _Mark extends StatelessWidget {
       return Semantics(label: 'aucune marque', child: const SizedBox.shrink());
     }
     final closed = marks >= marksToClose;
-    final fontSize = tokens.cricketMarkFontSize;
+    final fontSize = tokens.cricketMarkFontSize * scale;
     final mark = Container(
       key: closed ? const Key('mark-closed') : null,
       padding: const EdgeInsets.all(DartsSpace.xs),
