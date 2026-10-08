@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../share/session_share.dart';
 import '../share/share_dialogs.dart';
 import '../theme/darts_space.dart';
+import '../ui/app_fullscreen.dart';
+import '../ui/fullscreen_button.dart';
 
 /// Slim bar over the game: the way back to the menu, what is played,
 /// and what the screen is used for. Leaving keeps the session open, to
@@ -12,6 +14,7 @@ class GameBar extends StatelessWidget {
     super.key,
     required this.label,
     this.share,
+    this.fullscreen,
     this.keyboardHidden,
     this.onKeyboardHidden,
   });
@@ -21,6 +24,9 @@ class GameBar extends StatelessWidget {
   /// Shares the session with other devices; null hides the option.
   final SessionShare? share;
 
+  /// In-app fullscreen; null hides the option.
+  final AppFullscreen? fullscreen;
+
   /// Whether the input is put away; null when there is none to put away,
   /// or no choice about it.
   final bool? keyboardHidden;
@@ -29,6 +35,7 @@ class GameBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final share = this.share;
+    final fullscreen = this.fullscreen;
     final keyboardHidden = this.keyboardHidden;
     return Row(
       children: [
@@ -59,6 +66,7 @@ class GameBar extends StatelessWidget {
             ),
             onPressed: () => onKeyboardHidden?.call(!keyboardHidden),
           ),
+        if (fullscreen != null) FullscreenButton(fullscreen: fullscreen),
         if (share != null)
           ListenableBuilder(
             listenable: share,

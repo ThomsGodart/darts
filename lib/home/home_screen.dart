@@ -12,13 +12,21 @@ import '../setup/setup_screen.dart';
 import '../session_controller.dart';
 import '../session_launcher.dart';
 import '../theme/darts_space.dart';
+import '../ui/app_fullscreen.dart';
+import '../ui/fullscreen_button.dart';
 import '../ui/persist_failure_banner.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.launcher, required this.settings});
+  const HomeScreen({
+    super.key,
+    required this.launcher,
+    required this.settings,
+    required this.fullscreen,
+  });
 
   final SessionLauncher launcher;
   final AppSettings settings;
+  final AppFullscreen fullscreen;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -178,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
             controller: share.controller,
             share: share,
             portraitLock: widget.settings.portraitLock,
+            fullscreen: widget.fullscreen,
           ),
         ),
       );
@@ -218,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
           launcher: widget.launcher,
           share: share,
           portraitLock: widget.settings.portraitLock,
+          fullscreen: widget.fullscreen,
           onChangeSetup: () => _changeSetup(controller),
           onCancelGame: (cancelled) => _changeSetup(
             controller,
@@ -243,6 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         actions: [
+          FullscreenButton(fullscreen: widget.fullscreen),
           IconButton(
             key: const Key('settings-button'),
             tooltip: 'Réglages',

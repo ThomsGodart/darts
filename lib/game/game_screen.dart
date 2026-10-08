@@ -28,6 +28,7 @@ import 'screen_awake.dart';
 import 'shanghai_board.dart';
 import 'turn_banner.dart';
 import 'visit_input.dart';
+import '../ui/app_fullscreen.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({
@@ -38,6 +39,7 @@ class GameScreen extends StatefulWidget {
     this.onChangeSetup,
     this.onCancelGame,
     this.portraitLock = false,
+    this.fullscreen,
     this.screenAwake = const WakelockScreenAwake(),
     this.botDelay = const Duration(milliseconds: 900),
     this.botRandom,
@@ -65,6 +67,9 @@ class GameScreen extends StatefulWidget {
   /// Whether the screen stays in portrait when the phone is turned; it
   /// follows the phone otherwise.
   final bool portraitLock;
+
+  /// In-app fullscreen; null hides the control.
+  final AppFullscreen? fullscreen;
   final ScreenAwake screenAwake;
 
   /// How long a virtual opponent takes to throw.
@@ -235,7 +240,11 @@ class _GameScreenState extends State<GameScreen> {
           if (!_isGuest) return const SizedBox.shrink();
           return Column(
             children: [
-              GameBar(label: 'Session partagée', share: widget.share),
+              GameBar(
+                label: 'Session partagée',
+                share: widget.share,
+                fullscreen: widget.fullscreen,
+              ),
               ShareOffLineBanner(share: widget.share!),
               const Expanded(
                 child: Center(
@@ -268,6 +277,7 @@ class _GameScreenState extends State<GameScreen> {
                     },
                   ].join('  ·  '),
                   share: widget.share,
+                  fullscreen: widget.fullscreen,
                   keyboardHidden: game.isFinished || _isScreenOnly
                       ? null
                       : _keyboardHidden,

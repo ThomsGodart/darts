@@ -6,6 +6,7 @@ import 'session_launcher.dart';
 import 'settings/app_settings.dart';
 import 'share/share_transport.dart';
 import 'theme/app_themes.dart';
+import 'ui/app_fullscreen.dart';
 
 class DartsApp extends StatefulWidget {
   const DartsApp({
@@ -14,6 +15,7 @@ class DartsApp extends StatefulWidget {
     required this.catalog,
     this.settingsStore,
     this.shareTransport,
+    this.fullscreen,
     this.themeId = defaultThemeId,
   });
 
@@ -29,6 +31,9 @@ class DartsApp extends StatefulWidget {
   /// What sessions are shared over with other devices; without it the
   /// app does not offer to share or join one.
   final ShareTransport? shareTransport;
+
+  /// In-app fullscreen control; the platform default when not given.
+  final AppFullscreen? fullscreen;
   final String themeId;
 
   @override
@@ -48,6 +53,9 @@ class _DartsAppState extends State<DartsApp> {
     widget.settingsStore ?? InMemorySettingsStore(),
   );
 
+  late final AppFullscreen _fullscreen =
+      widget.fullscreen ?? AppFullscreen();
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +64,7 @@ class _DartsAppState extends State<DartsApp> {
 
   @override
   void dispose() {
+    if (widget.fullscreen == null) _fullscreen.dispose();
     _settings.dispose();
     _launcher.dispose();
     super.dispose();
@@ -67,7 +76,11 @@ class _DartsAppState extends State<DartsApp> {
       title: 'Darts',
       debugShowCheckedModeBanner: false,
       theme: themeById(widget.themeId),
-      home: HomeScreen(launcher: _launcher, settings: _settings),
+      home: HomeScreen(
+        launcher: _launcher,
+        settings: _settings,
+        fullscreen: _fullscreen,
+      ),
     );
   }
 }
