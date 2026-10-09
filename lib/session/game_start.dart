@@ -35,10 +35,7 @@ StartProblem? startProblem(List<Player> sides, GameConfig config) {
     return StartProblem.samePlayerTwice;
   }
   if (!config.isValid) return StartProblem.invalidRules;
-  final throwers = [
-    for (final side in sides)
-      if (side.isTeam) ...side.members else side,
-  ];
+  final throwers = sides.expand((side) => side.throwers);
   if (!config.takesTotals && throwers.any((thrower) => thrower.isBot)) {
     return StartProblem.botCannotPlay;
   }

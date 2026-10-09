@@ -33,6 +33,22 @@ class Player {
 
   bool get isTeam => members.isNotEmpty;
 
+  /// The people who throw for this side, in the order they do: a team's
+  /// members, or the player alone.
+  List<Player> get throwers => isTeam ? members : [this];
+
+  /// Who throws this side's visit number [visit], from 0: a team's members
+  /// take turns, round after round. The one place that says so.
+  Player throwerOf(int visit) => throwers[visit % throwers.length];
+
+  /// Those of this side's [visits], oldest first, that [person] threw,
+  /// each with its place among them; none if [person] is not of the side.
+  Iterable<(int, T)> thrownBy<T>(Player person, List<T> visits) sync* {
+    for (final (i, visit) in visits.indexed) {
+      if (throwerOf(i).id == person.id) yield (i, visit);
+    }
+  }
+
   bool get isBot => botAverage != null;
 
   @override
@@ -50,6 +66,6 @@ class Player {
 /// members rather than their team, and no virtual opponent.
 List<Player> peopleOf(Iterable<Player> players) => [
   for (final player in players)
-    for (final person in player.isTeam ? player.members : [player])
+    for (final person in player.throwers)
       if (!person.isBot) person,
 ];

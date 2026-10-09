@@ -173,20 +173,11 @@ class PlayerScore {
   /// Points per three darts, null before the first dart.
   double? get threeDartAverage => averagePerVisit(pointsScored, dartsThrown);
 
-  /// Visits [member] threw: all of them alone, or every Nth when [player]
-  /// is a team whose members alternate.
-  List<Visit> visitsOf(Player member) {
-    if (!player.isTeam) {
-      return member.id == player.id ? visits : const [];
-    }
-    final turn = player.members.indexWhere((m) => m.id == member.id);
-    if (turn < 0) return const [];
-    final turns = player.members.length;
-    return [
-      for (final (i, visit) in visits.indexed)
-        if (i % turns == turn) visit,
-    ];
-  }
+  /// Visits [member] threw: all of them alone, their turns of them when
+  /// [player] is a team.
+  List<Visit> visitsOf(Player member) => [
+    for (final (_, visit) in player.thrownBy(member, visits)) visit,
+  ];
 
   /// [member]'s latest visit on this score, null before their first.
   Visit? lastVisitOf(Player member) => visitsOf(member).lastOrNull;
@@ -245,10 +236,9 @@ sealed class Game {
   /// Who is at the oche: the active player, or in a team whichever of its
   /// members' turn it is. A team's members alternate round after round.
   Player get thrower {
-    final side = activePlayer;
-    if (!side.isTeam) return side;
-    final round = visitsPlayed ~/ players.length;
-    return side.members[round % side.members.length];
+    // Every side has played as many visits as there were rounds when its
+    // turn comes.
+    return activePlayer.throwerOf(visitsPlayed ~/ players.length);
   }
 
   /// Whoever throws after the active player, in throwing order.

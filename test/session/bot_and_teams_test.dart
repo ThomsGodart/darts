@@ -156,6 +156,22 @@ void main() {
       expect(session.state.x01!.scoreOf(cd).remaining, 501 - 71);
     });
 
+    test('a side says who throws each of its visits', () {
+      expect(
+        [for (var visit = 0; visit < 5; visit++) ab.throwerOf(visit)],
+        [alice, bob, alice, bob, alice],
+      );
+      expect(ab.thrownBy(bob, ['a', 'b', 'c', 'd']).toList(), [
+        (1, 'b'),
+        (3, 'd'),
+      ]);
+      // Someone alone throws all of theirs, and nobody else's.
+      expect(alice.throwerOf(7), alice);
+      expect(alice.thrownBy(alice, [1, 2]).toList(), [(0, 1), (1, 2)]);
+      expect(alice.thrownBy(bob, [1, 2]), isEmpty);
+      expect(ab.thrownBy(chloe, [1, 2]), isEmpty);
+    });
+
     test('a team score exposes each member\'s last visit and average', () {
       final session = newSession()..startGame([ab, cd]);
       // Alice 60, Chloé 26, Bob 100, Dan 45 — Alice is up again.

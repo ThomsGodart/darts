@@ -242,17 +242,15 @@ List<GameStats> statsOf(Iterable<PlayedGame> games, StatsQuery query) {
     if (!query._takes(played)) continue;
     final game = played.game;
     for (final side in game.players) {
-      final people = side.isTeam ? side.members : [side];
       if (side.isTeam && query.participation == Participation.solo) continue;
       if (!side.isTeam && query.participation == Participation.team) continue;
-      for (final (turn, person) in people.indexed) {
+      for (final person in side.throwers) {
         if (person.isBot) continue;
         final tally = tallies.putIfAbsent(person.id, _Tally.new)
           ..player = person;
         final part = _Part(
           side: side,
-          turn: turn,
-          turns: people.length,
+          person: person,
           won: game.winner?.id == side.id,
         );
         if (game.isFinished) {
@@ -314,27 +312,16 @@ int? _finalScore(Game game, Player side) {
 /// One person's part in one game: the side they played on and, in a
 /// team, which of its turns were theirs.
 class _Part {
-  const _Part({
-    required this.side,
-    required this.turn,
-    required this.turns,
-    required this.won,
-  });
+  const _Part({required this.side, required this.person, required this.won});
 
   final Player side;
-  final int turn;
-  final int turns;
+  final Player person;
   final bool won;
 
-  bool get isSolo => turns == 1;
+  bool get isSolo => side.throwers.length == 1;
 
-  /// Those of the side's [visits], in order, that this person threw: a
-  /// team's members throw round after round.
-  Iterable<(int, T)> own<T>(List<T> visits) sync* {
-    for (final (i, visit) in visits.indexed) {
-      if (i % turns == turn) yield (i, visit);
-    }
-  }
+  /// Those of the side's [visits], in order, that this person threw.
+  Iterable<(int, T)> own<T>(List<T> visits) => side.thrownBy(person, visits);
 }
 
 class _Tally {

@@ -34,7 +34,7 @@ class SetupController extends ChangeNotifier {
     if (!from.players.any((side) => side.isTeam)) return;
     _teamCount = from.players.length;
     for (final (team, side) in from.players.indexed) {
-      for (final member in side.isTeam ? side.members : [side]) {
+      for (final member in side.throwers) {
         _teamOf[member.id] = team;
       }
     }
