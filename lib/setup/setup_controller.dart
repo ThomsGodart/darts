@@ -2,17 +2,21 @@ import 'package:flutter/foundation.dart';
 
 import '../session/session.dart';
 
-/// Why a setup cannot start although enough players are picked.
+/// Why a setup cannot start.
 enum SetupProblem {
   /// One of the teams asked for has nobody in it.
   emptyTeam,
 
   /// A virtual opponent only plays games entered as totals.
   botCannotPlay,
-}
 
-/// The games a virtual opponent can play: those entered as a total.
-const botGameKinds = {GameKind.x01, GameKind.countUp};
+  /// Fewer sides than the game asks for: players, or teams once they
+  /// are in teams.
+  tooFewSides,
+
+  /// Anything else the session would refuse.
+  refused,
+}
 
 /// State of the session setup screen, over the player catalog.
 class SetupController extends ChangeNotifier {
@@ -131,18 +135,23 @@ class SetupController extends ChangeNotifier {
               Player.team(members),
         ];
 
-  /// What keeps the game from starting besides a lack of players; null
-  /// when nothing does.
+  /// What keeps the game from starting; null when nothing does. Teams
+  /// are the setup's own business; the rest is what the session says of
+  /// the sides.
   SetupProblem? get problem {
-    final teams = _teams;
-    if (teams.any((members) => members.isEmpty)) return SetupProblem.emptyTeam;
-    if (_picked.any((p) => p.isBot) && !botGameKinds.contains(_kind)) {
-      return SetupProblem.botCannotPlay;
-    }
-    return null;
+    if (_teams.any((members) => members.isEmpty)) return SetupProblem.emptyTeam;
+    return switch (startProblem(sides, config)) {
+      null => null,
+      StartProblem.botCannotPlay => SetupProblem.botCannotPlay,
+      StartProblem.noPlayers ||
+      StartProblem.tooFewPlayers => SetupProblem.tooFewSides,
+      StartProblem.tooManyPlayers ||
+      StartProblem.samePlayerTwice ||
+      StartProblem.invalidRules => SetupProblem.refused,
+    };
   }
 
-  bool get canStart => problem == null && sides.length >= config.minPlayers;
+  bool get canStart => problem == null;
 
   GameSetup get result => (players: sides, config: config);
 
@@ -203,10 +212,16 @@ class SetupController extends ChangeNotifier {
   /// players.
   void _pick(Player player) {
     if (_teamCount > 0) {
-      final teams = _teams;
+      // Counted over the teams asked for, not over [teamCount]: two
+      // players left are no teams, yet the third one picked makes them
+      // teams again.
+      final sizes = List.filled(_teamCount, 0);
+      for (final picked in _picked) {
+        sizes[teamOf(picked)]++;
+      }
       var smallest = 0;
-      for (var team = 1; team < teams.length; team++) {
-        if (teams[team].length < teams[smallest].length) smallest = team;
+      for (var team = 1; team < sizes.length; team++) {
+        if (sizes[team] < sizes[smallest]) smallest = team;
       }
       _teamOf[player.id] = smallest;
     }

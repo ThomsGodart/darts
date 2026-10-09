@@ -81,6 +81,10 @@ sealed class GameConfig {
 
   /// Fewest players these rules can be played with.
   int get minPlayers => 1;
+
+  /// Whether a visit can be entered as its total, without its darts: what
+  /// a virtual opponent needs to play.
+  bool get takesTotals => false;
 }
 
 /// Rules of an X01 game: one leg, and the match it may be a leg of.
@@ -144,6 +148,9 @@ final class X01Config extends GameConfig {
 
   @override
   bool get isValid => startScore > 1 && legsToWin >= 1 && setsToWin >= 1;
+
+  @override
+  bool get takesTotals => true;
 
   @override
   bool operator ==(Object other) =>
@@ -491,6 +498,9 @@ final class CountUpConfig extends GameConfig {
 
   @override
   bool get isValid => roundsOptions.contains(rounds);
+
+  @override
+  bool get takesTotals => true;
 
   @override
   bool operator ==(Object other) =>

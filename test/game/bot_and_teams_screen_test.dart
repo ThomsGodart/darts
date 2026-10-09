@@ -243,6 +243,31 @@ void main() {
       );
     });
 
+    testWidgets('Killer in teams says how many teams it needs', (tester) async {
+      await pumpApp(tester, await fourPlayers());
+      await pickPlayers(tester, 3);
+      await tapInSetup(tester, 'Killer');
+      await tapInSetup(tester, '2 équipes');
+
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('setup-problem')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        tester.widget<Text>(find.byKey(const Key('setup-problem'))).data,
+        'Killer : au moins 3 équipes',
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Lancer la partie'),
+            )
+            .onPressed,
+        isNull,
+      );
+    });
+
     testWidgets('no banner when everyone plays for themselves', (tester) async {
       await pumpApp(tester, await fourPlayers());
       await pickPlayers(tester, 2);

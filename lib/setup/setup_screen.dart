@@ -560,29 +560,12 @@ class _SetupScreenState extends State<SetupScreen> {
               ],
               BaseballConfig() => [],
             },
-            if (setup.problem case final problem?)
+            if (_problemText(setup) case final text?)
               Padding(
                 padding: const EdgeInsets.only(top: DartsSpace.sm),
                 child: Text(
-                  switch (problem) {
-                    SetupProblem.emptyTeam =>
-                      'Chaque équipe doit avoir au moins un joueur',
-                    SetupProblem.botCannotPlay =>
-                      'L’adversaire virtuel ne joue qu’au X01 et au Count-Up',
-                  },
+                  text,
                   key: const Key('setup-problem'),
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              ),
-            if (setup.config.minPlayers > 1 &&
-                setup.picked.length < setup.config.minPlayers)
-              Padding(
-                padding: const EdgeInsets.only(top: DartsSpace.sm),
-                child: Text(
-                  '${kindLabel(setup.kind)} : au moins '
-                  '${setup.config.minPlayers} joueurs',
                   style: textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.error,
                   ),
@@ -620,6 +603,20 @@ class _SetupScreenState extends State<SetupScreen> {
     );
   }
 }
+
+/// What to tell the players about a setup that cannot start; null when it
+/// can, or when the reason needs no words: nobody picked yet.
+String? _problemText(SetupController setup) => switch (setup.problem) {
+  null => null,
+  SetupProblem.emptyTeam => 'Chaque équipe doit avoir au moins un joueur',
+  SetupProblem.botCannotPlay =>
+    'L’adversaire virtuel ne joue qu’au X01 et au Count-Up',
+  SetupProblem.tooFewSides when setup.config.minPlayers > 1 =>
+    '${kindLabel(setup.kind)} : au moins ${setup.config.minPlayers} '
+        '${setup.teamCount > 0 ? 'équipes' : 'joueurs'}',
+  SetupProblem.tooFewSides => null,
+  SetupProblem.refused => 'Ces règles ne peuvent pas être jouées',
+};
 
 String? _describe(PlayerNameProblem? problem) => switch (problem) {
   null => null,

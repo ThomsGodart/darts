@@ -109,6 +109,37 @@ void main() {
       expect(setup.result.players[1].isTeam, isFalse);
     });
 
+    test(
+      'Killer counts its sides: three players in two teams are two',
+      () async {
+        final setup = await allPicked(['Ana', 'Bob', 'Cléo']);
+        setup.kind = GameKind.killer;
+        expect(setup.canStart, isTrue);
+
+        setup.teamCount = 2;
+
+        expect(setup.canStart, isFalse);
+        expect(setup.problem, SetupProblem.tooFewSides);
+      },
+    );
+
+    test('a player picked again joins the team with the fewest', () async {
+      final setup = await allPicked(['Ana', 'Bob', 'Cléo']);
+      setup.teamCount = 2;
+      final bob = setup.players[1];
+      expect(setup.teamOf(bob), 1);
+
+      // Bob was alone in the second team: unpicked, two players are left
+      // and they are two sides without teams.
+      setup
+        ..toggle(bob)
+        ..toggle(bob);
+
+      expect(setup.teamOf(bob), 1);
+      expect(setup.problem, isNull);
+      expect(sideNames(setup), ['Ana & Cléo', 'Bob']);
+    });
+
     test('a team left without anyone keeps the game from starting', () async {
       final setup = await allPicked(['Ana', 'Bob', 'Cléo']);
       setup.teamCount = 2;

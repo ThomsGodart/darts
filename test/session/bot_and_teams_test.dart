@@ -20,6 +20,39 @@ void main() {
       expect(Player.bot(60), Player.bot(60));
     });
 
+    test('it only starts the games entered as totals', () {
+      final bot = Player.bot(60);
+      for (final config in <GameConfig>[
+        const X01Config(),
+        const CountUpConfig(),
+      ]) {
+        expect(
+          newSession().startGame([alice, bot], config: config),
+          isA<Accepted>(),
+          reason: '${config.kind}',
+        );
+      }
+      for (final kind in GameKind.values) {
+        final config = defaultConfigOf(kind);
+        if (config.takesTotals) continue;
+        final sides = [alice, bob, bot];
+        expect(
+          newSession().startGame(sides, config: config),
+          isA<Rejected>(),
+          reason: '$kind',
+        );
+        expect(startProblem(sides, config), StartProblem.botCannotPlay);
+      }
+      // In a team it still has to throw.
+      expect(
+        newSession().startGame([
+          Player.team([alice, bot]),
+          bob,
+        ], config: const CricketConfig()),
+        isA<Rejected>(),
+      );
+    });
+
     test('far from a finish, its visits average what was asked', () {
       for (final average in [40, 60, 80]) {
         final random = Random(average);

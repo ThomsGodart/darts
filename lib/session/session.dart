@@ -19,4 +19,5 @@ export 'repository.dart';
 export 'session_facade.dart';
 export 'state.dart';
 export 'game_config.dart';
+export 'game_start.dart';
 export 'x01_rules.dart' show isPossibleVisitTotal;

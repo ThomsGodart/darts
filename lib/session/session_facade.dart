@@ -6,6 +6,7 @@ import 'journal.dart';
 import 'player.dart';
 import 'state.dart';
 import 'game_config.dart';
+import 'game_start.dart';
 import 'x01_rules.dart';
 
 /// Single entry point to the session domain.
@@ -53,18 +54,25 @@ class Session {
     GameConfig config = const X01Config(),
   }) {
     if (_state.isEnded) return const Rejected('The session is over');
-    if (players.isEmpty) return const Rejected('A game needs players');
-    if (players.length > maxPlayers) {
-      return const Rejected('At most $maxPlayers players');
-    }
-    if (players.length < config.minPlayers) {
-      return Rejected('These rules need at least ${config.minPlayers} players');
-    }
-    if (players.map((p) => p.id).toSet().length != players.length) {
-      return const Rejected('A player cannot play twice in a game');
-    }
-    if (!config.isValid) {
-      return const Rejected('These rules cannot be played');
+    switch (startProblem(players, config)) {
+      case null:
+        break;
+      case StartProblem.noPlayers:
+        return const Rejected('A game needs players');
+      case StartProblem.tooManyPlayers:
+        return const Rejected('At most $maxPlayers players');
+      case StartProblem.tooFewPlayers:
+        return Rejected(
+          'These rules need at least ${config.minPlayers} players',
+        );
+      case StartProblem.samePlayerTwice:
+        return const Rejected('A player cannot play twice in a game');
+      case StartProblem.invalidRules:
+        return const Rejected('These rules cannot be played');
+      case StartProblem.botCannotPlay:
+        return const Rejected(
+          'A virtual opponent only plays games entered as totals',
+        );
     }
     final game = _state.game;
     if (game != null && !game.isFinished) {
