@@ -11,12 +11,15 @@ class AppFullscreen extends ChangeNotifier {
     Future<void> Function()? enter,
     Future<void> Function()? exit,
     bool Function()? readActive,
+    void Function(void Function(bool active) onChanged)? listen,
+    void Function()? stopListening,
   }) : isSupported = supported ?? platform.fullscreenSupported,
        _enter = enter ?? platform.enterFullscreen,
        _exit = exit ?? platform.exitFullscreen,
-       _readActive = readActive ?? (() => platform.fullscreenActive) {
+       _readActive = readActive ?? (() => platform.fullscreenActive),
+       _stopListening = stopListening ?? platform.stopListeningFullscreen {
     if (isSupported) {
-      platform.listenFullscreen(_sync);
+      (listen ?? platform.listenFullscreen)(_sync);
       _active = _readActive();
     }
   }
@@ -27,6 +30,7 @@ class AppFullscreen extends ChangeNotifier {
   final Future<void> Function() _enter;
   final Future<void> Function() _exit;
   final bool Function() _readActive;
+  final void Function() _stopListening;
 
   var _active = false;
 
@@ -57,6 +61,8 @@ class AppFullscreen extends ChangeNotifier {
     }
   }
 
+  /// The display left or entered fullscreen without the button, as with
+  /// Escape in a browser.
   void _sync(bool active) {
     if (_active == active) return;
     _active = active;
@@ -65,7 +71,7 @@ class AppFullscreen extends ChangeNotifier {
 
   @override
   void dispose() {
-    platform.stopListeningFullscreen();
+    _stopListening();
     super.dispose();
   }
 }

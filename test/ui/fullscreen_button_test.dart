@@ -63,6 +63,43 @@ void main() {
     expect(fullscreen.isActive, isTrue);
   });
 
+  testWidgets('leaving fullscreen outside the app puts the button back', (
+    tester,
+  ) async {
+    late void Function(bool active) platformChanged;
+    var listening = false;
+    final fullscreen = AppFullscreen(
+      supported: true,
+      enter: () async {},
+      exit: () async {},
+      readActive: () => false,
+      listen: (onChanged) {
+        platformChanged = onChanged;
+        listening = true;
+      },
+      stopListening: () => listening = false,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: FullscreenButton(fullscreen: fullscreen)),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('toggle-fullscreen')));
+    await tester.pump();
+    expect(find.byIcon(Icons.fullscreen_exit), findsOneWidget);
+
+    // Escape in a browser: the platform says so, no button was tapped.
+    platformChanged(false);
+    await tester.pump();
+
+    expect(fullscreen.isActive, isFalse);
+    expect(find.byIcon(Icons.fullscreen), findsOneWidget);
+
+    fullscreen.dispose();
+    expect(listening, isFalse);
+  });
+
   testWidgets('unsupported platforms hide the button', (tester) async {
     final fullscreen = AppFullscreen(supported: false);
     addTearDown(fullscreen.dispose);

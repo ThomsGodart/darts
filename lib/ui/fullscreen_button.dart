@@ -15,13 +15,9 @@ class FullscreenButton extends StatelessWidget {
       listenable: fullscreen,
       builder: (context, _) => IconButton(
         key: const Key('toggle-fullscreen'),
-        tooltip: fullscreen.isActive
-            ? 'Quitter le plein écran'
-            : 'Plein écran',
+        tooltip: fullscreen.isActive ? 'Quitter le plein écran' : 'Plein écran',
         icon: Icon(
-          fullscreen.isActive
-              ? Icons.fullscreen_exit
-              : Icons.fullscreen,
+          fullscreen.isActive ? Icons.fullscreen_exit : Icons.fullscreen,
         ),
         onPressed: fullscreen.toggle,
       ),

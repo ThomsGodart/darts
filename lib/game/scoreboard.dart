@@ -76,7 +76,7 @@ String _summary(
   int dartsInVisit = 0,
   Player? member,
 }) {
-  final moy = member != null
+  final average = member != null
       ? score.threeDartAverageOf(member)
       : score.threeDartAverage;
   final darts =
@@ -84,7 +84,7 @@ String _summary(
       dartsInVisit;
   return [
     if (match != null) matchWinsLabel(match, score.player),
-    if (moy case final average?) 'moy. ${averageLabel(average)}',
+    if (average != null) 'moy. ${averageLabel(average)}',
     if (darts > 0) '$darts fl.',
   ].join(' · ');
 }

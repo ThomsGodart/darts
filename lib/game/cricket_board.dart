@@ -47,6 +47,7 @@ class CricketBoard extends StatelessWidget {
   /// the rest goes to the keys.
   static const _minKeysWidth = 3 * (DartsSpace.tap + 2 * DartsSpace.xxs);
   static const _maxMarksWidth = 76.0;
+
   /// Portrait label column (20…Bull): wide enough for bold figures, centred.
   static const _labelWidth = 88.0;
 
@@ -211,8 +212,7 @@ class CricketBoard extends StatelessWidget {
 
   Widget _row({
     required Widget label,
-    required Widget Function(CricketScore score, {required bool active})
-    cellOf,
+    required Widget Function(CricketScore score, {required bool active}) cellOf,
     required DartsTokens tokens,
     required Color grid,
     Color? color,
@@ -221,11 +221,7 @@ class CricketBoard extends StatelessWidget {
   }) {
     // Half-width so neighbouring cells share a single fine line.
     final line = BorderSide(color: grid, width: 0.5);
-    Widget cell({
-      required Widget child,
-      required bool active,
-      AlignmentGeometry alignment = Alignment.center,
-    }) => Container(
+    Widget cell({required Widget child, required bool active}) => Container(
       decoration: BoxDecoration(
         color: active ? tokens.cricketActiveColumn : null,
         border: Border.fromBorderSide(line),
@@ -234,7 +230,7 @@ class CricketBoard extends StatelessWidget {
         vertical: DartsSpace.xs,
         horizontal: DartsSpace.xxs,
       ),
-      alignment: alignment,
+      alignment: Alignment.center,
       child: child,
     );
 
@@ -246,10 +242,7 @@ class CricketBoard extends StatelessWidget {
       if (marksWidth != null) {
         return SizedBox(width: marksWidth, child: boxed);
       }
-      return Expanded(
-        flex: active ? _activeFlex : _idleFlex,
-        child: boxed,
-      );
+      return Expanded(flex: active ? _activeFlex : _idleFlex, child: boxed);
     }
 
     final slots = <({Widget child, bool active, bool isLabel})>[

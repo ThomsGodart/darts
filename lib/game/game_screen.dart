@@ -302,10 +302,7 @@ class _GameScreenState extends State<GameScreen> {
                       final statePane = _statePane(
                         game,
                         keyboardHidden: keyboardHidden,
-                        boardKeysOnBoard:
-                            !splits ||
-                            game is! CricketGame ||
-                            game.config.input != CricketInput.board,
+                        boardKeysOnBoard: !splits,
                       );
                       if (keyboardHidden) return statePane;
                       return GameShell(
@@ -356,10 +353,7 @@ class _GameScreenState extends State<GameScreen> {
     required bool keyboardHidden,
     required bool boardKeysOnBoard,
   }) => switch (game) {
-    final X01Game game => Scoreboard(
-      game: game,
-      match: controller.state.match,
-    ),
+    final X01Game game => Scoreboard(game: game, match: controller.state.match),
     final CricketGame game => CricketBoard(
       game: game,
       showKeys:
@@ -436,9 +430,15 @@ class _GameScreenState extends State<GameScreen> {
         onEndVisit: controller.endVisit,
         onUndo: onUndo,
       ),
-      final HalveItGame game => _dartKeys(game, halveItKeys(game.currentTarget)),
+      final HalveItGame game => _dartKeys(
+        game,
+        halveItKeys(game.currentTarget),
+      ),
       final GolfGame game => _dartKeys(game, ringKeys(game.currentHole)),
-      final AroundTheClockGame game => _dartKeys(game, aroundTheClockKeys(game)),
+      final AroundTheClockGame game => _dartKeys(
+        game,
+        aroundTheClockKeys(game),
+      ),
       final Bobs27Game game => _dartKeys(game, bobs27Keys(game)),
       final BaseballGame game => _dartKeys(game, ringKeys(game.inning)),
       final ShanghaiGame game => ShanghaiInput(
@@ -452,8 +452,7 @@ class _GameScreenState extends State<GameScreen> {
       final X01Game game => VisitInput(
         key: ValueKey(game.visitsPlayed),
         entry: _entry[GameKind.x01] ?? VisitEntry.keypad,
-        onEntryChanged: (entry) =>
-            setState(() => _entry[GameKind.x01] = entry),
+        onEntryChanged: (entry) => setState(() => _entry[GameKind.x01] = entry),
         onSubmit: (score) => _submit(context, game, score),
         onDart: controller.throwDart,
         dartsInVisit: game.dartsInVisit,

@@ -47,11 +47,17 @@ void main() {
     final board = find.byKey(const Key('cricket-board'));
     final input = find.byKey(const Key('game-shell-input'));
     expect(
-      find.descendant(of: board, matching: find.byKey(const ValueKey('board-key-T20'))),
+      find.descendant(
+        of: board,
+        matching: find.byKey(const ValueKey('board-key-T20')),
+      ),
       findsNothing,
     );
     expect(
-      find.descendant(of: input, matching: find.byKey(const ValueKey('board-key-T20'))),
+      find.descendant(
+        of: input,
+        matching: find.byKey(const ValueKey('board-key-T20')),
+      ),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const ValueKey('board-key-T20')));
@@ -60,6 +66,30 @@ void main() {
       tester.widget<Text>(find.byKey(const Key('darts-in-visit'))).data,
       contains('T20'),
     );
+  });
+
+  testWidgets('Cricket landscape turns off the keys of a dead number', (
+    tester,
+  ) async {
+    await pumpApp(tester, await AppStorage.withTwoPlayers());
+    await launchGame(tester, const ['Joueur 1', 'Joueur 2'], 'Cricket');
+    await toLandscape(tester);
+
+    FilledButton key(String notation) => tester.widget<FilledButton>(
+      find.byKey(ValueKey('board-key-$notation')),
+    );
+
+    // Both players close the 20: nobody scores on it any more.
+    for (var player = 0; player < 2; player++) {
+      await tester.tap(find.byKey(const ValueKey('board-key-T20')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('end-visit')));
+      await tester.pumpAndSettle();
+    }
+
+    expect(key('T20').onPressed, isNull);
+    expect(key('20').onPressed, isNull);
+    expect(key('T19').onPressed, isNotNull);
   });
 
   testWidgets('Shanghai landscape shows board and S/D/T', (tester) async {

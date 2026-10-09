@@ -3,7 +3,8 @@ import 'dart:js_interop';
 import 'package:web/web.dart' as web;
 
 /// Browser Fullscreen API, driven from the app — not the browser chrome.
-bool get fullscreenSupported => true;
+/// Off where the browser has none to offer, as on an iPhone.
+bool get fullscreenSupported => web.document.fullscreenEnabled;
 
 bool get fullscreenActive => web.document.fullscreenElement != null;
 

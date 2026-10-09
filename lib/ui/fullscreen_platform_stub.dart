@@ -1,4 +1,4 @@
-/// No browser Fullscreen API (VM tests, mobile, desktop).
+/// A platform with neither `dart:io` nor JS interop: nothing to drive.
 bool get fullscreenSupported => false;
 
 bool get fullscreenActive => false;
