@@ -21,3 +21,4 @@ export 'state.dart';
 export 'game_config.dart';
 export 'game_start.dart';
 export 'x01_rules.dart' show isPossibleVisitTotal;
+export 'x01_total_entry.dart';

@@ -600,47 +600,32 @@ class _GameScreenState extends State<GameScreen> {
       ..showSnackBar(SnackBar(content: Text('Score invalide : $score')));
   }
 
+  /// A visit total of an X01 game. A total does not say everything the
+  /// rules may need: the players are asked the rest, and dismissing a
+  /// question drops the entry.
   Future<void> _submit(BuildContext context, X01Game game, int score) async {
-    int? dartsAtCheckout;
-    final options = game.checkoutDartOptions(score);
-    // A total does not say what the last dart was: when the rule asks
-    // for one, the players say whether it was thrown.
-    if (options.isNotEmpty && game.config.outRule != OutRule.straight) {
-      final finished = await _askFinishingDart(context, game.config.outRule);
-      if (finished == null || !context.mounted) return;
-      if (!finished) {
-        _reportIfRejected(
-          context,
-          controller.submitVisitTotal(score, missedFinish: true),
-          score,
-        );
-        return;
+    var entry = X01TotalEntry(game, score);
+    for (
+      var question = entry.question;
+      question != null;
+      question = entry.question
+    ) {
+      final X01TotalEntry? answered;
+      switch (question) {
+        case FinishingDartQuestion(:final outRule):
+          final finished = await _askFinishingDart(context, outRule);
+          answered = finished == null ? null : entry.finishingDart(finished);
+        case CheckoutDartsQuestion(:final options):
+          final darts = await _askCheckoutDarts(context, options);
+          answered = darts == null ? null : entry.checkoutIn(darts);
+        case DoubleDartsQuestion(:final options):
+          final darts = await _askDoubleDarts(context, options);
+          answered = darts == null ? null : entry.atDouble(darts);
       }
+      if (answered == null || !context.mounted) return;
+      entry = answered;
     }
-    if (options.length == 1) {
-      dartsAtCheckout = options.single;
-    } else if (options.isNotEmpty) {
-      dartsAtCheckout = await _askCheckoutDarts(context, options);
-      if (dartsAtCheckout == null || !context.mounted) return;
-    }
-    int? dartsAtDouble;
-    if (game.config.trackDoubles) {
-      final counts = game.doubleDartOptions(
-        score,
-        dartsAtCheckout: dartsAtCheckout,
-      );
-      if (counts.length == 1) {
-        dartsAtDouble = counts.single;
-      } else if (counts.isNotEmpty) {
-        dartsAtDouble = await _askDoubleDarts(context, counts);
-        if (dartsAtDouble == null || !context.mounted) return;
-      }
-    }
-    final result = controller.submitVisitTotal(
-      score,
-      dartsAtCheckout: dartsAtCheckout,
-      dartsAtDouble: dartsAtDouble,
-    );
+    final result = entry.submitTo(controller.submitVisitTotal);
     if (context.mounted) _reportIfRejected(context, result, score);
   }
 }

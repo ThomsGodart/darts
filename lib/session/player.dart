@@ -39,7 +39,8 @@ class Player {
 
   /// Who throws this side's visit number [visit], from 0: a team's members
   /// take turns, round after round. The one place that says so.
-  Player throwerOf(int visit) => throwers[visit % throwers.length];
+  Player throwerOf(int visit) =>
+      isTeam ? members[visit % members.length] : this;
 
   /// Those of this side's [visits], oldest first, that [person] threw,
   /// each with its place among them; none if [person] is not of the side.
