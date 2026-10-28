@@ -356,7 +356,7 @@ CricketGame _cricketDart(CricketGame game, Dart dart) {
     ];
     scores[game.activeIndex] = thrower.copyWith(
       marks: {...thrower.marks, number: before + closing},
-      marksHit: thrower.marksHit + marks,
+      marksHit: thrower.marksHit + (game.isDead(number) ? 0 : marks),
     );
     final points = extra * number;
     if (points > 0 && othersOpen.isNotEmpty) {

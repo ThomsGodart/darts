@@ -27,11 +27,20 @@ void main() {
     test('marks on a dead number and scoring marks still count', () {
       final session = newSession()..startGame([alice, bob], config: standard);
       visit(session, [t20]);
-      visit(session, [t20]);
-      visit(session, [t20, t20]); // 20 is dead: 6 marks, no points
+      visit(session);
+      visit(session, [t20, t20]); // Bob has not closed 20: 6 marks, 120 points
 
-      expect(cricketOf(session).scoreOf(alice).points, 0);
+      expect(cricketOf(session).scoreOf(alice).points, 120);
       expect(cricketOf(session).marksPerRound(alice), (3 + 6) / 2);
+    });
+
+    test('a mark on a number every player has closed is not a mark', () {
+      final session = newSession()..startGame([alice, bob], config: standard);
+      visit(session, [t20]); // Alice closes 20
+      visit(session, [t20]); // Bob closes 20
+      visit(session, [t20]); // 20 is dead for everyone: no mark
+      expect(cricketOf(session).marksPerRound(alice), 3 / 2);
+      expect(cricketOf(session).marksPerRound(bob), 3 / 1);
     });
 
     test('the winning visit counts as a whole round', () {
